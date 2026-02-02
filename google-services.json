@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "272322175282",
+    "project_id": "freshyfoodfactory-21ce5",
+    "storage_bucket": "freshyfoodfactory-21ce5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:272322175282:android:c360abc022ea1dab41f72b",
+        "android_client_info": {
+          "package_name": "com.freshyfood.factory"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBDK4gJpgRE9qvqROoYVZPVUpNNGreB-I0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

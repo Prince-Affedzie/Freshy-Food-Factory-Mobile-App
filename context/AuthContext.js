@@ -1,0 +1,208 @@
+// src/context/AuthContext.js
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import AuthService from '../services/authService';
+import { updateProfile,deleteProfile,logout,loginByGoogle,signUpByGoogle } from '../apis/userApi';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = async () => {
+    try {
+      const storedToken = await AsyncStorage.getItem('@freshyfood_token');
+      const storedUser = await AsyncStorage.getItem('@freshyfood_user');
+      
+      if (storedToken && storedUser) {
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
+        setIsAuthenticated(true);
+      }
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+//google_login
+
+const google_login = async (data) => {
+    try {
+      setLoading(true);
+      const response = await loginByGoogle(data);
+      
+      if (response.status === 200) {
+        console.log(response.data)
+        await AsyncStorage.setItem('@freshyfood_token', response.data.token);
+        await AsyncStorage.setItem('@freshyfood_user', JSON.stringify(response.data.user));
+        setToken(response.data.token);
+        setUser(response.data.user);
+        setIsAuthenticated(true);
+        
+        return { success: true, data: response.data };
+      } else {
+        return { success: false, error: response.error };
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      return { success: false, error: 'Login failed' };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const google_signUp = async (data) => {
+    try {
+      setLoading(true);
+      console.log(data)
+      const response = await signUpByGoogle(data);
+      console.log(response.data)
+      
+      if (response.status ===200) {
+        await AsyncStorage.setItem('@freshyfood_token', response.data.token);
+        await AsyncStorage.setItem('@freshyfood_user', JSON.stringify(response.data.user));
+        setToken(response.data.token);
+        setUser(response.data.user);
+        setIsAuthenticated(true);
+        
+        return { success: true, data: response.data };
+      } else {
+        return { success: false, error: response.error };
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      return { success: false, error: 'Registration failed' };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const login = async (credentials) => {
+    try {
+      setLoading(true);
+      const response = await AuthService.login(credentials);
+      
+      if (response.success) {
+        await AsyncStorage.setItem('@freshyfood_token', response.token);
+        await AsyncStorage.setItem('@freshyfood_user', JSON.stringify(response.user));
+        setToken(response.token);
+        setUser(response.user);
+        setIsAuthenticated(true);
+        
+        return { success: true, data: response.data };
+      } else {
+        return { success: false, error: response.error };
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      return { success: false, error: 'Login failed' };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signUp = async (userData) => {
+    try {
+      setLoading(true);
+      const response = await AuthService.signUp(userData);
+      
+      if (response.success) {
+        await AsyncStorage.setItem('@freshyfood_token', response.token);
+        await AsyncStorage.setItem('@freshyfood_user', JSON.stringify(response.user));
+        
+        setToken(response.token);
+        setUser(response.user);
+        setIsAuthenticated(true);
+        
+        return { success: true, data: response.data };
+      } else {
+        return { success: false, error: response.error };
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      return { success: false, error: 'Registration failed' };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logoutUser = async () => {
+    try {
+      const response = await logout()
+      if (response.status === 200){
+        await AsyncStorage.removeItem('@freshyfood_token');
+        await AsyncStorage.removeItem('@freshyfood_user');
+      
+      setToken(null);
+      setUser(null);
+      setIsAuthenticated(false);
+      }
+      return response;
+      
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
+  const updateUser = async (updatedUser) => {
+    try {
+      await AsyncStorage.setItem('@freshyfood_user', JSON.stringify(updatedUser));
+      const res = await  updateProfile(updatedUser)
+      setUser(updatedUser);
+      return res;
+    } catch (error) {
+      console.error('Update user error:', error);
+    }
+  };
+
+  const deleteAccount =async()=>{
+     const res = await deleteProfile()
+     if(res.status === 200){
+     await AsyncStorage.removeItem('@freshyfood_token');
+     await AsyncStorage.removeItem('@freshyfood_user');
+     setToken(null);
+     setUser(null);
+     setIsAuthenticated(false);
+     }
+     return res;
+    
+  }
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        loading,
+        isAuthenticated,
+        login,
+        signUp,
+        google_signUp,
+        google_login,
+        logoutUser,
+        updateUser,
+        deleteAccount,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

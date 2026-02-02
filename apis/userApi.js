@@ -1,0 +1,10 @@
+import API from "./apiClient";
+
+export const SignUp = (data)=>API.post('/api/register/account',data)
+export const login =(data)=>API.post('/api/login',data)
+export const signUpByGoogle = (data)=>API.post('/api/google_sign_up',data)
+export const loginByGoogle =(data)=>API.post('/api/google_login',data)
+export const logout =()=>API.post('/api/logout')
+export const updateProfile = (data)=>API.put('/api/update-account',data)
+export const deleteProfile = ()=>API.delete('/api/delete-account')
+export const sendPushToken = (data)=>API.post('/api/user/push-token',data)

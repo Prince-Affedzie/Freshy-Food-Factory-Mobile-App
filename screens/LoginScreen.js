@@ -59,7 +59,7 @@ const LoginScreen = ({ navigation }) => {
   // Configure Google Sign-In on component mount
   useEffect(() => {
     GoogleSignin.configure({
-      webClientId: 'YOUR_WEB_CLIENT_ID', // Replace with your web client ID
+      webClientId: '34872065423-88pioj4h26bguflctfpub95mt0830an6.apps.googleusercontent.com',
     });
   }, []);
 

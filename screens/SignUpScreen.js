@@ -45,6 +45,13 @@ const SignUpScreen = ({ navigation }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
 
+    useEffect(()=>{
+        GoogleSignin.configure({
+         webClientId:'34872065423-88pioj4h26bguflctfpub95mt0830an6.apps.googleusercontent.com'
+        })
+    },[])
+
+
   useEffect(() => {
     // Animate screen entrance
     Animated.parallel([

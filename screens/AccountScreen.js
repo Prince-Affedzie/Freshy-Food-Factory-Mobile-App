@@ -69,7 +69,7 @@ const AccountScreen = ({ navigation }) => {
       
       const response = await deleteAccount();
       
-      if (response.success) {
+      if (response.status === 200) {
         Alert.alert(
           'Account Deleted',
           'Your account has been permanently deleted. We\'re sorry to see you go!',

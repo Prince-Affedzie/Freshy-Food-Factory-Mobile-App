@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
 
 const google_login = async (data) => {
     try {
-      setLoading(true);
+      
       const response = await loginByGoogle(data);
       
       if (response.status === 200) {
@@ -66,15 +66,13 @@ const google_login = async (data) => {
           ? 'Network error. Please check your internet connection.'
           : 'An unexpected error occurred. Please try again.'),
     };
-    } finally {
-      setLoading(false);
-    }
+    } 
   };
 
 
   const google_signUp = async (data) => {
     try {
-      setLoading(true);
+      
       console.log(data)
       const response = await signUpByGoogle(data);
       console.log(response.data)
@@ -94,15 +92,12 @@ const google_login = async (data) => {
       const errorMessage = error.response?.data?.message || 
         "An account with this email already exists. Please login instead.";;
       return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
-    }
+    } 
   };
 
 
   const login = async (credentials) => {
     try {
-      setLoading(true);
       const response = await AuthService.login(credentials);
       
       if (response.success) {
@@ -131,14 +126,12 @@ const google_login = async (data) => {
           ? 'Network error. Please check your internet connection.'
           : 'An unexpected error occurred. Please try again.'),
     };;
-    } finally {
-      setLoading(false);
-    }
+    } 
   };
 
   const signUp = async (userData) => {
     try {
-      setLoading(true);
+      
       const response = await AuthService.signUp(userData);
       
       if (response.success) {
@@ -157,9 +150,7 @@ const google_login = async (data) => {
       const errorMessage = error.response?.data?.message || 
         "An account with this email already exists. Please login instead.";;
       return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
-    }
+    } 
   };
 
   const logoutUser = async () => {
@@ -191,18 +182,24 @@ const google_login = async (data) => {
     }
   };
 
-  const deleteAccount =async()=>{
-     const res = await deleteProfile()
-     if(res.status === 200){
-     await AsyncStorage.removeItem('@freshyfood_token');
-     await AsyncStorage.removeItem('@freshyfood_user');
-     setToken(null);
-     setUser(null);
-     setIsAuthenticated(false);
-     }
-     return res;
+ const deleteAccount = async () => {
+  try {
+    const res = await deleteProfile();
     
+    if (res?.status === 200) {
+      await AsyncStorage.removeItem('@freshyfood_token');
+      await AsyncStorage.removeItem('@freshyfood_user');
+      setToken(null);
+      setUser(null);
+      setIsAuthenticated(false);
+    }
+    
+    return res;
+  } catch (error) {
+    console.error('Delete account error:', error);
+    throw error; // or return error object
   }
+};
 
   return (
     <AuthContext.Provider

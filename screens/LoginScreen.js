@@ -1,5 +1,5 @@
 // src/screens/auth/LoginScreen.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,36 +12,67 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
+  ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
 
 const GoogleLogo = require('../assets/Google-logo.png');
+const BrandLogo = require('../assets/FreshyFoodFactory_App_Icon.png');
 
-// Simple Loading Component - defined inline
+// Improved Loading Component with proper animation
 const LoadingOverlay = ({ visible, message = 'Loading...' }) => {
-  const fadeAnim = new Animated.Value(0);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const spinValue = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    // Fade animation
     Animated.timing(fadeAnim, {
       toValue: visible ? 1 : 0,
       duration: 200,
       useNativeDriver: true,
     }).start();
+
+    // Spin animation when visible
+    if (visible) {
+      Animated.loop(
+        Animated.timing(spinValue, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        })
+      ).start();
+    } else {
+      spinValue.setValue(0);
+    }
   }, [visible]);
+
+  const spin = spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
 
   if (!visible) return null;
 
   return (
-    <Animated.View style={[styles.loadingOverlay, { opacity: fadeAnim }]}>
-      <View style={styles.loadingContainer}>
-        <View style={styles.loadingSpinner}>
-          <Ionicons name="refresh" size={30} color="#4CAF50" style={styles.spinningIcon} />
+    <Modal
+      transparent={true}
+      visible={visible}
+      animationType="fade"
+    >
+      <Animated.View style={[styles.loadingOverlay, { opacity: fadeAnim }]}>
+        <View style={styles.loadingContainer}>
+          <View style={styles.loadingSpinner}>
+            <Animated.View style={{ transform: [{ rotate: spin }] }}>
+              <Ionicons name="refresh" size={40} color="#4CAF50" />
+            </Animated.View>
+          </View>
+          <Text style={styles.loadingText}>{message}</Text>
         </View>
-        <Text style={styles.loadingText}>{message}</Text>
-      </View>
-    </Animated.View>
+      </Animated.View>
+    </Modal>
   );
 };
 
@@ -101,19 +132,20 @@ const LoginScreen = ({ navigation }) => {
 
       // Sign in with Google
       const res = await GoogleSignin.signIn();
-      const  idToken  = res.data.idToken;
+      const idToken = res.data.idToken;
     
-      const response = await google_login({  token: idToken, });
+      const response = await google_login({ token: idToken });
 
-      if (response.success) {
+      if (response?.success) {
         Alert.alert(
           'Welcome to FreshyFoodFactory!',
-          `Welcome back,! 🎉`,
-          [{ text: 'Continue', onPress: () => console.log('Navigated to home') }]
+          `Welcome back! 🎉`,
+          [{ text: 'Continue' }]
         );
+        navigation.navigate('MainTabs')
       } else {
-        const errorMessage = response.error || 
-                            response.message || 
+        const errorMessage = response?.error || 
+                            response?.message || 
                             "Login failed. Issues maybe Internet connectivity or you haven't created an account with Us.";
         Alert.alert('Login Failed', errorMessage);
       }
@@ -158,17 +190,18 @@ const LoginScreen = ({ navigation }) => {
 
       const response = await authLogin(loginData);
 
-      if (response.success) {
-        Alert.alert('Welcome Back!', 'Login successful 🎉');
+      if (response?.success) {
+        // Add a small delay to show loading state (optional)
+        setTimeout(() => {
+          Alert.alert('Welcome Back!', 'Login successful 🎉');
+          navigation.navigate('MainTabs')
+        }, 100);
       } else {
-        Alert.alert('Login Failed', response.error ||response.message || "Issues maybe Internet connectivity or you haven't created an account with Us.");
+        Alert.alert('Login Failed', response?.error || response?.message || "Issues maybe Internet connectivity or you haven't created an account with Us.");
       }
     } catch (error) {
       console.error('Login error:', error);
-      const errorMessage = response.error || 
-                            response.message || 
-                            "Issues maybe Internet connectivity or you haven't created an account with Us.";
-        Alert.alert('Login Failed', errorMessage);
+      Alert.alert('Login Failed', "An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -185,15 +218,6 @@ const LoginScreen = ({ navigation }) => {
     navigation.navigate('ForgotPassword');
   };
 
-  const handleQuickLogin = (demoType) => {
-    if (demoType === 'customer') {
-      setFormData({
-        phone: '0541234567',
-        password: '123456',
-      });
-    }
-  };
-
   // Combined loading state
   const isLoading = loading || googleLoading;
 
@@ -205,12 +229,17 @@ const LoginScreen = ({ navigation }) => {
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        {/* Header */}
+        {/* Header with Brand Logo */}
         <View style={styles.header}> 
           <View style={styles.logoContainer}>
-            <Ionicons name="leaf" size={48} color="#4CAF50" />
-            <Text style={styles.logoText}>FreshyFoodFactory</Text>
+            <Image 
+              source={BrandLogo}
+              style={styles.brandLogo}
+              resizeMode="contain"
+            />
+            <Text style={styles.logoText}>FreshyFood Factory</Text>
           </View>
           
           <Text style={styles.title}>Welcome Back</Text>
@@ -222,12 +251,13 @@ const LoginScreen = ({ navigation }) => {
           <TouchableOpacity 
             style={[styles.socialButton, googleLoading && styles.socialButtonDisabled]}
             onPress={handleGoogleLogin}
-            disabled={googleLoading || loading}
+            disabled={isLoading}
+            activeOpacity={0.7}
           >
             {googleLoading ? (
               <View style={styles.socialButtonLoading}>
-                <Ionicons name="logo-google" size={20} color="#DB4437" />
-                <Text style={styles.socialButtonText}>Connecting...</Text>
+                <ActivityIndicator size="small" color="#DB4437" />
+                <Text style={[styles.socialButtonText, { marginLeft: 8 }]}>Connecting...</Text>
               </View>
             ) : (
               <>
@@ -325,11 +355,12 @@ const LoginScreen = ({ navigation }) => {
             style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
             onPress={handleLogin}
             disabled={isLoading}
+            activeOpacity={0.8}
           >
             {loading ? (
               <View style={styles.buttonLoadingContent}>
-                <Ionicons name="refresh" size={20} color="#FFFFFF" style={styles.buttonSpinner} />
-                <Text style={styles.loginButtonText}>Signing In...</Text>
+                <ActivityIndicator size="small" color="#FFFFFF" />
+                <Text style={[styles.loginButtonText, { marginLeft: 8 }]}>Signing In...</Text>
               </View>
             ) : (
               <>
@@ -354,13 +385,13 @@ const LoginScreen = ({ navigation }) => {
         </View>
       </ScrollView>
 
-      {/* Simple Loading Overlay */}
+      {/* Improved Loading Overlay */}
       <LoadingOverlay 
         visible={isLoading}
         message={
           googleLoading ? "Signing in with Google..." : 
           loading ? "Logging in..." : 
-          "Loading..."
+          "Please wait..."
         }
       />
     </KeyboardAvoidingView>
@@ -387,11 +418,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  brandLogo: {
+    width: 40,
+    height: 40,
+    marginRight: 8,
+  },
   logoText: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#2E7D32',
-    marginLeft: 8,
   },
   title: {
     fontSize: 32,
@@ -509,14 +544,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  buttonSpinner: {
-    marginRight: 8,
-  },
   loginButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
-    marginRight: 8,
   },
   dividerContainer: {
     flexDirection: 'row',
@@ -560,7 +591,6 @@ const styles = StyleSheet.create({
   socialButtonText: {
     fontSize: 16,
     color: '#333',
-    marginLeft: 12,
     fontWeight: '500',
   },
   signupLinkContainer: {
@@ -580,15 +610,10 @@ const styles = StyleSheet.create({
   },
   // Loading Overlay Styles
   loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 999,
   },
   loadingContainer: {
     backgroundColor: 'white',
@@ -603,19 +628,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+    minWidth: 200,
   },
   loadingSpinner: {
     marginBottom: 15,
-  },
-  spinningIcon: {
-    transform: [{ rotate: '0deg' }],
-    animationKeyframes: {
-      '0%': { transform: [{ rotate: '0deg' }] },
-      '100%': { transform: [{ rotate: '360deg' }] },
-    },
-    animationDuration: '1s',
-    animationIterationCount: 'infinite',
-    animationTimingFunction: 'linear',
   },
   loadingText: {
     fontSize: 16,
@@ -624,31 +640,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-
-// Add animation to the icon using Animated
-const AnimatedLoginScreen = (props) => {
-  const spinValue = new Animated.Value(0);
-  
-  useEffect(() => {
-    Animated.loop(
-      Animated.timing(spinValue, {
-        toValue: 1,
-        duration: 1000,
-        useNativeDriver: true,
-      })
-    ).start();
-  }, []);
-
-  const spin = spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
-  return (
-    <Animated.View style={{ flex: 1 }}>
-      <LoginScreen {...props} spinAnimation={spin} />
-    </Animated.View>
-  );
-};
 
 export default LoginScreen;

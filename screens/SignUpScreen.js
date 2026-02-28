@@ -23,6 +23,8 @@ import FullScreenLoader from '../components/FullScreenLoader';
 import usePushNotifications from "../hooks/usePushNotification"; 
 
 const GoogleLogo = require('../assets/Google-logo.png');
+const BrandLogo = require('../assets/FreshyFoodFactory_App_Icon.png');
+
 const { width } = Dimensions.get('window');
 
 const SignUpScreen = ({ navigation }) => {
@@ -44,13 +46,15 @@ const SignUpScreen = ({ navigation }) => {
   // Animation refs
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
+  
+  // Spinner animation ref
+  const spinValue = useRef(new Animated.Value(0)).current;
 
-    useEffect(()=>{
-        GoogleSignin.configure({
-         webClientId:'34872065423-88pioj4h26bguflctfpub95mt0830an6.apps.googleusercontent.com'
-        })
-    },[])
-
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId: '34872065423-88pioj4h26bguflctfpub95mt0830an6.apps.googleusercontent.com'
+    });
+  }, []);
 
   useEffect(() => {
     // Animate screen entrance
@@ -68,6 +72,26 @@ const SignUpScreen = ({ navigation }) => {
       })
     ]).start();
   }, []);
+
+  useEffect(() => {
+    // Start spinning animation when loading
+    if (loading || googleLoading) {
+      Animated.loop(
+        Animated.timing(spinValue, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        })
+      ).start();
+    } else {
+      spinValue.setValue(0);
+    }
+  }, [loading, googleLoading]);
+
+  const spin = spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
 
   const validateForm = () => {
     const newErrors = {};
@@ -139,7 +163,7 @@ const SignUpScreen = ({ navigation }) => {
           [{ 
             text: 'Start Shopping', 
             onPress: () => {
-              console.log('Navigated to home after Google sign-up');
+              navigation.navigate('MainTabs');
             } 
           }]
         );
@@ -199,11 +223,16 @@ const SignUpScreen = ({ navigation }) => {
         });
 
         if (loginResponse.success) {
-          Alert.alert(
-            'Success!',
-            'Account created successfully! Welcome to FreshyFood Factory 🎉',
-            [{ text: 'OK' }]
-          );
+           Alert.alert(
+          'Welcome to FreshyFoodFactory!',
+          `Welcome! Your account has been created successfully 🎉`,
+          [{ 
+            text: 'Start Shopping', 
+            onPress: () => {
+              navigation.navigate('MainTabs');
+            } 
+          }]
+        );
         } else {
           Alert.alert('Login Failed', 'Account created but auto-login failed. Please login manually.');
         }
@@ -215,10 +244,7 @@ const SignUpScreen = ({ navigation }) => {
       }
     } catch (error) {
       console.error('Signup error:', error);
-       const errorMessage = response.error || 
-                            response.message || 
-                            'Registration failed. Please try again.';
-        Alert.alert('Account creation Failed', errorMessage);
+      Alert.alert('Account creation Failed', 'An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -252,11 +278,15 @@ const SignUpScreen = ({ navigation }) => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Header with Logo */}
+          {/* Header with Brand Logo */}
           <View style={styles.header}>
             <View style={styles.logoContainer}>
-              <Ionicons name="leaf" size={48} color="#4CAF50" />
-              <Text style={styles.logoText}>FreshyFoodFactory</Text>
+              <Image 
+                source={BrandLogo}
+                style={styles.brandLogo}
+                resizeMode="contain"
+              />
+              <Text style={styles.logoText}>FreshyFood Factory</Text>
             </View>
             <Text style={styles.title}>Create Account</Text>
             <Text style={styles.subtitle}>Join our community of fresh food lovers</Text>
@@ -272,7 +302,9 @@ const SignUpScreen = ({ navigation }) => {
             >
               {googleLoading ? (
                 <View style={styles.socialButtonLoading}>
-                  <Ionicons name="logo-google" size={20} color="#DB4437" />
+                  <Animated.View style={{ transform: [{ rotate: spin }] }}>
+                    <Ionicons name="refresh" size={20} color="#DB4437" />
+                  </Animated.View>
                   <Text style={styles.socialButtonText}>Connecting...</Text>
                 </View>
               ) : (
@@ -437,10 +469,19 @@ const SignUpScreen = ({ navigation }) => {
               disabled={isLoading}
               activeOpacity={0.8}
             >
-              <Text style={styles.signUpButtonText}>
-                {loading ? 'Creating Account...' : 'Create Account'}
-              </Text>
-              <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+              {loading ? (
+                <View style={styles.buttonLoadingContent}>
+                  <Animated.View style={{ transform: [{ rotate: spin }], marginRight: 8 }}>
+                    <Ionicons name="refresh" size={20} color="#FFFFFF" />
+                  </Animated.View>
+                  <Text style={styles.signUpButtonText}>Creating Account...</Text>
+                </View>
+              ) : (
+                <>
+                  <Text style={styles.signUpButtonText}>Create Account</Text>
+                  <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+                </>
+              )}
             </TouchableOpacity>
 
             {/* Login Link */}
@@ -504,11 +545,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  brandLogo: {
+    width: 40,
+    height: 40,
+    marginRight: 8,
+  },
   logoText: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#2E7D32',
-    marginLeft: 8,
   },
   title: {
     fontSize: 32,
@@ -642,6 +687,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginRight: 8,
+  },
+  buttonLoadingContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   dividerContainer: {
     flexDirection: 'row',

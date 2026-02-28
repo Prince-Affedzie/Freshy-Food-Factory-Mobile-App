@@ -144,10 +144,10 @@ const SignUpScreen = ({ navigation }) => {
           }]
         );
       } else {
-        Alert.alert(
-          'Registration Failed', 
-          response.error || 'Unable to create account with Google. Please try again.'
-        );
+        const errorMessage = response.error || 
+                            response.message || 
+                            'Registration failed. Please try again.';
+        Alert.alert('Registration Failed', errorMessage);
       }
       
     } catch (error) {
@@ -215,7 +215,10 @@ const SignUpScreen = ({ navigation }) => {
       }
     } catch (error) {
       console.error('Signup error:', error);
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+       const errorMessage = response.error || 
+                            response.message || 
+                            'Registration failed. Please try again.';
+        Alert.alert('Account creation Failed', errorMessage);
     } finally {
       setLoading(false);
     }

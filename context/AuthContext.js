@@ -51,9 +51,21 @@ const google_login = async (data) => {
       } else {
         return { success: false, error: response.error };
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      return { success: false, error: 'Login failed' };
+    } catch (err) {
+      console.error('Login error:', err);
+      return {
+      success: false,
+      status: err.response?.status || (err.request ? 0 : 500),
+      message:
+        err.response?.data?.message ||
+        (err.response?.status === 404
+          ? 'User not found. Please check your email or sign up.'
+          : err.response?.status === 401
+          ? 'Invalid email or password. Please try again.'
+          : err.request
+          ? 'Network error. Please check your internet connection.'
+          : 'An unexpected error occurred. Please try again.'),
+    };
     } finally {
       setLoading(false);
     }
@@ -79,8 +91,9 @@ const google_login = async (data) => {
         return { success: false, error: response.error };
       }
     } catch (error) {
-      console.error('Signup error:', error);
-      return { success: false, error: 'Registration failed' };
+      const errorMessage = error.response?.data?.message || 
+        "An account with this email already exists. Please login instead.";;
+      return { success: false, error: errorMessage };
     } finally {
       setLoading(false);
     }
@@ -103,9 +116,21 @@ const google_login = async (data) => {
       } else {
         return { success: false, error: response.error };
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      return { success: false, error: 'Login failed' };
+    } catch (err) {
+      console.error('Login error:', err);
+      return {
+      success: false,
+      status: err.response?.status || (err.request ? 0 : 500),
+      message:
+        err.response?.data?.message ||
+        (err.response?.status === 404
+          ? 'User not found. Please check your email or sign up.'
+          : err.response?.status === 401
+          ? 'Invalid email or password. Please try again.'
+          : err.request
+          ? 'Network error. Please check your internet connection.'
+          : 'An unexpected error occurred. Please try again.'),
+    };;
     } finally {
       setLoading(false);
     }
@@ -129,8 +154,9 @@ const google_login = async (data) => {
         return { success: false, error: response.error };
       }
     } catch (error) {
-      console.error('Signup error:', error);
-      return { success: false, error: 'Registration failed' };
+      const errorMessage = error.response?.data?.message || 
+        "An account with this email already exists. Please login instead.";;
+      return { success: false, error: errorMessage };
     } finally {
       setLoading(false);
     }

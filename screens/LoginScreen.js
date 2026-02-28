@@ -112,10 +112,10 @@ const LoginScreen = ({ navigation }) => {
           [{ text: 'Continue', onPress: () => console.log('Navigated to home') }]
         );
       } else {
-        Alert.alert(
-          'Login Failed', 
-          response.error || 'Unable to authenticate with Google. Please try again.'
-        );
+        const errorMessage = response.error || 
+                            response.message || 
+                            "Login failed. Issues maybe Internet connectivity or you haven't created an account with Us.";
+        Alert.alert('Login Failed', errorMessage);
       }
       
     } catch (error) {
@@ -161,11 +161,14 @@ const LoginScreen = ({ navigation }) => {
       if (response.success) {
         Alert.alert('Welcome Back!', 'Login successful 🎉');
       } else {
-        Alert.alert('Login Failed', response.error || 'Please check your credentials');
+        Alert.alert('Login Failed', response.error ||response.message || "Issues maybe Internet connectivity or you haven't created an account with Us.");
       }
     } catch (error) {
       console.error('Login error:', error);
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+      const errorMessage = response.error || 
+                            response.message || 
+                            "Issues maybe Internet connectivity or you haven't created an account with Us.";
+        Alert.alert('Login Failed', errorMessage);
     } finally {
       setLoading(false);
     }

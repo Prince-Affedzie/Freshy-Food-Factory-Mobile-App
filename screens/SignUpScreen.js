@@ -14,6 +14,7 @@ import {
   Animated,
   Easing,
   Dimensions,
+  Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SignUp } from '../apis/userApi';
@@ -42,6 +43,10 @@ const SignUpScreen = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { login: authLogin, google_signUp } = useAuth();
+  
+  // Refs
+  const scrollViewRef = useRef(null);
+  const buttonRef = useRef(null);
   
   // Animation refs
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -131,6 +136,8 @@ const SignUpScreen = ({ navigation }) => {
   };
 
   const handleGoogleSignUp = async () => {
+    if (isLoading) return; // Prevent multiple clicks
+    
     setGoogleLoading(true);
     
     try {
@@ -157,16 +164,14 @@ const SignUpScreen = ({ navigation }) => {
       if (response.success) {
         const userId = response.data.user?._id;
         const tokenSent = await sendTokenToBackend(userId, expoPushToken);
-        Alert.alert(
-          'Welcome to FreshyFoodFactory!',
-          `Welcome! Your account has been created successfully 🎉`,
-          [{ 
-            text: 'Start Shopping', 
-            onPress: () => {
-              navigation.navigate('MainTabs');
-            } 
-          }]
-        );
+        setTimeout(() => {
+          navigation.navigate('MainTabs');
+          Alert.alert(
+            'Welcome to FreshyFoodFactory!',
+            `Welcome! Your account has been created successfully 🎉`,
+            [{ text: 'Continue' }]
+          );
+        }, 100);
       } else {
         const errorMessage = response.error || 
                             response.message || 
@@ -202,52 +207,59 @@ const SignUpScreen = ({ navigation }) => {
   };
 
   const handleSignUp = async () => {
-    if (!validateForm()) return;
+    // Prevent multiple clicks while loading
+    if (isLoading) return;
+    
+    // Dismiss keyboard to prevent any focus issues
+    Keyboard.dismiss();
+    
+    // Small delay to ensure keyboard is dismissed
+    setTimeout(async () => {
+      if (!validateForm()) return;
 
-    setLoading(true);
-    try {
-      const signUpData = {
-        firstName: formData.firstName.trim(),
-        lastName: formData.lastName.trim(),
-        phone: formData.phone.trim(),
-        password: formData.password,
-      };
-
-      const response = await SignUp(signUpData);
-
-      if (response.status === 200 || response.success) {
-        // Auto-login after successful signup
-        const loginResponse = await authLogin({
+      setLoading(true);
+      try {
+        const signUpData = {
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim(),
           phone: formData.phone.trim(),
           password: formData.password,
-        });
+        };
 
-        if (loginResponse.success) {
-           Alert.alert(
-          'Welcome to FreshyFoodFactory!',
-          `Welcome! Your account has been created successfully 🎉`,
-          [{ 
-            text: 'Start Shopping', 
-            onPress: () => {
+        const response = await SignUp(signUpData);
+
+        if (response.status === 200 || response.success) {
+          // Auto-login after successful signup
+          const loginResponse = await authLogin({
+            phone: formData.phone.trim(),
+            password: formData.password,
+          });
+
+          if (loginResponse.success) {
+            setTimeout(() => {
               navigation.navigate('MainTabs');
-            } 
-          }]
-        );
+              Alert.alert(
+                'Welcome to FreshyFoodFactory!',
+                `Welcome! Your account has been created successfully 🎉`,
+                [{ text: 'Continue' }]
+              );
+            }, 100);
+          } else {
+            Alert.alert('Login Failed', 'Account created but auto-login failed. Please login manually.');
+          }
         } else {
-          Alert.alert('Login Failed', 'Account created but auto-login failed. Please login manually.');
+          const errorMessage = response.error || 
+                              response.message || 
+                              'Registration failed. Please try again.';
+          Alert.alert('Registration Failed', errorMessage);
         }
-      } else {
-        const errorMessage = response.error || 
-                            response.message || 
-                            'Registration failed. Please try again.';
-        Alert.alert('Registration Failed', errorMessage);
+      } catch (error) {
+        console.error('Signup error:', error);
+        Alert.alert('Account creation Failed', 'An unexpected error occurred. Please try again.');
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Signup error:', error);
-      Alert.alert('Account creation Failed', 'An unexpected error occurred. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+    }, 50);
   };
 
   const handleInputChange = (field, value) => {
@@ -264,6 +276,7 @@ const SignUpScreen = ({ navigation }) => {
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <Animated.View 
         style={[
@@ -275,8 +288,11 @@ const SignUpScreen = ({ navigation }) => {
         ]}
       >
         <ScrollView 
+          ref={scrollViewRef}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
         >
           {/* Header with Brand Logo */}
           <View style={styles.header}>
@@ -342,6 +358,8 @@ const SignUpScreen = ({ navigation }) => {
                     autoCapitalize="words"
                     editable={!isLoading}
                     maxLength={30}
+                    returnKeyType="next"
+                    blurOnSubmit={false}
                   />
                 </View>
                 {errors.firstName && <Text style={styles.errorText}>{errors.firstName}</Text>}
@@ -359,6 +377,8 @@ const SignUpScreen = ({ navigation }) => {
                     autoCapitalize="words"
                     editable={!isLoading}
                     maxLength={30}
+                    returnKeyType="next"
+                    blurOnSubmit={false}
                   />
                 </View>
                 {errors.lastName && <Text style={styles.errorText}>{errors.lastName}</Text>}
@@ -378,6 +398,8 @@ const SignUpScreen = ({ navigation }) => {
                   keyboardType="phone-pad"
                   maxLength={15}
                   editable={!isLoading}
+                  returnKeyType="next"
+                  blurOnSubmit={false}
                 />
               </View>
               {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
@@ -395,6 +417,8 @@ const SignUpScreen = ({ navigation }) => {
                   onChangeText={(text) => handleInputChange('password', text)}
                   secureTextEntry={!showPassword}
                   editable={!isLoading}
+                  returnKeyType="next"
+                  blurOnSubmit={false}
                 />
                 <TouchableOpacity
                   style={styles.eyeButton}
@@ -427,6 +451,12 @@ const SignUpScreen = ({ navigation }) => {
                   onChangeText={(text) => handleInputChange('confirmPassword', text)}
                   secureTextEntry={!showConfirmPassword}
                   editable={!isLoading}
+                  returnKeyType="done"
+                  onSubmitEditing={() => {
+                    if (!isLoading) {
+                      handleSignUp();
+                    }
+                  }}
                 />
                 <TouchableOpacity
                   style={styles.eyeButton}
@@ -446,24 +476,29 @@ const SignUpScreen = ({ navigation }) => {
             </View>
 
             {/* Terms Agreement with Checkbox */}
-            <View style={styles.termsContainer}>
-              <TouchableOpacity 
-                style={styles.checkboxContainer}
-                disabled={isLoading}
-              >
+            <TouchableOpacity 
+              style={styles.termsContainer}
+              disabled={isLoading}
+              activeOpacity={0.7}
+              onPress={() => {
+                // Handle terms agreement if needed
+              }}
+            >
+              <View style={styles.checkboxContainer}>
                 <View style={[styles.checkbox, isLoading && styles.checkboxDisabled]}>
                   <Ionicons name="checkmark" size={14} color="#FFFFFF" />
                 </View>
-              </TouchableOpacity>
+              </View>
               <Text style={styles.termsText}>
                 I agree to the{' '}
                 <Text style={styles.linkText}>Terms of Service</Text> and{' '}
                 <Text style={styles.linkText}>Privacy Policy</Text>
               </Text>
-            </View>
+            </TouchableOpacity>
 
             {/* Sign Up Button */}
             <TouchableOpacity
+              ref={buttonRef}
               style={[styles.signUpButton, isLoading && styles.signUpButtonDisabled]}
               onPress={handleSignUp}
               disabled={isLoading}

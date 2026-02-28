@@ -137,12 +137,13 @@ const LoginScreen = ({ navigation }) => {
       const response = await google_login({ token: idToken });
 
       if (response?.success) {
+        navigation.navigate('MainTabs')
         Alert.alert(
           'Welcome to FreshyFoodFactory!',
           `Welcome back! 🎉`,
           [{ text: 'Continue' }]
         );
-        navigation.navigate('MainTabs')
+        
       } else {
         const errorMessage = response?.error || 
                             response?.message || 
@@ -193,8 +194,12 @@ const LoginScreen = ({ navigation }) => {
       if (response?.success) {
         // Add a small delay to show loading state (optional)
         setTimeout(() => {
-          Alert.alert('Welcome Back!', 'Login successful 🎉');
           navigation.navigate('MainTabs')
+          Alert.alert(
+          'Welcome to FreshyFoodFactory!',
+          `Welcome back! 🎉`,
+          [{ text: 'Continue' }]
+        );
         }, 100);
       } else {
         Alert.alert('Login Failed', response?.error || response?.message || "Issues maybe Internet connectivity or you haven't created an account with Us.");
@@ -534,7 +539,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#4CAF50',
     borderRadius: 12,
     paddingVertical: 16,
-    marginBottom: 24,
+    marginBottom: 14,
   },
   loginButtonDisabled: {
     backgroundColor: '#A5D6A7',
@@ -597,7 +602,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 8,
+    marginBottom:16,
+    paddingBottom:8,
   },
   signupLinkText: {
     fontSize: 16,

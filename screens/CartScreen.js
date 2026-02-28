@@ -337,28 +337,20 @@ const CartScreen = () => {
         { opacity: fadeAnim }
       ]}
     >
-      {/* Order Summary */}
-      <View style={styles.summarySection}>
-        <Text style={styles.summaryTitle}>Order Summary</Text>
-        
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>Items ({cartCount})</Text>
-          <Text style={styles.summaryValue}>GH₵ {cartTotal.toFixed(2)}</Text>
-        </View>
-        
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>Delivery Fee</Text>
-          <Text style={styles.summaryValue}>
-            {cartTotal >= 200 ? 'Free' : 'GH₵ 40.00'}
+      {/* Compact Order Summary */}
+      <View style={styles.summaryRow}>
+        <View style={styles.summaryLeft}>
+          <Text style={styles.summaryItemCount}>
+            {cartCount} {cartCount === 1 ? 'item' : 'items'}
+          </Text>
+          <View style={styles.summaryDivider} />
+          <Text style={styles.summaryDelivery}>
+            {cartTotal >= 200 ? 'Free Delivery' : 'GH₵ 40 delivery'}
           </Text>
         </View>
-        
-        <View style={[styles.summaryRow, styles.totalRow]}>
-          <Text style={styles.totalLabel}>Total Amount</Text>
-          <Text style={styles.totalValue}>
-            GH₵ {(cartTotal + (cartTotal >= 200 ? 0 : 40)).toFixed(2)}
-          </Text>
-        </View>
+        <Text style={styles.summaryTotal}>
+          GH₵ {(cartTotal + (cartTotal >= 200 ? 0 : 40)).toFixed(2)}
+        </Text>
       </View>
 
       {/* Checkout Button */}
@@ -378,8 +370,8 @@ const CartScreen = () => {
           </View>
         ) : (
           <>
-            <Ionicons name="arrow-forward-circle" size={24} color="#FFFFFF" />
             <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
+            <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
           </>
         )}
       </TouchableOpacity>
@@ -463,7 +455,7 @@ const CartScreen = () => {
                 tintColor="#4CAF50"
               />
             }
-            contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 220 }]}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 }]}
             showsVerticalScrollIndicator={false}
           >
             {/* Cart Items List */}
@@ -478,18 +470,20 @@ const CartScreen = () => {
                 ]}
               >
                 <View style={styles.deliveryHeader}>
-                  <Ionicons name="time-outline" size={20} color="#4CAF50" />
-                  <Text style={styles.deliveryTitle}>Delivery Information</Text>
+                  <Ionicons name="time-outline" size={18} color="#4CAF50" />
+                  <Text style={styles.deliveryTitle}>Delivery Info</Text>
                 </View>
-                <Text style={styles.deliveryText}>
-                  • Free delivery on orders over GH₵ 200
-                </Text>
-                <Text style={styles.deliveryText}>
-                  • Next-day delivery available
-                </Text>
-                <Text style={styles.deliveryText}>
-                  • Flexible delivery scheduling
-                </Text>
+                <View style={styles.deliveryContent}>
+                  <Text style={styles.deliveryText}>
+                    • Free delivery on orders over GH₵ 200
+                  </Text>
+                  <Text style={styles.deliveryText}>
+                    • Next-day delivery available
+                  </Text>
+                  <Text style={styles.deliveryText}>
+                    • Flexible delivery scheduling
+                  </Text>
+                </View>
               </Animated.View>
             )}
           </ScrollView>
@@ -718,94 +712,91 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 20,
     marginBottom: 16,
-    padding: 20,
-    borderRadius: 16,
+    padding: 16,
+    borderRadius: 12,
     borderWidth: 1.5,
     borderColor: '#C8E6C9',
   },
   deliveryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   deliveryTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#1B5E20',
-    marginLeft: 10,
+    marginLeft: 8,
+  },
+  deliveryContent: {
+    marginLeft: 26,
   },
   deliveryText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#666',
-    marginBottom: 6,
-    lineHeight: 20,
+    marginBottom: 4,
+    lineHeight: 18,
   },
   checkoutContainer: {
     backgroundColor: '#FFFFFF',
-    padding: 20,
-    borderTopWidth: 1.5,
+    padding: 12,
+    paddingHorizontal: 16,
+    borderTopWidth: 1,
     borderTopColor: '#E8E8E8',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 4,
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
   },
-  summarySection: {
-    marginBottom: 20,
-  },
-  summaryTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1B5E20',
-    marginBottom: 16,
-  },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 12,
   },
-  summaryLabel: {
+  summaryLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  summaryItemCount: {
     fontSize: 15,
+    fontWeight: '500',
+    color: '#666',
+  },
+  summaryDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: '#E8E8E8',
+    marginHorizontal: 10,
+  },
+  summaryDelivery: {
+    fontSize: 14,
     color: '#666',
     fontWeight: '500',
   },
-  summaryValue: {
-    fontSize: 15,
-    color: '#333',
-    fontWeight: '600',
-  },
-  totalRow: {
-    paddingTop: 16,
-    borderTopWidth: 1.5,
-    borderTopColor: '#E8E8E8',
-  },
-  totalLabel: {
-    fontSize: 17,
+  summaryTotal: {
+    fontSize: 20,
     fontWeight: '700',
-    color: '#212121',
-  },
-  totalValue: {
-    fontSize: 22,
-    fontWeight: 'bold',
     color: '#2E7D32',
   },
   checkoutButton: {
     backgroundColor: '#4CAF50',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 18,
-    borderRadius: 12,
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 10,
     shadowColor: '#4CAF50',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   checkoutButtonDisabled: {
     backgroundColor: '#A5D6A7',
@@ -814,27 +805,14 @@ const styles = StyleSheet.create({
   checkoutButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
   },
   checkoutButtonText: {
     color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 10,
-  },
-  continueButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    borderWidth: 2,
-    borderColor: '#4CAF50',
-    borderRadius: 10,
-  },
-  continueButtonText: {
-    color: '#4CAF50',
     fontSize: 16,
     fontWeight: '600',
-    marginLeft: 8,
+    marginRight: 8,
   },
 });
 

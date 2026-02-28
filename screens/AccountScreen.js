@@ -28,7 +28,6 @@ const AccountScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [confirmationText, setConfirmationText] = useState('');
   const [editField, setEditField] = useState('');
   const [editValue, setEditValue] = useState('');
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -65,62 +64,31 @@ const AccountScreen = ({ navigation }) => {
   };
 
   const confirmDeleteAccount = async () => {
-    if (confirmationText.toLowerCase() !== 'delete my account') {
-      Alert.alert(
-        'Invalid Confirmation',
-        'Please type exactly "delete my account" to confirm.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-
     try {
       setLoading(true);
       
-      Alert.alert(
-        '⚠️ Permanent Account Deletion',
-        'This action is irreversible. All your data, orders, and favorites will be permanently deleted. Are you absolutely sure?',
-        [
-          {
-            text: 'Cancel',
-            style: 'cancel',
-            onPress: () => {
-              setDeleteModalVisible(false);
-              setConfirmationText('');
-            }
-          },
-          {
-            text: 'Yes, Delete Forever',
-            style: 'destructive',
-            onPress: async () => {
-              const response = await deleteAccount();
-              
-              if (response.success) {
-                Alert.alert(
-                  'Account Deleted',
-                  'Your account has been permanently deleted. We\'re sorry to see you go!',
-                  [
-                    {
-                      text: 'OK',
-                      onPress: () => {
-                        setDeleteModalVisible(false);
-                        setConfirmationText('');
-                        // Navigation will be handled by the auth context
-                      }
-                    }
-                  ]
-                );
-              } else {
-                Alert.alert(
-                  'Deletion Failed',
-                  response.error || 'Failed to delete account. Please try again.',
-                  [{ text: 'OK' }]
-                );
+      const response = await deleteAccount();
+      
+      if (response.success) {
+        Alert.alert(
+          'Account Deleted',
+          'Your account has been permanently deleted. We\'re sorry to see you go!',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                setDeleteModalVisible(false);
               }
             }
-          }
-        ]
-      );
+          ]
+        );
+      } else {
+        Alert.alert(
+          'Deletion Failed',
+          response.error || 'Failed to delete account. Please try again.',
+          [{ text: 'OK' }]
+        );
+      }
     } catch (error) {
       console.error('Delete account error:', error);
       Alert.alert('Error', 'Something went wrong. Please try again.');
@@ -229,7 +197,7 @@ const AccountScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header title="My Account" showBack onBackPress={() => navigation.goBack()} />
+      <Header title="My Account" onBackPress={() => navigation.goBack()} />
       
       <ScrollView 
         showsVerticalScrollIndicator={false}
@@ -424,7 +392,7 @@ const AccountScreen = ({ navigation }) => {
             
             <View style={styles.preferenceDivider} />
             
-            <View style={styles.preferenceItem}>
+           {/* <View style={styles.preferenceItem}>
               <View style={styles.preferenceLeft}>
                 <Ionicons name="moon-outline" size={22} color="#666" />
                 <Text style={styles.preferenceText}>Dark Mode</Text>
@@ -435,7 +403,7 @@ const AccountScreen = ({ navigation }) => {
                 trackColor={{ false: '#E0E0E0', true: '#A5D6A7' }}
                 thumbColor={darkMode ? '#4CAF50' : '#F5F5F5'}
               />
-            </View>
+            </View>*/}
           </View>
         </View>
 
@@ -461,8 +429,8 @@ const AccountScreen = ({ navigation }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Danger Zone</Text>
           <View style={styles.dangerCard}>
-            {renderMenuItem('Change Password', 'lock-closed-outline', 
-              () => navigation.navigate('ChangePassword'), false)}
+            {/*{renderMenuItem('Change Password', 'lock-closed-outline', 
+              () => navigation.navigate('ChangePassword'), false)}*/}
             
             {renderMenuItem('Delete Account', 'trash-outline', 
               handleDeleteAccount, true)}
@@ -526,15 +494,12 @@ const AccountScreen = ({ navigation }) => {
         </View>
       </Modal>
 
-      {/* Delete Account Modal */}
+      {/* Simple Delete Confirmation Modal */}
       <Modal
         animationType="fade"
         transparent={true}
         visible={deleteModalVisible}
-        onRequestClose={() => {
-          setDeleteModalVisible(false);
-          setConfirmationText('');
-        }}
+        onRequestClose={() => setDeleteModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, styles.deleteModalContent]}>
@@ -545,39 +510,17 @@ const AccountScreen = ({ navigation }) => {
             <Text style={styles.deleteModalTitle}>Delete Account</Text>
             
             <Text style={styles.deleteModalSubtitle}>
-              This action is irreversible. All your data will be permanently deleted.
+              Are you sure you want to delete your account? This action cannot be undone.
             </Text>
             
-            <View style={styles.deleteWarningBox}>
-              <Text style={styles.deleteWarningTitle}>⚠️ What will be deleted:</Text>
-              <Text style={styles.deleteWarningItem}>• Your personal information</Text>
-              <Text style={styles.deleteWarningItem}>• Order history</Text>
-              <Text style={styles.deleteWarningItem}>• Favorite items</Text>
-              <Text style={styles.deleteWarningItem}>• Account preferences</Text>
-              <Text style={styles.deleteWarningItem}>• All associated data</Text>
-            </View>
-            
-            <Text style={styles.confirmationLabel}>
-              To confirm, type "delete my account" below:
+            <Text style={styles.deleteModalWarning}>
+              All your data, including personal information, order history, and favorites will be permanently deleted.
             </Text>
-            
-            <TextInput
-              style={[styles.modalInput, styles.deleteInput]}
-              value={confirmationText}
-              onChangeText={setConfirmationText}
-              placeholder="delete my account"
-              autoCapitalize="none"
-              autoCorrect={false}
-              placeholderTextColor="#999"
-            />
             
             <View style={styles.modalButtons}>
               <TouchableOpacity 
                 style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => {
-                  setDeleteModalVisible(false);
-                  setConfirmationText('');
-                }}
+                onPress={() => setDeleteModalVisible(false)}
                 disabled={loading}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
@@ -586,13 +529,13 @@ const AccountScreen = ({ navigation }) => {
               <TouchableOpacity 
                 style={[styles.modalButton, styles.deleteButton]}
                 onPress={confirmDeleteAccount}
-                disabled={loading || confirmationText.toLowerCase() !== 'delete my account'}
+                disabled={loading}
               >
                 {loading ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
                   <Text style={styles.deleteButtonText}>
-                    Delete Account
+                     Delete Account
                   </Text>
                 )}
               </TouchableOpacity>
@@ -970,6 +913,7 @@ const styles = StyleSheet.create({
   },
   deleteModalContent: {
     maxWidth: 400,
+    alignItems: 'center',
   },
   deleteIconContainer: {
     alignItems: 'center',
@@ -983,37 +927,18 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   deleteModalSubtitle: {
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 12,
+    lineHeight: 22,
+  },
+  deleteModalWarning: {
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
     lineHeight: 20,
-  },
-  deleteWarningBox: {
-    backgroundColor: '#FFF5F5',
-    borderWidth: 1,
-    borderColor: '#FFCDD2',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 20,
-  },
-  deleteWarningTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#D32F2F',
-    marginBottom: 6,
-  },
-  deleteWarningItem: {
-    fontSize: 13,
-    color: '#666',
-    marginLeft: 8,
-    marginBottom: 2,
-  },
-  confirmationLabel: {
-    fontSize: 14,
-    color: '#333',
-    marginBottom: 8,
-    fontWeight: '500',
   },
   modalTitle: {
     fontSize: 18,
@@ -1030,13 +955,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 20,
   },
-  deleteInput: {
-    borderColor: '#F44336',
-    backgroundColor: '#FFF5F5',
-  },
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    width: '100%',
   },
   modalButton: {
     flex: 1,

@@ -11,13 +11,15 @@ import {
   Linking,
   RefreshControl,
   Platform,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { getOrderById } from '../apis/orderApi';
+import { getOrderById, cancelOrder } from '../apis/orderApi';
 
 const OrderDetailScreen = () => {
   const navigation = useNavigation();
@@ -29,6 +31,20 @@ const OrderDetailScreen = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [expanded, setExpanded] = useState('status');
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [customReason, setCustomReason] = useState('');
+  const [cancelling, setCancelling] = useState(false);
+
+  // Cancellation reasons
+  const cancellationReasons = [
+    { id: 'changed_mind', label: 'Changed my mind', icon: 'heart-dislike' },
+    { id: 'found_cheaper', label: 'Found cheaper elsewhere', icon: 'pricetag' },
+    { id: 'delivery_time', label: 'Delivery time too long', icon: 'time' },
+    { id: 'ordered_mistake', label: 'Ordered by mistake', icon: 'alert-circle' },
+    { id: 'payment_issues', label: 'Payment issues', icon: 'card' },
+    { id: 'other', label: 'Other reason', icon: 'chatbubble' },
+  ];
 
   // Status styling
   const statusStyles = {
@@ -92,22 +108,101 @@ const OrderDetailScreen = () => {
     Alert.alert('Track Order', 'Tracking link / map coming soon!');
   };
 
- const handleReorder = (order) => {
-     Alert.alert(
-       'Reorder',
-       'Add all items from this order to your cart?',
-       [
-         { text: 'Cancel', style: 'cancel' },
-         { 
-           text: 'Reorder', 
-           onPress: () => {
-             // TODO: Implement reorder logic
-             Alert.alert('Coming Soon', 'Reorder feature will be available soon!');
-           }
-         }
-       ]
-     );
-   };
+  const handleReorder = (order) => {
+    Alert.alert(
+      'Reorder',
+      'Add all items from this order to your cart?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Reorder', 
+          onPress: () => {
+            // TODO: Implement reorder logic
+            Alert.alert('Coming Soon', 'Reorder feature will be available soon!');
+          }
+        }
+      ]
+    );
+  };
+
+  // Handle order cancellation
+  const handleCancelOrder = () => {
+    if (!order) return;
+    
+    // Check if order can be cancelled
+    if (!['Pending', 'Processing'].includes(order.status?.current)) {
+      Alert.alert(
+        'Cannot Cancel',
+        `Orders with status "${order.status?.current}" cannot be cancelled.`
+      );
+      return;
+    }
+
+    if (order.payment?.isPaid) {
+      Alert.alert(
+        'Paid Order',
+        'This order has already been paid. Please contact support for assistance with cancellation and refund.'
+      );
+      return;
+    }
+
+    // Reset state and show modal
+    setCancelReason('');
+    setCustomReason('');
+    setCancelModalVisible(true);
+  };
+
+  const selectReason = (reasonId) => {
+    setCancelReason(reasonId);
+    if (reasonId !== 'other') {
+      setCustomReason('');
+    }
+  };
+
+  const submitCancellation = async () => {
+    // Determine the final reason text
+    let finalReason = '';
+    if (cancelReason === 'other') {
+      if (!customReason.trim()) {
+        Alert.alert('Error', 'Please enter your reason for cancellation');
+        return;
+      }
+      finalReason = customReason.trim();
+    } else {
+      const selected = cancellationReasons.find(r => r.id === cancelReason);
+      if (!selected) {
+        Alert.alert('Error', 'Please select a reason for cancellation');
+        return;
+      }
+      finalReason = selected.label;
+    }
+
+    setCancelling(true);
+    try {
+      const response = await cancelOrder(orderId, { reason: finalReason });
+      
+      if (response.status === 200 && response.data?.success) {
+        Alert.alert(
+          'Order Cancelled',
+          'Your order has been successfully cancelled.',
+          [{ text: 'OK', onPress: () => {
+            setCancelModalVisible(false);
+            fetchOrder(); // Refresh order details
+          }}]
+        );
+      } else {
+        Alert.alert('Error', response.data?.message || 'Failed to cancel order');
+      }
+    } catch (error) {
+      console.error('Cancel order error:', error);
+      Alert.alert(
+        'Error',
+        error.response?.data?.message || 'Failed to cancel order. Please try again.'
+      );
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   const getStatusStyle = (status) => statusStyles[status] || statusStyles.Pending;
 
@@ -137,6 +232,7 @@ const OrderDetailScreen = () => {
 
   const status = order.status?.current || 'Pending';
   const statusStyle = getStatusStyle(status);
+  const canCancel = ['Pending', 'Processing'].includes(status) && !order.payment?.isPaid;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -150,6 +246,138 @@ const OrderDetailScreen = () => {
           </TouchableOpacity>
         }
       />
+
+      {/* Redesigned Cancellation Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={cancelModalVisible}
+        onRequestClose={() => setCancelModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalHeaderLeft}>
+                <Ionicons name="close-circle-outline" size={28} color="#b91c1c" />
+                <Text style={styles.modalTitle}>Cancel Order</Text>
+              </View>
+              <TouchableOpacity 
+                onPress={() => setCancelModalVisible(false)}
+                style={styles.modalCloseButton}
+              >
+                <Ionicons name="close" size={24} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View style={styles.modalBody}>
+                {/* Order Summary */}
+                <View style={styles.orderSummary}>
+                  <Text style={styles.summaryLabel}>Order #{order.orderNumber || order._id?.slice(-8).toUpperCase()}</Text>
+                  <Text style={styles.summaryTotal}>Total: GH₵ {order.pricing?.totalPrice || '—'}</Text>
+                </View>
+
+                <Text style={styles.modalSubtitle}>
+                  Please let us know why you're cancelling this order
+                </Text>
+
+                {/* Cancellation reasons grid */}
+                <View style={styles.reasonsGrid}>
+                  {cancellationReasons.map((reason) => (
+                    <TouchableOpacity
+                      key={reason.id}
+                      style={[
+                        styles.reasonCard,
+                        cancelReason === reason.id && styles.reasonCardSelected
+                      ]}
+                      onPress={() => selectReason(reason.id)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[
+                        styles.reasonIconContainer,
+                        cancelReason === reason.id && styles.reasonIconContainerSelected
+                      ]}>
+                        <Ionicons 
+                          name={reason.icon} 
+                          size={24} 
+                          color={cancelReason === reason.id ? '#15803d' : '#64748b'} 
+                        />
+                      </View>
+                      <Text style={[
+                        styles.reasonCardText,
+                        cancelReason === reason.id && styles.reasonCardTextSelected
+                      ]}>
+                        {reason.label}
+                      </Text>
+                      {cancelReason === reason.id && (
+                        <View style={styles.selectedIndicator}>
+                          <Ionicons name="checkmark-circle" size={20} color="#15803d" />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Custom reason input for "Other" */}
+                {cancelReason === 'other' && (
+                  <View style={styles.customReasonContainer}>
+                    <Text style={styles.customReasonLabel}>Please specify your reason:</Text>
+                    <TextInput
+                      style={styles.customReasonInput}
+                      placeholder="Enter your reason here..."
+                      placeholderTextColor="#94a3b8"
+                      value={customReason}
+                      onChangeText={setCustomReason}
+                      multiline
+                      numberOfLines={3}
+                      textAlignVertical="top"
+                      autoFocus
+                    />
+                  </View>
+                )}
+
+                {/* Cancellation policy notice */}
+                <View style={styles.policyNotice}>
+                  <Ionicons name="information-circle-outline" size={20} color="#3b82f6" />
+                  <Text style={styles.policyNoticeText}>
+                    By cancelling this order, any pending payments will be voided and items will be returned to stock.
+                  </Text>
+                </View>
+              </View>
+            </ScrollView>
+
+            {/* Modal Footer with Actions */}
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={styles.footerCancelButton}
+                onPress={() => setCancelModalVisible(false)}
+                disabled={cancelling}
+              >
+                <Text style={styles.footerCancelButtonText}>Keep Order</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.footerConfirmButton, 
+                  (!cancelReason || (cancelReason === 'other' && !customReason.trim()) || cancelling) && 
+                  styles.footerConfirmButtonDisabled
+                ]}
+                onPress={submitCancellation}
+                disabled={!cancelReason || (cancelReason === 'other' && !customReason.trim()) || cancelling}
+              >
+                {cancelling ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <Ionicons name="checkmark-circle" size={18} color="#fff" style={styles.footerConfirmIcon} />
+                    <Text style={styles.footerConfirmButtonText}>Confirm Cancellation</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <ScrollView
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#15803d" />}
@@ -175,7 +403,9 @@ const OrderDetailScreen = () => {
               <View key={s} style={styles.timelineStep}>
                 <View style={[
                   styles.timelineDot,
-                  s === status ? styles.timelineDotActive : s === 'Delivered' && status === 'Delivered' ? styles.timelineDotDone : styles.timelineDotInactive
+                  s === status ? styles.timelineDotActive : 
+                  s === 'Delivered' && status === 'Delivered' ? styles.timelineDotDone : 
+                  styles.timelineDotInactive
                 ]} />
                 <Text style={[
                   styles.timelineLabel,
@@ -364,13 +594,20 @@ const OrderDetailScreen = () => {
         )}
 
         {status === 'Delivered' && (
-          <TouchableOpacity style={styles.actionReorder} onPress={handleReorder}>
+          <TouchableOpacity style={styles.actionReorder} onPress={() => handleReorder(order)}>
             <Ionicons name="repeat-outline" size={20} color="#fff" />
             <Text style={styles.actionText}>Reorder</Text>
           </TouchableOpacity>
         )}
 
-        {!order.payment?.isPaid && status !== 'Cancelled' && (
+        {canCancel && (
+          <TouchableOpacity style={styles.actionCancel} onPress={handleCancelOrder}>
+            <Ionicons name="close-circle-outline" size={20} color="#fff" />
+            <Text style={styles.actionText}>Cancel</Text>
+          </TouchableOpacity>
+        )}
+
+        {!order.payment?.isPaid && status !== 'Cancelled' && !canCancel && status !== 'Delivered' && (
           <TouchableOpacity style={styles.actionPay} onPress={() => Alert.alert('Pay Now', 'Redirecting to payment...')}>
             <Ionicons name="card-outline" size={20} color="#fff" />
             <Text style={styles.actionText}>Pay Now</Text>
@@ -465,6 +702,200 @@ const styles = StyleSheet.create({
   totalLabel: { fontSize: 16, fontWeight: '700', color: '#1e293b' },
   grandTotal: { fontSize: 20, fontWeight: '800', color: '#15803d' },
 
+  // Redesigned Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContainer: {
+    backgroundColor: 'white',
+    borderRadius: 24,
+    width: '100%',
+    maxHeight: '80%',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 24,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    backgroundColor: '#f8fafc',
+  },
+  modalHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1e293b',
+    marginLeft: 12,
+  },
+  modalCloseButton: {
+    padding: 4,
+  },
+  modalBody: {
+    padding: 20,
+  },
+  orderSummary: {
+    backgroundColor: '#f1f5f9',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  summaryLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1e293b',
+  },
+  summaryTotal: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#15803d',
+  },
+  modalSubtitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#334155',
+    marginBottom: 16,
+  },
+  reasonsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  reasonCard: {
+    width: '48%',
+    backgroundColor: '#f8fafc',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
+    position: 'relative',
+  },
+  reasonCardSelected: {
+    borderColor: '#15803d',
+    backgroundColor: '#f0fdf4',
+  },
+  reasonIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  reasonIconContainerSelected: {
+    backgroundColor: '#dcfce7',
+    borderColor: '#15803d',
+  },
+  reasonCardText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#334155',
+  },
+  reasonCardTextSelected: {
+    color: '#15803d',
+  },
+  selectedIndicator: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+  },
+  customReasonContainer: {
+    marginBottom: 20,
+  },
+  customReasonLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#334155',
+    marginBottom: 8,
+  },
+  customReasonInput: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 16,
+    padding: 16,
+    fontSize: 15,
+    color: '#1e293b',
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
+    minHeight: 100,
+  },
+  policyNotice: {
+    flexDirection: 'row',
+    backgroundColor: '#eff6ff',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+    marginBottom: 8,
+  },
+  policyNoticeText: {
+    flex: 1,
+    marginLeft: 12,
+    fontSize: 14,
+    color: '#1e40af',
+    lineHeight: 20,
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    backgroundColor: 'white',
+    gap: 12,
+  },
+  footerCancelButton: {
+    flex: 1,
+    backgroundColor: '#f1f5f9',
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: 'center',
+  },
+  footerCancelButtonText: {
+    color: '#475569',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  footerConfirmButton: {
+    flex: 1,
+    backgroundColor: '#b91c1c',
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  footerConfirmButtonDisabled: {
+    backgroundColor: '#94a3b8',
+  },
+  footerConfirmIcon: {
+    marginRight: 8,
+  },
+  footerConfirmButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
   bottomActions: {
     position: 'absolute',
     bottom: 0,
@@ -482,10 +913,58 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 16,
   },
-  actionSupport: { flex: 1, backgroundColor: '#3b82f6', paddingVertical: 14, borderRadius: 12, marginRight: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',marginBottom:24, },
-  actionTrack: { flex: 1, backgroundColor: '#10b981', paddingVertical: 14, borderRadius: 12, marginRight: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',marginBottom:24, },
-  actionReorder: { flex: 1, backgroundColor: '#f59e0b', paddingVertical: 14, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',marginBottom:24, },
-  actionPay: { flex: 1, backgroundColor: '#15803d', paddingVertical: 14, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',marginBottom:24, },
+  actionSupport: { 
+    flex: 1, 
+    backgroundColor: '#3b82f6', 
+    paddingVertical: 14, 
+    borderRadius: 12, 
+    marginRight: 8, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    marginBottom: 24, 
+  },
+  actionTrack: { 
+    flex: 1, 
+    backgroundColor: '#10b981', 
+    paddingVertical: 14, 
+    borderRadius: 12, 
+    marginRight: 8, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    marginBottom: 24, 
+  },
+  actionReorder: { 
+    flex: 1, 
+    backgroundColor: '#f59e0b', 
+    paddingVertical: 14, 
+    borderRadius: 12, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    marginBottom: 24, 
+  },
+  actionCancel: { 
+    flex: 1, 
+    backgroundColor: '#b91c1c', 
+    paddingVertical: 14, 
+    borderRadius: 12, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    marginBottom: 24, 
+  },
+  actionPay: { 
+    flex: 1, 
+    backgroundColor: '#15803d', 
+    paddingVertical: 14, 
+    borderRadius: 12, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    marginBottom: 24, 
+  },
   actionText: { color: 'white', fontWeight: '700', marginLeft: 8, fontSize: 14 },
 });
 

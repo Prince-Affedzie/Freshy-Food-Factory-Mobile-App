@@ -1,3 +1,4 @@
+// src/screens/main/CategoryScreen.js
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -12,6 +13,7 @@ import {
   Dimensions,
   Alert,
   TextInput,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,12 +25,28 @@ import { getProductsByCategory } from '../apis/productApi';
 
 const { width } = Dimensions.get('window');
 
+// Category images from Cloudinary
+const CATEGORY_IMAGES = {
+  vegetables: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1769990080/vegetables_cpp5n5.jpg',
+  fruits: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1770885485/colorful-fruits-tasty-fresh-ripe-juicy-white-desk_utdxnl.jpg',
+  staples: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1770886305/staple_food_xlgo92.jpg',
+  herb: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1770885919/spices_and_herbs_srdlvf.jpg',
+  tuber: 'https://res.cloudinary.com/duv3qvvjz/image/upload/fresh-potato-kitchen-ready-be-cooked_jndkde.jpg',
+  dairy: 'https://images.unsplash.com/photo-1628088062854-d1870b4553da?w=800&q=80',
+  meat: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=800&q=80',
+  seafood: 'https://images.unsplash.com/photo-1559563458-527698bf5295?w=800&q=80',
+  bakery: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&q=80',
+  beverages: 'https://images.unsplash.com/photo-1543255255-b03b8f7a6d39?w=800&q=80',
+  organic: 'https://images.unsplash.com/photo-1550989460-0adf9ea622e2?w=800&q=80',
+  default: 'https://res.cloudinary.com/duv3qvvjz/image/upload/grains_iijbmq.jpg',
+};
+
 const CategoryScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { category: routeCategory, categoryName } = route.params || {};
   const { token, isAuthenticated } = useAuth();
-  const { addToCart, cartItems } = useCart();
+  const { addToCart, updateQuantity, removeFromCart, cartItems } = useCart();
   
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -36,12 +54,16 @@ const CategoryScreen = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [cartLoading, setCartLoading] = useState({});
+  const [addingProductId, setAddingProductId] = useState(null);
+  const [updatingProductId, setUpdatingProductId] = useState(null);
   const [sortBy, setSortBy] = useState('name');
   const [showSortOptions, setShowSortOptions] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
+  const [showCartSuccessModal, setShowCartSuccessModal] = useState(false);
+  const [addedProductName, setAddedProductName] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
 
   const sortOptions = [
     { id: 'name', label: 'Name (A-Z)', icon: 'text' },
@@ -49,6 +71,12 @@ const CategoryScreen = () => {
     { id: 'price-desc', label: 'Price (High to Low)', icon: 'arrow-down' },
     { id: 'stock-desc', label: 'Most in Stock', icon: 'trending-up' },
   ];
+
+  // Get category image based on category name
+  const getCategoryImage = (categoryKey) => {
+    const key = categoryKey?.toLowerCase() || 'default';
+    return CATEGORY_IMAGES[key] || CATEGORY_IMAGES.default;
+  };
 
   useEffect(() => {
     if (routeCategory) {
@@ -179,28 +207,73 @@ const CategoryScreen = () => {
       return;
     }
 
-    setCartLoading(prev => ({ ...prev, [product.id]: true }));
+    setAddingProductId(product.id);
+    setAddedProductName(product.name);
+    
     try {
       await addToCart(product.id, 1);
-      Alert.alert('Added to Cart', `${product.name} added to cart!`);
+      
+      // Show success modal
+      setShowCartSuccessModal(true);
+      setModalVisible(true);
+      
+      // Auto-hide modal after 2 seconds
+      setTimeout(() => {
+        setModalVisible(false);
+        setTimeout(() => setShowCartSuccessModal(false), 300);
+      }, 2000);
+      
     } catch (error) {
       console.error('Add to cart error:', error);
       Alert.alert('Error', 'Failed to add item to cart. Please try again.');
     } finally {
-      setCartLoading(prev => ({ ...prev, [product.id]: false }));
+      setAddingProductId(null);
     }
   };
 
-  const getCategoryIcon = (category) => {
-    const icons = {
-      'vegetable': 'leaf-outline',
-      'fruit': 'nutrition-outline',
-      'staple': 'beaker-outline',
-      'herb': 'leaf-outline',
-      'tuber': 'nutrition-outline',
-      'other': 'cube-outline',
-    };
-    return icons[category] || 'cube-outline';
+  const handleQuantityUpdate = async (product, action) => {
+    try {
+      const productId = product.id;
+      const currentQuantity = getQuantityInCart(productId);
+      
+      if (action === 'increase') {
+        const availableStock = product.stock || product.countInStock;
+        if (currentQuantity >= availableStock) {
+          Alert.alert('Stock Limit', `Only ${availableStock} units available.`);
+          return;
+        }
+        
+        setUpdatingProductId(productId);
+        await addToCart(productId, 1);
+        setUpdatingProductId(null);
+        
+      } else if (action === 'decrease' && currentQuantity > 1) {
+        setUpdatingProductId(productId);
+        await updateQuantity(productId, currentQuantity - 1);
+        setUpdatingProductId(null);
+        
+      } else if (action === 'decrease' && currentQuantity === 1) {
+        Alert.alert(
+          'Remove Item?',
+          `Remove ${product.name} from cart?`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { 
+              text: 'Remove', 
+              onPress: async () => {
+                setUpdatingProductId(productId);
+                await removeFromCart(productId);
+                setUpdatingProductId(null);
+              }
+            }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('Quantity update error:', error);
+      Alert.alert('Error', 'Failed to update quantity. Please try again.');
+      setUpdatingProductId(null);
+    }
   };
 
   const getCategoryColor = (category) => {
@@ -268,7 +341,10 @@ const CategoryScreen = () => {
   const renderProductItem = ({ item }) => {
     const quantityInCart = getQuantityInCart(item.id);
     const isInCart = quantityInCart > 0;
-    const isLoading = cartLoading[item.id];
+    const isAdding = addingProductId === item.id;
+    const isUpdating = updatingProductId === item.id;
+    const isLoading = isAdding || isUpdating;
+    const isOutOfStock = !item.inStock || item.countInStock <= 0;
 
     return (
       <TouchableOpacity
@@ -278,6 +354,7 @@ const CategoryScreen = () => {
           product: item
         })}
         activeOpacity={0.7}
+        disabled={isLoading}
       >
         <View style={styles.productImageContainer}>
           <Image
@@ -285,7 +362,7 @@ const CategoryScreen = () => {
             style={styles.productImage}
             resizeMode="cover"
           />
-          {!item.inStock && (
+          {isOutOfStock && (
             <View style={styles.outOfStockOverlay}>
               <Text style={styles.outOfStockText}>Out of Stock</Text>
             </View>
@@ -298,42 +375,81 @@ const CategoryScreen = () => {
         </View>
 
         <View style={styles.productInfo}>
-          <Text style={styles.productName} numberOfLines={1}>
+          <Text style={styles.productName} numberOfLines={2}>
             {item.name}
           </Text>
           <Text style={styles.productUnit}>
             {item.unitDisplay || item.unit || 'piece'}
           </Text>
-          <Text style={styles.productPrice}>
-            {item.priceDisplay || `GH₵ ${item.price}`}
-          </Text>
           
-          <View style={styles.productFooter}>
-            <View style={styles.stockInfo}>
-              <Ionicons 
-                name={item.inStock ? 'checkmark-circle' : 'close-circle'} 
-                size={16} 
-                color={item.inStock ? '#4CAF50' : '#F44336'} 
-              />
-              <Text style={[styles.stockText, { color: item.inStock ? '#4CAF50' : '#F44336' }]}>
-                {item.inStock ? `${item.countInStock} in stock` : 'Out of stock'}
-              </Text>
-            </View>
+          <View style={styles.priceContainer}>
+            <Text style={styles.productPrice}>
+              {item.priceDisplay || `GH₵ ${item.price}`}
+            </Text>
             
-            <TouchableOpacity
-              style={[styles.addButton, isInCart && styles.inCartButton, !item.inStock && styles.disabledButton]}
-              onPress={() => handleAddToCart(item)}
-              disabled={isLoading || !item.inStock}
-            >
-              {isLoading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : isInCart ? (
-                <Ionicons name="checkmark" size={16} color="#FFFFFF" />
-              ) : (
-                <Ionicons name="cart-outline" size={16} color="#FFFFFF" />
-              )}
-            </TouchableOpacity>
+            {!isInCart && (
+              <TouchableOpacity
+                style={[
+                  styles.cartActionButton,
+                  isLoading && styles.addingButton,
+                  isOutOfStock && styles.outOfStockButton
+                ]}
+                onPress={() => handleAddToCart(item)}
+                disabled={isLoading || isOutOfStock}
+              >
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Ionicons 
+                    name={isOutOfStock ? "close" : "cart-outline"} 
+                    size={18} 
+                    color="#FFFFFF" 
+                  />
+                )}
+              </TouchableOpacity>
+            )}
           </View>
+
+          {/* Quantity Controls - Show only when item is in cart */}
+          {isInCart && (
+            <View style={styles.quantityControlsContainer}>
+              <View style={styles.quantityControls}>
+                <TouchableOpacity
+                  style={[styles.quantityButton, quantityInCart <= 1 && styles.quantityButtonDisabled]}
+                  onPress={() => handleQuantityUpdate(item, 'decrease')}
+                  disabled={isLoading || isOutOfStock}
+                >
+                  <Ionicons 
+                    name="remove" 
+                    size={16} 
+                    color={quantityInCart <= 1 ? "#CCCCCC" : "#2E7D32"} 
+                  />
+                </TouchableOpacity>
+                
+                <View style={styles.quantityDisplay}>
+                  {isUpdating ? (
+                    <ActivityIndicator size="small" color="#4CAF50" />
+                  ) : (
+                    <Text style={styles.quantityText}>{quantityInCart}</Text>
+                  )}
+                </View>
+                
+                <TouchableOpacity
+                  style={[styles.quantityButton, quantityInCart >= (item.stock || item.countInStock) && styles.quantityButtonDisabled]}
+                  onPress={() => handleQuantityUpdate(item, 'increase')}
+                  disabled={isLoading || isOutOfStock || quantityInCart >= (item.stock || item.countInStock)}
+                >
+                  <Ionicons 
+                    name="add" 
+                    size={16} 
+                    color={quantityInCart >= (item.stock || item.countInStock) ? "#CCCCCC" : "#2E7D32"} 
+                  />
+                </TouchableOpacity>
+              </View>
+              
+              <Text style={styles.inCartLabel}>In Cart</Text>
+            </View>
+          )}
         </View>
       </TouchableOpacity>
     );
@@ -453,6 +569,42 @@ const CategoryScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Cart Success Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.successModal}>
+            <View style={styles.successIcon}>
+              <Ionicons name="checkmark-circle" size={50} color="#4CAF50" />
+            </View>
+            <Text style={styles.successTitle}>Added to Cart!</Text>
+            <Text style={styles.successMessage}>
+              {addedProductName} has been added to your cart
+            </Text>
+            <TouchableOpacity
+              style={styles.viewCartButton}
+              onPress={() => {
+                setModalVisible(false);
+                setTimeout(() => setShowCartSuccessModal(false), 300);
+                navigation.navigate('Cart');
+              }}
+            >
+              <Text style={styles.viewCartButtonText}>View Cart</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.continueButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.continueButtonText}>Continue Shopping</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <Header
         title={category?.displayName || categoryName || routeCategory}
         showBack
@@ -466,21 +618,25 @@ const CategoryScreen = () => {
         }
       />
 
-      {/* Category Header */}
-      <View style={[styles.categoryHeader, { backgroundColor: getCategoryColor(routeCategory) + '20' }]}>
-        <View style={[styles.categoryIconContainer, { backgroundColor: getCategoryColor(routeCategory) }]}>
-          <Ionicons name={getCategoryIcon(routeCategory)} size={32} color="#FFFFFF" />
-        </View>
-        <View style={styles.categoryInfo}>
-          <Text style={styles.categoryTitle}>
-            {category?.displayName || categoryName || routeCategory}
-          </Text>
-          <Text style={styles.categoryDescription}>
-            {isSearching 
-              ? `Search results for "${searchQuery}"` 
-              : 'Browse all products in this category'
-            }
-          </Text>
+      {/* Category Header with Image */}
+      <View style={styles.categoryHeader}>
+        <Image
+          source={{ uri: getCategoryImage(routeCategory) }}
+          style={styles.categoryBackgroundImage}
+          resizeMode="cover"
+        />
+        <View style={styles.categoryOverlay}>
+          <View style={styles.categoryContent}>
+            <Text style={styles.categoryTitle}>
+              {category?.displayName || categoryName || routeCategory}
+            </Text>
+            <Text style={styles.categoryDescription}>
+              {isSearching 
+                ? `Search results for "${searchQuery}"` 
+                : `Browse our selection of fresh ${category?.displayName || categoryName || routeCategory}`
+              }
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -508,7 +664,7 @@ const CategoryScreen = () => {
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={<View style={styles.listHeader} />}
         ListFooterComponent={<View style={styles.listFooter} />}
-        extraData={[isSearching, searchQuery]} // Re-render when search state changes
+        extraData={[isSearching, searchQuery, cartItems]} // Re-render when cart changes
       />
     </SafeAreaView>
   );
@@ -539,32 +695,38 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   categoryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    height: 150,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  categoryBackgroundImage: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+  },
+  categoryOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  categoryContent: {
     padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  categoryIconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  categoryInfo: {
-    flex: 1,
   },
   categoryTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#1B5E20',
+    color: '#FFFFFF',
     marginBottom: 4,
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   categoryDescription: {
     fontSize: 14,
-    color: '#666',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   // Search Styles
   searchContainer: {
@@ -627,25 +789,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#2E7D32',
     marginLeft: 6,
-  },
-  searchTips: {
-    marginTop: 12,
-    padding: 12,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-  },
-  searchTipsTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1B5E20',
-    marginBottom: 6,
-  },
-  searchTipsText: {
-    fontSize: 13,
-    color: '#666',
-    lineHeight: 18,
   },
   // Sort Options
   sortOptionsContainer: {
@@ -718,7 +861,7 @@ const styles = StyleSheet.create({
   },
   productsRow: {
     justifyContent: 'space-between',
-     gap: 8,
+    gap: 8,
     paddingHorizontal: 8,
   },
   productCard: {
@@ -775,32 +918,25 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#212121',
     marginBottom: 2,
+    height: 40,
   },
   productUnit: {
     fontSize: 12,
     color: '#666',
     marginBottom: 4,
   },
+  priceContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   productPrice: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#2E7D32',
-    marginBottom: 8,
   },
-  productFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  stockInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  stockText: {
-    fontSize: 12,
-    marginLeft: 4,
-  },
-  addButton: {
+  cartActionButton: {
     backgroundColor: '#4CAF50',
     width: 32,
     height: 32,
@@ -808,11 +944,130 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  inCartButton: {
-    backgroundColor: '#2E7D32',
+  addingButton: {
+    backgroundColor: '#81C784',
   },
-  disabledButton: {
+  outOfStockButton: {
     backgroundColor: '#CCCCCC',
+  },
+  // New Quantity Controls Styles
+  quantityControlsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+    width: '100%',
+  },
+  quantityControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    flex: 1,
+    maxWidth: 110,
+  },
+  quantityButton: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  quantityButtonDisabled: {
+    backgroundColor: '#F5F5F5',
+    opacity: 0.5,
+  },
+  quantityDisplay: {
+    minWidth: 32,
+    alignItems: 'center',
+  },
+  quantityText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#212121',
+  },
+  inCartLabel: {
+    fontSize: 10,
+    color: '#4CAF50',
+    fontWeight: '600',
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  successModal: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 30,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 350,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+  },
+  successIcon: {
+    marginBottom: 20,
+  },
+  successTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1B5E20',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  successMessage: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 25,
+    lineHeight: 22,
+  },
+  viewCartButton: {
+    backgroundColor: '#4CAF50',
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  viewCartButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  continueButton: {
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#4CAF50',
+  },
+  continueButtonText: {
+    color: '#4CAF50',
+    fontSize: 16,
+    fontWeight: '600',
   },
   // Empty States
   emptyContainer: {

@@ -318,114 +318,123 @@ const ProductsScreen = ({ navigation, route }) => {
     setSortModalVisible(false);
   };
 
-  const renderProductGridItem = ({ item }) => {
-    const quantityInCart = getQuantityInCart(item.id || item._id);
-    const isInCart = quantityInCart > 0;
-    const isAdding = addingProductId === (item.id || item._id);
-    const isUpdating = updatingProductId === (item.id || item._id);
-    const isLoading = isAdding || isUpdating;
-    
-    return (
-      <TouchableOpacity
-        style={styles.productCard}
-        onPress={() => handleProductPress(item)}
-        activeOpacity={0.7}
-        disabled={isLoading}
-      >
-        <View style={styles.imageContainer}>
-          <Image
-            source={{ uri: item.image || 'https://via.placeholder.com/150' }}
-            style={styles.productImage}
-            resizeMode="cover"
-          />
-          
-          {(item.stock <= 0 || item.countInStock <= 0) && (
-            <View style={styles.outOfStockBadge}>
-              <Text style={styles.outOfStockText}>Out of Stock</Text>
-            </View>
-          )}
-          
-          <View style={styles.categoryBadge}>
-            <Text style={styles.categoryBadgeText}>
-              {item.category?.charAt(0).toUpperCase() + item.category?.slice(1) || 'Product'}
-            </Text>
-          </View>
-        </View>
+  // Update the renderProductGridItem function in your ProductsScreen.js
 
-        <View style={styles.productInfo}>
-          <Text style={styles.productName} numberOfLines={2}>
-            {item.name}
+const renderProductGridItem = ({ item }) => {
+  const quantityInCart = getQuantityInCart(item.id || item._id);
+  const isInCart = quantityInCart > 0;
+  const isAdding = addingProductId === (item.id || item._id);
+  const isUpdating = updatingProductId === (item.id || item._id);
+  const isLoading = isAdding || isUpdating;
+  
+  return (
+    <TouchableOpacity
+      style={styles.productCard}
+      onPress={() => handleProductPress(item)}
+      activeOpacity={0.7}
+      disabled={isLoading}
+    >
+      <View style={styles.imageContainer}>
+        <Image
+          source={{ uri: item.image || 'https://via.placeholder.com/150' }}
+          style={styles.productImage}
+          resizeMode="cover"
+        />
+        
+        {(item.stock <= 0 || item.countInStock <= 0) && (
+          <View style={styles.outOfStockBadge}>
+            <Text style={styles.outOfStockText}>Out of Stock</Text>
+          </View>
+        )}
+        
+        <View style={styles.categoryBadge}>
+          <Text style={styles.categoryBadgeText}>
+            {item.category?.charAt(0).toUpperCase() + item.category?.slice(1) || 'Product'}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.productInfo}>
+        <Text style={styles.productName} numberOfLines={2}>
+          {item.name}
+        </Text>
+        
+        <Text style={styles.productUnit}>
+          /{item.unit || 'piece'}
+        </Text>
+        
+        <View style={styles.priceContainer}>
+          <Text style={styles.productPrice}>
+            GH₵ {typeof item.price === 'number' ? item.price.toFixed(2) : '0.00'}
           </Text>
           
-          <Text style={styles.productUnit}>
-            /{item.unit || 'piece'}
-          </Text>
-          
-          <View style={styles.priceContainer}>
-            <Text style={styles.productPrice}>
-              GH₵ {typeof item.price === 'number' ? item.price.toFixed(2) : '0.00'}
-            </Text>
-            
-            {isInCart ? (
-              <View style={styles.quantityControls}>
-                <TouchableOpacity
-                  style={[styles.quantityButton, quantityInCart <= 1 && styles.quantityButtonDisabled]}
-                  onPress={() => handleQuantityUpdate(item, 'decrease')}
-                  disabled={isLoading || (item.stock <= 0 || item.countInStock <= 0)}
-                >
-                  <Ionicons 
-                    name="remove" 
-                    size={16} 
-                    color={quantityInCart <= 1 ? "#CCCCCC" : "#2E7D32"} 
-                  />
-                </TouchableOpacity>
-                
-                <View style={styles.quantityDisplay}>
-                  {isLoading ? (
-                    <ActivityIndicator size="small" color="#4CAF50" />
-                  ) : (
-                    <Text style={styles.quantityText}>{quantityInCart}</Text>
-                  )}
-                </View>
-                
-                <TouchableOpacity
-                  style={[styles.quantityButton, quantityInCart >= (item.stock || item.countInStock) && styles.quantityButtonDisabled]}
-                  onPress={() => handleQuantityUpdate(item, 'increase')}
-                  disabled={isLoading || (item.stock <= 0 || item.countInStock <= 0) || quantityInCart >= (item.stock || item.countInStock)}
-                >
-                  <Ionicons 
-                    name="add" 
-                    size={16} 
-                    color={quantityInCart >= (item.stock || item.countInStock) ? "#CCCCCC" : "#2E7D32"} 
-                  />
-                </TouchableOpacity>
-              </View>
-            ) : (
+          {!isInCart && (
+            <TouchableOpacity
+              style={[
+                styles.cartActionButton, 
+                isLoading && styles.addingButton,
+                (item.stock <= 0 || item.countInStock <= 0) && styles.outOfStockButton
+              ]}
+              onPress={() => handleAddToCart(item)}
+              disabled={isLoading || (item.stock <= 0 || item.countInStock <= 0)}
+            >
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Ionicons 
+                  name={(item.stock <= 0 || item.countInStock <= 0) ? "close" : "cart-outline"} 
+                  size={18} 
+                  color="#FFFFFF" 
+                />
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
+        
+        {/* Quantity controls - now on its own line below price when in cart */}
+        {isInCart && (
+          <View style={styles.quantityControlsContainer}>
+            <View style={styles.quantityControls}>
               <TouchableOpacity
-                style={[
-                  styles.cartActionButton, 
-                  isLoading && styles.addingButton,
-                  (item.stock <= 0 || item.countInStock <= 0) && styles.outOfStockButton
-                ]}
-                onPress={() => handleAddToCart(item)}
+                style={[styles.quantityButton, quantityInCart <= 1 && styles.quantityButtonDisabled]}
+                onPress={() => handleQuantityUpdate(item, 'decrease')}
                 disabled={isLoading || (item.stock <= 0 || item.countInStock <= 0)}
               >
-                {isLoading ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <Ionicons 
-                    name={(item.stock <= 0 || item.countInStock <= 0) ? "close" : "cart-outline"} 
-                    size={18} 
-                    color="#FFFFFF" 
-                  />
-                )}
+                <Ionicons 
+                  name="remove" 
+                  size={16} 
+                  color={quantityInCart <= 1 ? "#CCCCCC" : "#2E7D32"} 
+                />
               </TouchableOpacity>
-            )}
+              
+              <View style={styles.quantityDisplay}>
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#4CAF50" />
+                ) : (
+                  <Text style={styles.quantityText}>{quantityInCart}</Text>
+                )}
+              </View>
+              
+              <TouchableOpacity
+                style={[styles.quantityButton, quantityInCart >= (item.stock || item.countInStock) && styles.quantityButtonDisabled]}
+                onPress={() => handleQuantityUpdate(item, 'increase')}
+                disabled={isLoading || (item.stock <= 0 || item.countInStock <= 0) || quantityInCart >= (item.stock || item.countInStock)}
+              >
+                <Ionicons 
+                  name="add" 
+                  size={16} 
+                  color={quantityInCart >= (item.stock || item.countInStock) ? "#CCCCCC" : "#2E7D32"} 
+                />
+              </TouchableOpacity>
+            </View>
+            
+           
           </View>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+};
 
   const renderProductListItem = ({ item }) => {
     const quantityInCart = getQuantityInCart(item.id || item._id);
@@ -691,19 +700,6 @@ const ProductsScreen = ({ navigation, route }) => {
             <Ionicons name="funnel-outline" size={18} color="#666" />
             <Text style={styles.actionButtonText}>Sort</Text>
           </TouchableOpacity>
-          
-          <View style={styles.viewModeButtons}>
-            <TouchableOpacity
-              style={[styles.viewModeButton, viewMode === 'grid' && styles.viewModeButtonActive]}
-              onPress={() => setViewMode('grid')}
-            >
-              <Ionicons 
-                name="grid" 
-                size={18} 
-                color={viewMode === 'grid' ? '#4CAF50' : '#666'} 
-              />
-            </TouchableOpacity>
-          </View>
         </View>
       </View>
     </View>
@@ -787,7 +783,7 @@ const ProductsScreen = ({ navigation, route }) => {
               onPress={() => {
                 setModalVisible(false);
                 setTimeout(() => setShowCartSuccessModal(false), 300);
-                navigation.navigate('Cart');
+                navigation.navigate('MainTabs',{screen:'Cart'});
               }}
             >
               <Text style={styles.viewCartButtonText}>View Cart</Text>
@@ -803,12 +799,10 @@ const ProductsScreen = ({ navigation, route }) => {
       </Modal>
 
       <Header
-        title="Fresh Products"
-        showBack
-        onBackPress={() => navigation.goBack()}
+        title="Fresh Food Items"
         rightComponent={
           <TouchableOpacity 
-            onPress={() => navigation.navigate('Cart')}
+            onPress={() => navigation.navigate('MainTabs',{screen:'Cart'})}
             style={styles.cartButton}
           >
             <Ionicons 
@@ -1501,6 +1495,62 @@ const styles = StyleSheet.create({
     color: '#2E7D32',
     fontWeight: '600',
   },
+  // Add these new styles to your existing StyleSheet
+
+quantityControlsContainer: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginTop: 10,
+  paddingTop: 8,
+  borderTopWidth: 1,
+  borderTopColor: '#F0F0F0',
+  width: '100%',
+},
+quantityControls: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#F8F9FA',
+  borderRadius: 12,
+  padding: 4,
+  borderWidth: 1,
+  borderColor: '#E0E0E0',
+  flex: 1,
+  maxWidth: 120,
+},
+quantityButton: {
+  width: 28,
+  height: 28,
+  borderRadius: 14,
+  backgroundColor: '#FFFFFF',
+  justifyContent: 'center',
+  alignItems: 'center',
+  borderWidth: 1,
+  borderColor: '#E0E0E0',
+},
+quantityButtonDisabled: {
+  backgroundColor: '#F5F5F5',
+  opacity: 0.5,
+},
+quantityDisplay: {
+  minWidth: 36,
+  alignItems: 'center',
+},
+quantityText: {
+  fontSize: 15,
+  fontWeight: '600',
+  color: '#212121',
+},
+inCartLabel: {
+  fontSize: 11,
+  color: '#4CAF50',
+  fontWeight: '600',
+  backgroundColor: '#E8F5E9',
+  paddingHorizontal: 8,
+  paddingVertical: 4,
+  borderRadius: 12,
+  overflow: 'hidden',
+},
 });
 
 export default ProductsScreen;

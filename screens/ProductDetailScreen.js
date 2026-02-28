@@ -142,7 +142,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
       await addToCart(product._id || product.id, 1);
       Alert.alert('Success', `${product.name} added to cart`, [
         { text: 'Continue Shopping', style: 'cancel' },
-        { text: 'View Cart', onPress: () => navigation.navigate('Cart') },
+        { text: 'View Cart', onPress: () => navigation.navigate('MainTabs',{screen:'Cart'}) },
       ]);
     } catch (err) {
       Alert.alert('Error', 'Failed to add to cart');
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#fafafa',
-    padding: 40,
+    padding: 10,
   },
   loadingText: { marginTop: 16, fontSize: 16, color: '#616161' },
   errorTitle: { fontSize: 22, fontWeight: '600', color: '#424242', marginTop: 16, marginBottom: 8 },
@@ -413,7 +413,7 @@ const styles = StyleSheet.create({
   headerActions: { flexDirection: 'row', alignItems: 'center' },
   iconBtn: { padding: 8, marginLeft: 4 },
 
-  scrollContent: { paddingBottom: 160 },
+  scrollContent: { paddingBottom: 20 },
 
   imageHero: {
     width,
@@ -460,7 +460,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 36,
     paddingHorizontal: 24,
     paddingTop: 32,
-    paddingBottom: 60,
+    paddingBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -6 },
     shadowOpacity: 0.1,

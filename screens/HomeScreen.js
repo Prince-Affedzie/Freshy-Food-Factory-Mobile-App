@@ -12,6 +12,7 @@ import {
   Dimensions,
   Alert,
   Modal,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,6 +27,22 @@ import { useNavigation } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 
+// Unsplash category images
+const CATEGORY_IMAGES = {
+  vegetables: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1769990080/vegetables_cpp5n5.jpg',
+  fruits: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1770885485/colorful-fruits-tasty-fresh-ripe-juicy-white-desk_utdxnl.jpg',
+  staples: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1770886305/staple_food_xlgo92.jpg',
+  herb: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1770885919/spices_and_herbs_srdlvf.jpg',
+  tuber: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1770885482/fresh-potato-kitchen-ready-be-cooked_jndkde.jpg',
+  dairy: 'https://images.unsplash.com/photo-1628088062854-d1870b4553da?w=800&q=80',
+  meat: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=800&q=80',
+  seafood: 'https://images.unsplash.com/photo-1559563458-527698bf5295?w=800&q=80',
+  bakery: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&q=80',
+  beverages: 'https://images.unsplash.com/photo-1543255255-b03b8f7a6d39?w=800&q=80',
+  organic: 'https://images.unsplash.com/photo-1550989460-0adf9ea622e2?w=800&q=80',
+  default: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1769990080/vegetables_cpp5n5.jpg',
+};
+
 const HomeScreen = () => {
   const navigation = useNavigation();
   const { user, isAuthenticated } = useAuth();
@@ -38,14 +55,34 @@ const HomeScreen = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [addingProductId, setAddingProductId] = useState(null); // Track which product is being added
+  const [addingProductId, setAddingProductId] = useState(null);
   const [showCartSuccessModal, setShowCartSuccessModal] = useState(false);
   const [addedProductName, setAddedProductName] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
+  
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
 
   useEffect(() => {
     loadHomeData();
   }, []);
+
+  // Debounced search
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchQuery.trim().length > 0) {
+        performSearch();
+      } else {
+        setSearchResults([]);
+        setShowSearchResults(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
 
   const loadHomeData = async () => {
     try {
@@ -81,6 +118,41 @@ const HomeScreen = () => {
     loadHomeData();
   }, []);
 
+  const performSearch = async () => {
+    if (searchQuery.trim().length === 0) return;
+    
+    setSearching(true);
+    try {
+      const response = await productService.getProducts({ 
+        search: searchQuery,
+        limit: 10 
+      });
+      
+      if (response.success) {
+        setSearchResults(response.data);
+        setShowSearchResults(true);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleSearchSubmit = () => {
+    if (searchQuery.trim().length > 0) {
+      navigation.navigate('Products', { search: searchQuery });
+      setShowSearchResults(false);
+      setSearchQuery('');
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setSearchResults([]);
+    setShowSearchResults(false);
+  };
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
@@ -113,17 +185,14 @@ const HomeScreen = () => {
         return;
       }
 
-      // Set loading state for this specific product
       setAddingProductId(product.id || product._id);
       setAddedProductName(product.name);
       
       await addToCart(product.id || product._id, 1);
       
-      // Show success modal
       setShowCartSuccessModal(true);
       setModalVisible(true);
       
-      // Auto-hide modal after 2 seconds
       setTimeout(() => {
         setModalVisible(false);
         setTimeout(() => setShowCartSuccessModal(false), 300);
@@ -133,17 +202,30 @@ const HomeScreen = () => {
       console.error('Add to cart error:', error);
       Alert.alert('Error', 'Failed to add item to cart. Please try again.');
     } finally {
-      // Clear loading state for this product
       setAddingProductId(null);
     }
   };
 
-  const quickActions = [
-    { id: '1', title: 'Shop All', icon: 'basket-outline', screen: 'Products', color: '#4CAF50' },
-    { id: '2', title: 'Vegetables', icon: 'leaf-outline', screen: 'Products', params: { category: 'vegetables' }, color: '#2E7D32' },
-    { id: '3', title: 'Fruits', icon: 'nutrition-outline', screen: 'Products', params: { category: 'fruits' }, color: '#F57C00' },
-    { id: '4', title: 'Staples', icon: 'beaker-outline', screen: 'Products', params: { category: 'staples' }, color: '#5D4037' },
-  ];
+  const getCategoryImage = (categoryName) => {
+    if (!categoryName) return CATEGORY_IMAGES.default;
+    
+    const name = categoryName.toLowerCase();
+    
+    // Map category names to Unsplash images
+    if (name.includes('vegetable') || name.includes('veggie')) return CATEGORY_IMAGES.vegetables;
+    if (name.includes('fruit')) return CATEGORY_IMAGES.fruits;
+    if (name.includes('staple')) return CATEGORY_IMAGES.staples;
+    if (name.includes('herb') || name.includes('spice')) return CATEGORY_IMAGES.herb;
+    if (name.includes('tuber') || name.includes('potato')) return CATEGORY_IMAGES.tuber;
+    if (name.includes('dairy') || name.includes('milk')) return CATEGORY_IMAGES.dairy;
+    if (name.includes('meat') || name.includes('chicken')) return CATEGORY_IMAGES.meat;
+    if (name.includes('seafood') || name.includes('fish')) return CATEGORY_IMAGES.seafood;
+    if (name.includes('bakery') || name.includes('bread')) return CATEGORY_IMAGES.bakery;
+    if (name.includes('beverage') || name.includes('drink')) return CATEGORY_IMAGES.beverages;
+    if (name.includes('organic')) return CATEGORY_IMAGES.organic;
+    
+    return CATEGORY_IMAGES.default;
+  };
 
   const renderProductCard = (product, isSmall = false) => {
     const quantityInCart = getQuantityInCart(product.id || product._id);
@@ -163,7 +245,7 @@ const HomeScreen = () => {
         disabled={isAdding}
       >
         <Image
-          source={{ uri: product.image || product.images?.[0] || 'https://via.placeholder.com/150' }}
+          source={{ uri: product.image || product.images?.[0] || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80' }}
           style={[styles.productImage, isSmall && styles.smallProductImage]}
           resizeMode="cover"
         />
@@ -201,6 +283,52 @@ const HomeScreen = () => {
     );
   };
 
+  const renderCategoryCard = (category) => (
+    <TouchableOpacity
+      key={category.id || category._id}
+      style={styles.categoryCard}
+      onPress={() => navigation.navigate('Category', { category: category.name })}
+    >
+      <Image
+        source={{ uri: getCategoryImage(category.name) }}
+        style={styles.categoryImage}
+        resizeMode="cover"
+      />
+      <View style={styles.categoryOverlay}>
+        <Text style={styles.categoryName} numberOfLines={1}>
+          {category.name}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+  const renderSearchResult = (product) => (
+    <TouchableOpacity
+      key={product.id || product._id}
+      style={styles.searchResultItem}
+      onPress={() => {
+        navigation.navigate('ProductDetail', { 
+          productId: product.id || product._id,
+          product 
+        });
+        clearSearch();
+      }}
+    >
+      <Image
+        source={{ uri: product.image || product.images?.[0] || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80' }}
+        style={styles.searchResultImage}
+      />
+      <View style={styles.searchResultInfo}>
+        <Text style={styles.searchResultName} numberOfLines={1}>
+          {product.name}
+        </Text>
+        <Text style={styles.searchResultPrice}>
+          GH₵ {product.price?.toFixed(2) || product.price}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+
   const renderSection = (title, products, onSeeAll, isHorizontal = true) => (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
@@ -231,45 +359,6 @@ const HomeScreen = () => {
       )}
     </View>
   );
-
-  const renderCategoryCard = (category) => (
-    <TouchableOpacity
-      key={category.id || category._id}
-      style={styles.categoryCard}
-      onPress={() => navigation.navigate('Category', { category: category.name })}
-    >
-      <View style={[styles.categoryIcon, { backgroundColor: getCategoryColor(category.name?.toLowerCase() || '') }]}>
-        <Ionicons name={getCategoryIcon(category.name?.toLowerCase() || '')} size={28} color="#fff" />
-      </View>
-      <Text style={styles.categoryName} numberOfLines={1}>
-        {category.name}
-      </Text>
-    </TouchableOpacity>
-  );
-
-  const getCategoryIcon = (name) => {
-    const icons = {
-      vegetables: 'leaf-outline',
-      fruits: 'nutrition-outline',
-      staples: 'beaker-outline',
-      herb: 'leaf-outline',
-      tuber: 'nutrition-outline',
-      other: 'grid-outline',
-    };
-    return icons[name] || 'cube-outline';
-  };
-
-  const getCategoryColor = (name) => {
-    const colors = {
-      vegetables: '#2E7D32',
-      fruits: '#F57C00',
-      staples: '#5D4037',
-      herb: '#388E3C',
-      tuber: '#E64A19',
-      other: '#455A64',
-    };
-    return colors[name] || '#6D4C41';
-  };
 
   if (loading && !refreshing) {
     return (
@@ -319,7 +408,7 @@ const HomeScreen = () => {
       </Modal>
 
       <Header
-        title="FreshyFood"
+        title="FreshyFood Factory"
         rightComponent={
           <TouchableOpacity style={styles.cartButton} onPress={() => navigation.navigate('Notification')}>
             <Ionicons name={unreadCount > 0 ? 'notifications' : 'notifications-outline'} size={26} color="#2E7D32" />
@@ -336,6 +425,7 @@ const HomeScreen = () => {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2E7D32" />}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
       >
         <HeroSection navigation={navigation} />
 
@@ -346,28 +436,64 @@ const HomeScreen = () => {
           <Text style={styles.subtitle}>Discover farm-fresh produce delivered fast</Text>
         </View>
 
-        <TouchableOpacity style={styles.searchBar} onPress={() => navigation.navigate('Products')}>
-          <Ionicons name="search-outline" size={20} color="#757575" />
-          <Text style={styles.searchPlaceholder}>Search vegetables, fruits...</Text>
-        </TouchableOpacity>
-
-        {/* Quick Actions Section (Commented out) */}
-        {/* <View style={styles.quickActionsSection}>
-          <View style={styles.quickActionsGrid}>
-            {quickActions.map((action) => (
-              <TouchableOpacity
-                key={action.id}
-                style={styles.quickActionCard}
-                onPress={() => navigation.navigate(action.screen, action.params)}
-              >
-                <View style={[styles.quickActionIcon, { backgroundColor: action.color }]}>
-                  <Ionicons name={action.icon} size={26} color="#fff" />
-                </View>
-                <Text style={styles.quickActionText}>{action.title}</Text>
+        {/* Search Bar with Functionality */}
+        <View style={styles.searchContainer}>
+          <View style={styles.searchBar}>
+            <Ionicons name="search-outline" size={20} color="#757575" />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search vegetables, fruits..."
+              placeholderTextColor="#757575"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              onSubmitEditing={handleSearchSubmit}
+              returnKeyType="search"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+                <Ionicons name="close-circle" size={20} color="#757575" />
               </TouchableOpacity>
-            ))}
+            )}
+            {searching && (
+              <ActivityIndicator size="small" color="#2E7D32" style={styles.searchingIndicator} />
+            )}
           </View>
-        </View> */}
+
+          {/* Search Results Dropdown */}
+          {showSearchResults && searchResults.length > 0 && (
+            <View style={styles.searchResultsContainer}>
+              <ScrollView 
+                style={styles.searchResultsList}
+                keyboardShouldPersistTaps="handled"
+                nestedScrollEnabled={true}
+                showsVerticalScrollIndicator={false}
+              >
+                {searchResults.map(renderSearchResult)}
+                <TouchableOpacity 
+                  style={styles.viewAllResults}
+                  onPress={handleSearchSubmit}
+                >
+                  <Text style={styles.viewAllResultsText}>
+                    View all results for "{searchQuery}"
+                  </Text>
+                  <Ionicons name="arrow-forward" size={16} color="#2E7D32" />
+                </TouchableOpacity>
+              </ScrollView>
+            </View>
+          )}
+
+          {showSearchResults && searchResults.length === 0 && !searching && searchQuery.length > 0 && (
+            <View style={styles.searchResultsContainer}>
+              <View style={styles.noResults}>
+                <Ionicons name="search-outline" size={40} color="#BDBDBD" />
+                <Text style={styles.noResultsText}>No products found</Text>
+                <Text style={styles.noResultsSubtext}>Try different keywords</Text>
+              </View>
+            </View>
+          )}
+        </View>
 
         {categories.length > 0 && (
           <View style={styles.categoriesSection}>
@@ -455,14 +581,19 @@ const styles = StyleSheet.create({
     color: '#616161',
     marginTop: 4,
   },
+  searchContainer: {
+    position: 'relative',
+    zIndex: 1000,
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+  },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    marginHorizontal: 20,
-    marginTop: 12,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 12,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#EEEEEE',
@@ -472,44 +603,94 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
   },
-  searchPlaceholder: {
+  searchInput: {
+    flex: 1,
     marginLeft: 12,
     fontSize: 15,
-    color: '#757575',
+    color: '#212121',
+    padding: 0,
+  },
+  clearButton: {
+    padding: 4,
+  },
+  searchingIndicator: {
+    marginLeft: 8,
+  },
+  searchResultsContainer: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    right: 20,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    maxHeight: 400,
+    zIndex: 1001,
+  },
+  searchResultsList: {
+    padding: 8,
+  },
+  searchResultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+  },
+  searchResultImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  searchResultInfo: {
     flex: 1,
   },
-  quickActionsSection: {
-    backgroundColor: '#fff',
-    marginTop: 16,
-    paddingVertical: 20,
-  },
-  quickActionsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-  },
-  quickActionCard: {
-    alignItems: 'center',
-    width: width / 4 - 20,
-  },
-  quickActionIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  quickActionText: {
-    fontSize: 12,
-    color: '#424242',
+  searchResultName: {
+    fontSize: 14,
     fontWeight: '600',
-    textAlign: 'center',
+    color: '#212121',
+    marginBottom: 4,
+  },
+  searchResultPrice: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#2E7D32',
+  },
+  viewAllResults: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+    marginTop: 4,
+  },
+  viewAllResultsText: {
+    fontSize: 14,
+    color: '#2E7D32',
+    fontWeight: '600',
+    marginRight: 8,
+  },
+  noResults: {
+    alignItems: 'center',
+    padding: 30,
+  },
+  noResultsText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#424242',
+    marginTop: 12,
+  },
+  noResultsSubtext: {
+    fontSize: 14,
+    color: '#757575',
+    marginTop: 4,
   },
   categoriesSection: {
     backgroundColor: '#fff',
@@ -526,24 +707,32 @@ const styles = StyleSheet.create({
     width: '31%',
     alignItems: 'center',
     marginBottom: 20,
-  },
-  categoryIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: '#fff',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.14,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
+  categoryImage: {
+    width: '100%',
+    height: 80,
+  },
+  categoryOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
   categoryName: {
-    fontSize: 13,
-    color: '#424242',
-    fontWeight: '500',
+    fontSize: 12,
+    color: '#fff',
+    fontWeight: '600',
     textAlign: 'center',
   },
   section: {

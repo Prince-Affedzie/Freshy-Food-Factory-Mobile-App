@@ -11,10 +11,10 @@ import {
   RefreshControl,
   Modal,
   Animated,
+  StatusBar,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import Header from '../components/Header';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -371,7 +371,7 @@ const CartScreen = () => {
         ) : (
           <>
             <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
-            <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+            
           </>
         )}
       </TouchableOpacity>
@@ -381,12 +381,25 @@ const CartScreen = () => {
   // Main Loading Overlay
   if (screenLoading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <Header
-          title="Cart"
-          showBack
-          onBackPress={() => navigation.goBack()}
-        />
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <StatusBar backgroundColor="#2E7D32" barStyle="light-content" />
+        
+        {/* Green Header */}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={22} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.topBarTitle}>My Cart</Text>
+          <View style={styles.headerRight}>
+            <TouchableOpacity 
+              style={styles.headerIconBtn}
+              onPress={() => navigation.navigate('MainTabs', { screen: 'Home' })}
+            >
+              <Ionicons name="home-outline" size={22} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </View>
+        
         <View style={styles.loadingOverlay}>
           <View style={styles.loadingContent}>
             <ActivityIndicator size="large" color="#4CAF50" />
@@ -401,14 +414,19 @@ const CartScreen = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Header
-        title="Cart"
-        showBack
-        onBackPress={() => navigation.goBack()}
-        rightComponent={
-          cartItems.length > 0 && (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar backgroundColor="#2E7D32" barStyle="light-content" />
+      
+      {/* Green Header - Matching Home and Products screens */}
+      <View style={styles.topBar}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={22} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.topBarTitle}>My Cart</Text>
+        <View style={styles.headerRight}>
+          {cartItems.length > 0 && (
             <TouchableOpacity 
+              style={styles.headerIconBtn}
               onPress={handleClearCart}
               disabled={screenLoading}
             >
@@ -419,9 +437,15 @@ const CartScreen = () => {
                 Clear
               </Text>
             </TouchableOpacity>
-          )
-        }
-      />
+          )}
+          <TouchableOpacity 
+            style={styles.headerIconBtn}
+            onPress={() => navigation.navigate('MainTabs', { screen: 'Home' })}
+          >
+            <Ionicons name="home-outline" size={22} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      </View>
 
       {/* Full Screen Loading Modal for actions */}
       <Modal
@@ -501,6 +525,46 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8F9FA',
   },
+  
+  // ── TOP BAR (Green header like Home and Products) ──
+  topBar: {
+    backgroundColor: '#2E7D32',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopLeftRadius:12,
+    borderTopRightRadius:12,
+  },
+  backBtn: { 
+    padding: 4,
+  },
+  topBarTitle: { 
+    fontSize: 18, 
+    fontWeight: '700', 
+    color: '#fff', 
+    flex: 1, 
+    textAlign: 'center' 
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerIconBtn: {
+    padding: 4,
+    position: 'relative',
+  },
+  headerClearText: {
+    color: '#FFCDD2',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  disabledText: {
+    color: '#A5D6A7',
+  },
+  
   mainContainer: {
     flex: 1,
     position: 'relative',
@@ -565,14 +629,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
-  },
-  headerClearText: {
-    color: '#F44336',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  disabledText: {
-    color: '#CCCCCC',
   },
   emptyContainer: {
     flex: 1,
@@ -749,7 +805,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
     position: 'absolute',
-    bottom: 0,
+    bottom: 36,
     left: 0,
     right: 0,
   },
@@ -786,9 +842,9 @@ const styles = StyleSheet.create({
   },
   checkoutButton: {
     backgroundColor: '#4CAF50',
-    flexDirection: 'row',
+    
     alignItems: 'center',
-    justifyContent: 'space-between',
+    
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderRadius: 10,
@@ -803,7 +859,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
   },
   checkoutButtonContent: {
-    flexDirection: 'row',
+    
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
@@ -812,7 +868,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
-    marginRight: 8,
+   
   },
 });
 

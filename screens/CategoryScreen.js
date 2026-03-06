@@ -1,5 +1,5 @@
 // src/screens/main/CategoryScreen.js
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import {
   Alert,
   TextInput,
   Modal,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -59,11 +60,15 @@ const CategoryScreen = () => {
   const [sortBy, setSortBy] = useState('name');
   const [showSortOptions, setShowSortOptions] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
   const [showCartSuccessModal, setShowCartSuccessModal] = useState(false);
   const [addedProductName, setAddedProductName] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
+
+  // Add ref for search input
+  const searchInputRef = useRef(null);
 
   const sortOptions = [
     { id: 'name', label: 'Name (A-Z)', icon: 'text' },
@@ -71,6 +76,15 @@ const CategoryScreen = () => {
     { id: 'price-desc', label: 'Price (High to Low)', icon: 'arrow-down' },
     { id: 'stock-desc', label: 'Most in Stock', icon: 'trending-up' },
   ];
+
+  // Auto-focus search when expanded
+  useEffect(() => {
+    if (showSearch && searchInputRef.current) {
+      setTimeout(() => {
+        searchInputRef.current.focus();
+      }, 100);
+    }
+  }, [showSearch]);
 
   // Get category image based on category name
   const getCategoryImage = (categoryKey) => {
@@ -293,6 +307,7 @@ const CategoryScreen = () => {
       <View style={styles.searchInputContainer}>
         <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
         <TextInput
+          ref={searchInputRef}
           style={styles.searchInput}
           placeholder={`Search in ${category?.displayName || categoryName || routeCategory}...`}
           placeholderTextColor="#999"
@@ -382,15 +397,16 @@ const CategoryScreen = () => {
             {item.unitDisplay || item.unit || 'piece'}
           </Text>
           
-          <View style={styles.priceContainer}>
+          {/* Price and Add button row */}
+          <View style={styles.priceRow}>
             <Text style={styles.productPrice}>
-              {item.priceDisplay || `GH₵ ${item.price}`}
+              {item.priceDisplay || `GH₵ ${item.price?.toFixed(2)}`}
             </Text>
             
             {!isInCart && (
               <TouchableOpacity
                 style={[
-                  styles.cartActionButton,
+                  styles.addButton,
                   isLoading && styles.addingButton,
                   isOutOfStock && styles.outOfStockButton
                 ]}
@@ -400,11 +416,10 @@ const CategoryScreen = () => {
                 {isLoading ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
-                  <Ionicons 
-                    name={isOutOfStock ? "close" : "cart-outline"} 
-                    size={18} 
-                    color="#FFFFFF" 
-                  />
+                  <>
+                    <Ionicons name="cart-outline" size={14} color="#FFFFFF" />
+                    <Text style={styles.addButtonText}>Add</Text>
+                  </>
                 )}
               </TouchableOpacity>
             )}
@@ -412,7 +427,7 @@ const CategoryScreen = () => {
 
           {/* Quantity Controls - Show only when item is in cart */}
           {isInCart && (
-            <View style={styles.quantityControlsContainer}>
+            <View style={styles.quantityContainer}>
               <View style={styles.quantityControls}>
                 <TouchableOpacity
                   style={[styles.quantityButton, quantityInCart <= 1 && styles.quantityButtonDisabled]}
@@ -446,8 +461,6 @@ const CategoryScreen = () => {
                   />
                 </TouchableOpacity>
               </View>
-              
-              <Text style={styles.inCartLabel}>In Cart</Text>
             </View>
           )}
         </View>
@@ -532,10 +545,10 @@ const CategoryScreen = () => {
             <Text style={styles.suggestionsButtonText}>Search Tips</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.backButton}
+            style={styles.clearSearchButton}
             onPress={clearSearch}
           >
-            <Text style={styles.backButtonText}>Clear Search</Text>
+            <Text style={styles.clearSearchButtonText}>Clear Search</Text>
           </TouchableOpacity>
         </View>
       );
@@ -568,7 +581,9 @@ const CategoryScreen = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar backgroundColor="#2E7D32" barStyle="light-content" />
+
       {/* Cart Success Modal */}
       <Modal
         animationType="fade"
@@ -590,7 +605,7 @@ const CategoryScreen = () => {
               onPress={() => {
                 setModalVisible(false);
                 setTimeout(() => setShowCartSuccessModal(false), 300);
-                navigation.navigate('Cart');
+                navigation.navigate('MainTabs', { screen: 'Cart' });
               }}
             >
               <Text style={styles.viewCartButtonText}>View Cart</Text>
@@ -605,18 +620,27 @@ const CategoryScreen = () => {
         </View>
       </Modal>
 
-      <Header
-        title={category?.displayName || categoryName || routeCategory}
-        showBack
-        onBackPress={() => navigation.goBack()}
-        rightComponent={
-          <View style={styles.headerRight}>
-            <TouchableOpacity onPress={() => setShowSortOptions(!showSortOptions)} style={styles.headerButton}>
-              <Ionicons name="filter-outline" size={24} color="#2E7D32" />
-            </TouchableOpacity>
-          </View>
-        }
-      />
+      {/* Custom Header */}
+      <View style={styles.topBar}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={22} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.topBarTitle}>{category?.displayName || categoryName || routeCategory}</Text>
+        <View style={styles.headerRight}>
+          <TouchableOpacity 
+            style={styles.headerButton} 
+            onPress={() => setShowSortOptions(!showSortOptions)}
+          >
+            <Ionicons name="filter-outline" size={22} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.headerButton} 
+            onPress={() => navigation.navigate('MainTabs', { screen: 'Cart' })}
+          >
+            <Ionicons name="cart-outline" size={22} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      </View>
 
       {/* Category Header with Image */}
       <View style={styles.categoryHeader}>
@@ -658,7 +682,7 @@ const CategoryScreen = () => {
         columnWrapperStyle={styles.productsRow}
         contentContainerStyle={styles.productsContainer}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2E7D32" />
         }
         ListEmptyComponent={renderEmptyState}
         showsVerticalScrollIndicator={false}
@@ -686,6 +710,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
   },
+  
+  // Top Bar (like ProductsScreen)
+  topBar: {
+    backgroundColor: '#2E7D32',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopLeftRadius:12,
+    borderTopRightRadius:12,
+  },
+  backBtn: { padding: 4 },
+  topBarTitle: { 
+    fontSize: 17, 
+    fontWeight: '700', 
+    color: '#fff', 
+    flex: 1, 
+    textAlign: 'center' 
+  },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -694,6 +738,8 @@ const styles = StyleSheet.create({
     padding: 8,
     marginLeft: 8,
   },
+  
+  // Category Header
   categoryHeader: {
     height: 150,
     position: 'relative',
@@ -728,7 +774,8 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
-  // Search Styles
+  
+  // Search Styles (Enhanced)
   searchContainer: {
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
@@ -739,18 +786,21 @@ const styles = StyleSheet.create({
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8F9FA',
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   searchIcon: {
     marginRight: 10,
+    color: '#4CAF50',
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
-    color: '#333',
+    fontSize: 15,
+    color: '#212121',
     paddingVertical: 0,
   },
   clearButton: {
@@ -790,6 +840,7 @@ const styles = StyleSheet.create({
     color: '#2E7D32',
     marginLeft: 6,
   },
+  
   // Sort Options
   sortOptionsContainer: {
     backgroundColor: '#FFFFFF',
@@ -822,10 +873,11 @@ const styles = StyleSheet.create({
     color: '#2E7D32',
     fontWeight: '600',
   },
+  
   // Stats
   statsContainer: {
     backgroundColor: '#FFFFFF',
-    padding: 20,
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
   },
@@ -837,16 +889,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statNumber: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#212121',
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#666',
     textAlign: 'center',
   },
+  
   // Products List
   productsContainer: {
     padding: 8,
@@ -864,6 +917,8 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 8,
   },
+  
+  // Product Card (Enhanced with new layout)
   productCard: {
     width: (width - 32) / 2,
     backgroundColor: '#FFFFFF',
@@ -872,6 +927,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   productImageContainer: {
     position: 'relative',
@@ -917,15 +977,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#212121',
-    marginBottom: 2,
+    marginBottom: 4,
     height: 40,
   },
   productUnit: {
     fontSize: 12,
     color: '#666',
-    marginBottom: 4,
+    marginBottom: 8,
   },
-  priceContainer: {
+  
+  // Price row with inline Add button (like ProductsScreen)
+  priceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -933,16 +995,22 @@ const styles = StyleSheet.create({
   },
   productPrice: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2E7D32',
+    fontWeight: '800',
+    color: '#1B5E20',
   },
-  cartActionButton: {
-    backgroundColor: '#4CAF50',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
+  addButton: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#4CAF50',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    gap: 4,
+  },
+  addButtonText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#fff',
   },
   addingButton: {
     backgroundColor: '#81C784',
@@ -950,40 +1018,34 @@ const styles = StyleSheet.create({
   outOfStockButton: {
     backgroundColor: '#CCCCCC',
   },
-  // New Quantity Controls Styles
-  quantityControlsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+  
+  // Quantity Controls (full width below price, like ProductsScreen)
+  quantityContainer: {
     width: '100%',
+    marginTop: 4,
   },
   quantityControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
-    borderRadius: 12,
+    justifyContent: 'space-between',
+    borderRadius: 8,
     padding: 4,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    flex: 1,
-    maxWidth: 110,
+    
   },
   quantityButton: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 28,
+    height: 28,
+    borderRadius: 6,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#4CAF50',
   },
   quantityButtonDisabled: {
     backgroundColor: '#F5F5F5',
+    borderColor: '#E0E0E0',
     opacity: 0.5,
   },
   quantityDisplay: {
@@ -992,83 +1054,10 @@ const styles = StyleSheet.create({
   },
   quantityText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#212121',
-  },
-  inCartLabel: {
-    fontSize: 10,
-    color: '#4CAF50',
-    fontWeight: '600',
-    backgroundColor: '#E8F5E9',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 10,
-    overflow: 'hidden',
-  },
-  // Modal Styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  successModal: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 30,
-    alignItems: 'center',
-    width: '100%',
-    maxWidth: 350,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-  },
-  successIcon: {
-    marginBottom: 20,
-  },
-  successTitle: {
-    fontSize: 22,
     fontWeight: '700',
-    color: '#1B5E20',
-    marginBottom: 10,
-    textAlign: 'center',
+    color: '#2E7D32',
   },
-  successMessage: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 25,
-    lineHeight: 22,
-  },
-  viewCartButton: {
-    backgroundColor: '#4CAF50',
-    width: '100%',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  viewCartButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  continueButton: {
-    width: '100%',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#4CAF50',
-  },
-  continueButtonText: {
-    color: '#4CAF50',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  
   // Empty States
   emptyContainer: {
     alignItems: 'center',
@@ -1093,7 +1082,7 @@ const styles = StyleSheet.create({
   suggestionsButton: {
     backgroundColor: '#F0F7F0',
     paddingHorizontal: 24,
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderRadius: 8,
     marginBottom: 12,
     borderWidth: 1,
@@ -1101,7 +1090,18 @@ const styles = StyleSheet.create({
   },
   suggestionsButtonText: {
     color: '#2E7D32',
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  clearSearchButton: {
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  clearSearchButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
     fontWeight: '600',
   },
   backButton: {
@@ -1114,6 +1114,71 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  successModal: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 28,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 340,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+  },
+  successIcon: {
+    marginBottom: 16,
+  },
+  successTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1B5E20',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  successMessage: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 22,
+    lineHeight: 20,
+  },
+  viewCartButton: {
+    backgroundColor: '#4CAF50',
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  viewCartButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  continueButton: {
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#4CAF50',
+  },
+  continueButtonText: {
+    color: '#4CAF50',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });
 

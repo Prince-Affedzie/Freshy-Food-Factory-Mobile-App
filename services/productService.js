@@ -65,21 +65,40 @@ async getProducts(filters = {}) {
   }
 }
 
-  async getProductById(id) {
-   
-    try {
-      const response = await API.get(`/api/product/${id}`);
-      
-      return response;
-    } catch (error) {
-      console.error('Error fetching product:', error);
-      return {
-        success: false,
-        error: error.message || 'Failed to fetch product',
-        data: null,
-      };
+///products/tag/:tag
+
+ async getProductByTag(tag) {
+    
+      try {
+        const response = await API.get(`/api/products/tag/${tag}`);
+        
+        return response;
+      } catch (error) {
+        console.error('Error fetching product:', error);
+        return {
+          success: false,
+          error: error.message || 'Failed to fetch product',
+          data: null,
+        };
+      }
     }
-  }
+
+
+    async getProductById(id) {
+    
+      try {
+        const response = await API.get(`/api/product/${id}`);
+        
+        return response;
+      } catch (error) {
+        console.error('Error fetching product:', error);
+        return {
+          success: false,
+          error: error.message || 'Failed to fetch product',
+          data: null,
+        };
+      }
+    }
 
   async getProductsByCategory(category, sort = 'name', limit = 50) {
     try {

@@ -13,10 +13,10 @@ import {
   Alert,
   FlatList,
   Platform,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import Header from '../components/Header';
 import productService from '../services/productService';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -170,22 +170,62 @@ const ProductDetailScreen = ({ route, navigation }) => {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#2E7D32" />
-        <Text style={styles.loadingText}>Loading product details...</Text>
-      </View>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <StatusBar backgroundColor="#2E7D32" barStyle="light-content" />
+        
+        {/* Green Header */}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={22} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.topBarTitle}>Product Details</Text>
+          <View style={styles.headerRight}>
+            <TouchableOpacity 
+              style={styles.headerIconBtn}
+              onPress={() => navigation.navigate('MainTabs', { screen: 'Home' })}
+            >
+              <Ionicons name="home-outline" size={22} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </View>
+        
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#2E7D32" />
+          <Text style={styles.loadingText}>Loading product details...</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   if (error || !product) {
     return (
-      <View style={styles.centered}>
-        <Ionicons name="alert-circle-outline" size={64} color="#ef5350" />
-        <Text style={styles.errorTitle}>Product not found</Text>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Text style={styles.backBtnText}>← Back to Products</Text>
-        </TouchableOpacity>
-      </View>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <StatusBar backgroundColor="#2E7D32" barStyle="light-content" />
+        
+        {/* Green Header */}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={22} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.topBarTitle}>Product Details</Text>
+          <View style={styles.headerRight}>
+            <TouchableOpacity 
+              style={styles.headerIconBtn}
+              onPress={() => navigation.navigate('MainTabs', { screen: 'Home' })}
+            >
+              <Ionicons name="home-outline" size={22} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </View>
+        
+        <View style={styles.centered}>
+          <Ionicons name="alert-circle-outline" size={64} color="#ef5350" />
+          <Text style={styles.errorTitle}>Product not found</Text>
+          <TouchableOpacity style={styles.errorBackBtn} onPress={() => navigation.goBack()}>
+            <Text style={styles.errorBackBtnText}>← Back to Products</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -195,29 +235,41 @@ const ProductDetailScreen = ({ route, navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <Header
-        title="Product"
-        showBack
-        onBackPress={() => navigation.goBack()}
-        rightComponent={
-          <View style={styles.headerActions}>
-            <TouchableOpacity onPress={handleShare} style={styles.iconBtn}>
-              <Ionicons name="share-social-outline" size={22} color="#424242" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleFavoriteToggle} disabled={favoriteLoading || checkingFavorite}>
-              {favoriteLoading || checkingFavorite ? (
-                <ActivityIndicator size="small" color="#ef5350" />
-              ) : (
-                <Ionicons
-                  name={isFavorite ? 'heart' : 'heart-outline'}
-                  size={24}
-                  color={isFavorite ? '#ef5350' : '#424242'}
-                />
-              )}
-            </TouchableOpacity>
-          </View>
-        }
-      />
+      <StatusBar backgroundColor="#2E7D32" barStyle="light-content" />
+      
+      {/* Green Header - Matching Home and Products screens */}
+      <View style={styles.topBar}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={22} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.topBarTitle}>Product Details</Text>
+        <View style={styles.headerRight}>
+          <TouchableOpacity onPress={handleShare} style={styles.headerIconBtn}>
+            <Ionicons name="share-social-outline" size={20} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.headerIconBtn} 
+            onPress={handleFavoriteToggle} 
+            disabled={favoriteLoading || checkingFavorite}
+          >
+            {favoriteLoading || checkingFavorite ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Ionicons
+                name={isFavorite ? 'heart' : 'heart-outline'}
+                size={22}
+                color={isFavorite ? '#FFCDD2' : '#fff'}
+              />
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.headerIconBtn}
+            onPress={() => navigation.navigate('MainTabs', { screen: 'Home' })}
+          >
+            <Ionicons name="home-outline" size={22} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Hero Image */}
@@ -270,7 +322,6 @@ const ProductDetailScreen = ({ route, navigation }) => {
                 {product.rating?.toFixed(1) || '4.8'} • {product.reviewCount || 142} reviews
               </Text>
             </View>
-            
           </View>
 
           <View style={styles.priceBlock}>
@@ -392,6 +443,38 @@ const getCategoryName = (cat) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fafafa' },
+  
+  // ── TOP BAR (Green header like Home, Products, and Cart) ──
+  topBar: {
+    backgroundColor: '#2E7D32',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopLeftRadius:12,
+    borderTopRightRadius:12,
+  },
+  backBtn: { 
+    padding: 4,
+  },
+  topBarTitle: { 
+    fontSize: 18, 
+    fontWeight: '700', 
+    color: '#fff', 
+    flex: 1, 
+    textAlign: 'center' 
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerIconBtn: {
+    padding: 4,
+    position: 'relative',
+  },
+  
   centered: {
     flex: 1,
     justifyContent: 'center',
@@ -401,17 +484,14 @@ const styles = StyleSheet.create({
   },
   loadingText: { marginTop: 16, fontSize: 16, color: '#616161' },
   errorTitle: { fontSize: 22, fontWeight: '600', color: '#424242', marginTop: 16, marginBottom: 8 },
-  backBtn: {
+  errorBackBtn: {
     marginTop: 24,
     backgroundColor: '#2e7d32',
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 12,
   },
-  backBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-
-  headerActions: { flexDirection: 'row', alignItems: 'center' },
-  iconBtn: { padding: 8, marginLeft: 4 },
+  errorBackBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 
   scrollContent: { paddingBottom: 20 },
 
@@ -465,7 +545,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -6 },
     shadowOpacity: 0.1,
     shadowRadius: 16,
-   // elevation: Platform.OS === 'android' ? 12 : 0,
   },
 
   categoryPill: {
@@ -566,6 +645,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#f0f0f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   relatedImg: { width: '100%', height: 120 },
   relatedName: {
@@ -574,6 +658,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 10,
     paddingBottom: 4,
+    color: '#212121',
   },
   relatedPrice: {
     fontSize: 16,

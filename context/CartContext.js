@@ -7,6 +7,7 @@ import {
   emptyCart,
   getMyFavorites,
 } from '../apis/userActionsApi';
+import { useAuth } from "./AuthContext";
 
 const CartContext = createContext();
 
@@ -14,6 +15,7 @@ export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [favoriteItems, setFavoriteItems] = useState([]);
+  const { user, token } =  useAuth();
   const [error, setError] = useState(null);
 
   /* =======================
@@ -44,8 +46,10 @@ export const CartProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    fetchCart();
-  }, []);
+    if(user){
+      fetchCart();
+    } 
+  }, [user]);
 
   /* =======================
      ADD TO CART

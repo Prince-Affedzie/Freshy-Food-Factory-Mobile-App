@@ -29,8 +29,11 @@ export const NotificationProvider = ({ children }) => {
     setLoading(true);
     try {
       const res = await getNotifications();
-      setNotifications(res.data || []);
+      if(res.status===200){
+      setNotifications(res.data.data || res.data || []);
       setUnreadCount(res.data.filter(n => !n.read).map(n => n._id) || [])
+      }
+     
     } catch (err) {
       console.log("Failed to load notifications:", err);
       Alert.alert("Error", "Failed to load notifications");
@@ -114,10 +117,10 @@ export const NotificationProvider = ({ children }) => {
 
   // Load notifications on component mount
   useEffect(() => {
-    if (token) {
+    if (user) {
       loadNotifications();
     }
-  }, [token]);
+  }, [user]);
 
 
 

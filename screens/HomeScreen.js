@@ -63,7 +63,7 @@ const HomeScreen = () => {
   const navigation = useNavigation();
   const { user, isAuthenticated } = useAuth();
   const { addToCart, cartCount, cartItems } = useCart();
-  const { unreadCount } = useContext(NotificationContext);
+  const { notifications, unreadCount } = useContext(NotificationContext);
 
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
@@ -80,6 +80,9 @@ const HomeScreen = () => {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
+
+   const unreadNotifications = notifications?.filter(n => !n.read);
+   const notificationCount = unreadNotifications.length > 0 ? unreadNotifications.length :0
 
   useEffect(() => {
     loadHomeData();
@@ -398,14 +401,14 @@ const HomeScreen = () => {
               onPress={() => navigation.navigate('Notification')}
             >
               <Ionicons
-                name={unreadCount > 0 ? 'notifications' : 'notifications-outline'}
+                name={notificationCount > 0 ? 'notifications' : 'notifications-outline'}
                 size={22}
                 color="#fff"
               />
-              {unreadCount > 0 && (
+              {notificationCount > 0 && (
                 <View style={styles.notifBadge}>
                   <Text style={styles.notifBadgeText}>
-                    {unreadCount > 9 ? '9+' : unreadCount}
+                    {notificationCount > 9 ? '9+' : notificationCount}
                   </Text>
                 </View>
               )}

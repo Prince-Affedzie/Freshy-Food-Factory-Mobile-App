@@ -13,10 +13,10 @@ import {
   Platform,
   Modal,
   TextInput,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { getOrderById, cancelOrder } from '../apis/orderApi';
@@ -48,11 +48,11 @@ const OrderDetailScreen = () => {
 
   // Status styling
   const statusStyles = {
-    Pending: { bg: '#fff7ed', text: '#c2410c', border: '#fed7aa' },
-    Processing: { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' },
-    'Out for Delivery': { bg: '#f0fdf4', text: '#15803d', border: '#86efac' },
-    Delivered: { bg: '#f0fdf4', text: '#166534', border: '#86efac' },
-    Cancelled: { bg: '#fef2f2', text: '#b91c1c', border: '#fecaca' },
+    Pending: { bg: '#fff7ed', text: '#c2410c', border: '#fed7aa', icon: 'time' },
+    Processing: { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe', icon: 'sync' },
+    'Out for Delivery': { bg: '#f0fdf4', text: '#15803d', border: '#86efac', icon: 'bicycle' },
+    Delivered: { bg: '#f0fdf4', text: '#166534', border: '#86efac', icon: 'checkmark-circle' },
+    Cancelled: { bg: '#fef2f2', text: '#b91c1c', border: '#fecaca', icon: 'close-circle' },
   };
 
   useEffect(() => {
@@ -101,11 +101,15 @@ const OrderDetailScreen = () => {
   };
 
   const handleContactSupport = () => {
-    Linking.openURL('tel:+233501234567'); // ← change to real number
+    Linking.openURL('tel:+233505671577');
   };
 
   const handleTrackOrder = () => {
-    Alert.alert('Track Order', 'Tracking link / map coming soon!');
+    Alert.alert(
+      'Track Order',
+      'Real-time tracking will be available soon! You will be notified when your order is out for delivery.',
+      [{ text: 'OK' }]
+    );
   };
 
   const handleReorder = (order) => {
@@ -117,7 +121,6 @@ const OrderDetailScreen = () => {
         { 
           text: 'Reorder', 
           onPress: () => {
-            // TODO: Implement reorder logic
             Alert.alert('Coming Soon', 'Reorder feature will be available soon!');
           }
         }
@@ -208,22 +211,53 @@ const OrderDetailScreen = () => {
 
   if (loading && !refreshing) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#15803d" />
-        <Text style={styles.centerText}>Loading order details...</Text>
-      </View>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <StatusBar backgroundColor="#2E7D32" barStyle="light-content" />
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={22} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.topBarTitle}>Order Details</Text>
+          <View style={styles.headerRight}>
+            <TouchableOpacity 
+              style={styles.headerIconBtn}
+              onPress={() => navigation.navigate('MainTabs', { screen: 'Home' })}
+            >
+              <Ionicons name="home-outline" size={22} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color="#2E7D32" />
+          <Text style={styles.centerText}>Loading order details...</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   if (!order) {
     return (
-      <SafeAreaView style={styles.container}>
-        <Header title="Order Details" showBack onBackPress={() => navigation.goBack()} />
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <StatusBar backgroundColor="#2E7D32" barStyle="light-content" />
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={22} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.topBarTitle}>Order Details</Text>
+          <View style={styles.headerRight}>
+            <TouchableOpacity 
+              style={styles.headerIconBtn}
+              onPress={() => navigation.navigate('MainTabs', { screen: 'Home' })}
+            >
+              <Ionicons name="home-outline" size={22} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </View>
         <View style={styles.center}>
           <Ionicons name="alert-circle-outline" size={80} color="#ef4444" />
           <Text style={styles.emptyTitle}>Order Not Found</Text>
-          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <Text style={styles.backBtnText}>← Back</Text>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.backButtonText}>← Back to Orders</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -235,19 +269,32 @@ const OrderDetailScreen = () => {
   const canCancel = ['Pending', 'Processing'].includes(status) && !order.payment?.isPaid;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Header
-        title="Order Details"
-        showBack
-        onBackPress={() => navigation.goBack()}
-        rightComponent={
-          <TouchableOpacity onPress={onRefresh}>
-            <Ionicons name="refresh" size={24} color="#15803d" />
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar backgroundColor="#2E7D32" barStyle="light-content" />
+      
+      {/* Green Header - Matching other screens */}
+      <View style={styles.topBar}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={22} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.topBarTitle}>Order Details</Text>
+        <View style={styles.headerRight}>
+          <TouchableOpacity 
+            style={styles.headerIconBtn}
+            onPress={onRefresh}
+          >
+            <Ionicons name="refresh" size={22} color="#fff" />
           </TouchableOpacity>
-        }
-      />
+          <TouchableOpacity 
+            style={styles.headerIconBtn}
+            onPress={() => navigation.navigate('MainTabs', { screen: 'Home' })}
+          >
+            <Ionicons name="home-outline" size={22} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      </View>
 
-      {/* Redesigned Cancellation Modal */}
+      {/* Cancellation Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -274,7 +321,7 @@ const OrderDetailScreen = () => {
                 {/* Order Summary */}
                 <View style={styles.orderSummary}>
                   <Text style={styles.summaryLabel}>Order #{order.orderNumber || order._id?.slice(-8).toUpperCase()}</Text>
-                  <Text style={styles.summaryTotal}>Total: GH₵ {order.pricing?.totalPrice || '—'}</Text>
+                  <Text style={styles.summaryTotal}>GH₵ {order.pricing?.totalPrice || '—'}</Text>
                 </View>
 
                 <Text style={styles.modalSubtitle}>
@@ -380,13 +427,15 @@ const OrderDetailScreen = () => {
       </Modal>
 
       <ScrollView
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#15803d" />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2E7D32" />}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* STATUS CARD */}
+        {/* STATUS CARD - Enhanced */}
         <View style={[styles.statusCard, { backgroundColor: statusStyle.bg, borderColor: statusStyle.border }]}>
           <View style={styles.statusHeader}>
-            <Ionicons name="checkmark-circle" size={28} color={statusStyle.text} />
+            <View style={[styles.statusIconContainer, { backgroundColor: statusStyle.text }]}>
+              <Ionicons name={statusStyle.icon} size={24} color="#fff" />
+            </View>
             <View style={styles.statusInfo}>
               <Text style={[styles.statusMain, { color: statusStyle.text }]}>
                 {status}
@@ -399,29 +448,50 @@ const OrderDetailScreen = () => {
 
           {/* Simple timeline dots */}
           <View style={styles.timeline}>
-            {['Pending', 'Processing', 'Out for Delivery', 'Delivered'].map((s, i) => (
-              <View key={s} style={styles.timelineStep}>
-                <View style={[
-                  styles.timelineDot,
-                  s === status ? styles.timelineDotActive : 
-                  s === 'Delivered' && status === 'Delivered' ? styles.timelineDotDone : 
-                  styles.timelineDotInactive
-                ]} />
-                <Text style={[
-                  styles.timelineLabel,
-                  (s === status || (s === 'Delivered' && status === 'Delivered')) && { color: statusStyle.text }
-                ]}>
-                  {s}
-                </Text>
-              </View>
-            ))}
+            {['Pending', 'Processing', 'Out for Delivery', 'Delivered'].map((s, i) => {
+              const isActive = s === status;
+              const isPast = 
+                (status === 'Processing' && s === 'Pending') ||
+                (status === 'Out for Delivery' && (s === 'Pending' || s === 'Processing')) ||
+                (status === 'Delivered' && s !== 'Delivered');
+              
+              return (
+                <View key={s} style={styles.timelineStep}>
+                  <View style={[
+                    styles.timelineDot,
+                    isActive ? styles.timelineDotActive : 
+                    isPast ? styles.timelineDotPast : 
+                    styles.timelineDotInactive
+                  ]} />
+                  <Text style={[
+                    styles.timelineLabel,
+                    isActive && { color: statusStyle.text, fontWeight: '600' }
+                  ]}>
+                    {s === 'Out for Delivery' ? 'Out for' : s}
+                    {s === 'Out for Delivery' && <Text style={styles.timelineLabelSmall}> Delivery</Text>}
+                  </Text>
+                </View>
+              );
+            })}
           </View>
+
+          {/* Tracking info placeholder */}
+          {status === 'Out for Delivery' && (
+            <TouchableOpacity style={styles.trackingPreview} onPress={handleTrackOrder}>
+              <Ionicons name="location" size={16} color="#15803d" />
+              <Text style={styles.trackingPreviewText}>Tap to track your order</Text>
+              <Ionicons name="chevron-forward" size={16} color="#15803d" />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* ORDER ITEMS */}
         <View style={styles.section}>
           <TouchableOpacity style={styles.sectionHeader} onPress={() => toggleSection('items')}>
-            <Text style={styles.sectionTitle}>Items ({order.orderItems?.length || 0})</Text>
+            <View style={styles.sectionHeaderLeft}>
+              <Ionicons name="basket-outline" size={20} color="#2E7D32" />
+              <Text style={styles.sectionTitle}>Items ({order.orderItems?.length || 0})</Text>
+            </View>
             <Ionicons name={expanded === 'items' ? 'chevron-up' : 'chevron-down'} size={20} color="#64748b" />
           </TouchableOpacity>
 
@@ -453,7 +523,10 @@ const OrderDetailScreen = () => {
         {/* DELIVERY INFO */}
         <View style={styles.section}>
           <TouchableOpacity style={styles.sectionHeader} onPress={() => toggleSection('delivery')}>
-            <Text style={styles.sectionTitle}>Delivery</Text>
+            <View style={styles.sectionHeaderLeft}>
+              <Ionicons name="location-outline" size={20} color="#2E7D32" />
+              <Text style={styles.sectionTitle}>Delivery</Text>
+            </View>
             <Ionicons name={expanded === 'delivery' ? 'chevron-up' : 'chevron-down'} size={20} color="#64748b" />
           </TouchableOpacity>
 
@@ -504,7 +577,10 @@ const OrderDetailScreen = () => {
         {/* PAYMENT INFO */}
         <View style={styles.section}>
           <TouchableOpacity style={styles.sectionHeader} onPress={() => toggleSection('payment')}>
-            <Text style={styles.sectionTitle}>Payment</Text>
+            <View style={styles.sectionHeaderLeft}>
+              <Ionicons name="card-outline" size={20} color="#2E7D32" />
+              <Text style={styles.sectionTitle}>Payment</Text>
+            </View>
             <Ionicons name={expanded === 'payment' ? 'chevron-up' : 'chevron-down'} size={20} color="#64748b" />
           </TouchableOpacity>
 
@@ -551,7 +627,10 @@ const OrderDetailScreen = () => {
         {/* SUMMARY */}
         <View style={styles.section}>
           <TouchableOpacity style={styles.sectionHeader} onPress={() => toggleSection('summary')}>
-            <Text style={styles.sectionTitle}>Summary</Text>
+            <View style={styles.sectionHeaderLeft}>
+              <Ionicons name="calculator-outline" size={20} color="#2E7D32" />
+              <Text style={styles.sectionTitle}>Summary</Text>
+            </View>
             <Ionicons name={expanded === 'summary' ? 'chevron-up' : 'chevron-down'} size={20} color="#64748b" />
           </TouchableOpacity>
 
@@ -576,17 +655,105 @@ const OrderDetailScreen = () => {
           )}
         </View>
 
+        {/* ORDER TIMELINE */}
+        <View style={styles.section}>
+          <TouchableOpacity style={styles.sectionHeader} onPress={() => toggleSection('timeline')}>
+            <View style={styles.sectionHeaderLeft}>
+              <Ionicons name="time-outline" size={20} color="#2E7D32" />
+              <Text style={styles.sectionTitle}>Order Timeline</Text>
+            </View>
+            <Ionicons name={expanded === 'timeline' ? 'chevron-up' : 'chevron-down'} size={20} color="#64748b" />
+          </TouchableOpacity>
+
+          {expanded === 'timeline' && (
+            <View style={styles.timelineBlock}>
+              <View style={styles.timelineItem}>
+                <View style={styles.timelineItemLeft}>
+                  <View style={styles.timelineItemDot} />
+                  <View style={styles.timelineItemLine} />
+                </View>
+                <View style={styles.timelineItemContent}>
+                  <Text style={styles.timelineItemTitle}>Order Placed</Text>
+                  <Text style={styles.timelineItemTime}>{formatDate(order.createdAt)}</Text>
+                </View>
+              </View>
+
+              <View style={styles.timelineItem}>
+                <View style={styles.timelineItemLeft}>
+                  <View style={[
+                    styles.timelineItemDot,
+                    ['Processing', 'Out for Delivery', 'Delivered'].includes(status) && styles.timelineItemDotActive
+                  ]} />
+                  <View style={[
+                    styles.timelineItemLine,
+                    ['Out for Delivery', 'Delivered'].includes(status) && styles.timelineItemLineActive
+                  ]} />
+                </View>
+                <View style={styles.timelineItemContent}>
+                  <Text style={[
+                    styles.timelineItemTitle,
+                    ['Processing', 'Out for Delivery', 'Delivered'].includes(status) && styles.timelineItemTitleActive
+                  ]}>Order Confirmed</Text>
+                  {['Processing', 'Out for Delivery', 'Delivered'].includes(status) && (
+                    <Text style={styles.timelineItemTime}>Processing started</Text>
+                  )}
+                </View>
+              </View>
+
+              <View style={styles.timelineItem}>
+                <View style={styles.timelineItemLeft}>
+                  <View style={[
+                    styles.timelineItemDot,
+                    ['Out for Delivery', 'Delivered'].includes(status) && styles.timelineItemDotActive
+                  ]} />
+                  <View style={[
+                    styles.timelineItemLine,
+                    status === 'Delivered' && styles.timelineItemLineActive
+                  ]} />
+                </View>
+                <View style={styles.timelineItemContent}>
+                  <Text style={[
+                    styles.timelineItemTitle,
+                    ['Out for Delivery', 'Delivered'].includes(status) && styles.timelineItemTitleActive
+                  ]}>Out for Delivery</Text>
+                  {status === 'Out for Delivery' && (
+                    <Text style={styles.timelineItemTime}>Your order is on the way</Text>
+                  )}
+                </View>
+              </View>
+
+              <View style={styles.timelineItem}>
+                <View style={styles.timelineItemLeft}>
+                  <View style={[
+                    styles.timelineItemDot,
+                    status === 'Delivered' && styles.timelineItemDotActive
+                  ]} />
+                </View>
+                <View style={styles.timelineItemContent}>
+                  <Text style={[
+                    styles.timelineItemTitle,
+                    status === 'Delivered' && styles.timelineItemTitleActive
+                  ]}>Delivered</Text>
+                  {status === 'Delivered' && (
+                    <Text style={styles.timelineItemTime}>{formatDate(order.deliveredAt)}</Text>
+                  )}
+                </View>
+              </View>
+            </View>
+          )}
+        </View>
+
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* BOTTOM ACTIONS */}
+      {/* BOTTOM ACTIONS - Enhanced */}
       <View style={styles.bottomActions}>
         <TouchableOpacity style={styles.actionSupport} onPress={handleContactSupport}>
           <Ionicons name="help-circle-outline" size={20} color="#fff" />
           <Text style={styles.actionText}>Support</Text>
         </TouchableOpacity>
 
-        {(status === 'Processing' || status === 'Out for Delivery') && (
+        {(status === 'Out for Delivery') && (
           <TouchableOpacity style={styles.actionTrack} onPress={handleTrackOrder}>
             <Ionicons name="location-outline" size={20} color="#fff" />
             <Text style={styles.actionText}>Track</Text>
@@ -620,14 +787,47 @@ const OrderDetailScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8fafc' },
+  
+  // ── TOP BAR (Green header like other screens) ──
+  topBar: {
+    backgroundColor: '#2E7D32',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopLeftRadius:12,
+    borderTopRightRadius:12,
+  },
+  backBtn: { 
+    padding: 4,
+  },
+  topBarTitle: { 
+    fontSize: 18, 
+    fontWeight: '700', 
+    color: '#fff', 
+    flex: 1, 
+    textAlign: 'center' 
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerIconBtn: {
+    padding: 4,
+    position: 'relative',
+  },
+  
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
   centerText: { marginTop: 16, fontSize: 16, color: '#64748b' },
   emptyTitle: { fontSize: 22, fontWeight: '700', color: '#1e293b', marginTop: 16 },
-  backBtn: { marginTop: 24, backgroundColor: '#15803d', paddingVertical: 14, paddingHorizontal: 32, borderRadius: 12 },
-  backBtnText: { color: 'white', fontSize: 16, fontWeight: '600' },
+  backButton: { marginTop: 24, backgroundColor: '#2E7D32', paddingVertical: 14, paddingHorizontal: 32, borderRadius: 12 },
+  backButtonText: { color: 'white', fontSize: 16, fontWeight: '600' },
 
   scrollContent: { paddingBottom: 140 },
 
+  // Status Card - Enhanced
   statusCard: {
     margin: 16,
     borderRadius: 16,
@@ -640,7 +840,15 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   statusHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  statusInfo: { marginLeft: 12, flex: 1 },
+  statusIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  statusInfo: { flex: 1 },
   statusMain: { fontSize: 20, fontWeight: '700' },
   orderNumber: { fontSize: 14, color: '#64748b', marginTop: 4 },
 
@@ -656,11 +864,29 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginBottom: 6,
   },
-  timelineDotActive: { backgroundColor: '#15803d' },
-  timelineDotDone: { backgroundColor: '#166534' },
+  timelineDotActive: { backgroundColor: '#15803d', width: 14, height: 14, borderRadius: 7 },
+  timelineDotPast: { backgroundColor: '#15803d', opacity: 0.5 },
   timelineDotInactive: { backgroundColor: '#cbd5e1' },
-  timelineLabel: { fontSize: 12, color: '#64748b', textAlign: 'center' },
+  timelineLabel: { fontSize: 11, color: '#64748b', textAlign: 'center' },
+  timelineLabelSmall: { fontSize: 9 },
 
+  trackingPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: '#f0fdf4',
+    borderRadius: 12,
+    gap: 8,
+  },
+  trackingPreviewText: {
+    fontSize: 14,
+    color: '#15803d',
+    fontWeight: '600',
+  },
+
+  // Sections
   section: {
     backgroundColor: 'white',
     marginHorizontal: 16,
@@ -676,6 +902,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     backgroundColor: '#f8fafc',
+  },
+  sectionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: '#1e293b' },
 
@@ -702,7 +933,61 @@ const styles = StyleSheet.create({
   totalLabel: { fontSize: 16, fontWeight: '700', color: '#1e293b' },
   grandTotal: { fontSize: 20, fontWeight: '800', color: '#15803d' },
 
-  // Redesigned Modal Styles
+  // Timeline Block
+  timelineBlock: {
+    padding: 16,
+  },
+  timelineItem: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  timelineItemLeft: {
+    width: 30,
+    alignItems: 'center',
+  },
+  timelineItemDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#cbd5e1',
+    zIndex: 1,
+  },
+  timelineItemDotActive: {
+    backgroundColor: '#15803d',
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+  },
+  timelineItemLine: {
+    width: 2,
+    flex: 1,
+    backgroundColor: '#cbd5e1',
+    marginTop: 2,
+    marginBottom: 2,
+  },
+  timelineItemLineActive: {
+    backgroundColor: '#15803d',
+  },
+  timelineItemContent: {
+    flex: 1,
+    paddingBottom: 16,
+  },
+  timelineItemTitle: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#64748b',
+    marginBottom: 2,
+  },
+  timelineItemTitleActive: {
+    color: '#1e293b',
+    fontWeight: '600',
+  },
+  timelineItemTime: {
+    fontSize: 12,
+    color: '#94a3b8',
+  },
+
+  // Modal Styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -896,6 +1181,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
+  // Bottom Actions
   bottomActions: {
     position: 'absolute',
     bottom: 0,

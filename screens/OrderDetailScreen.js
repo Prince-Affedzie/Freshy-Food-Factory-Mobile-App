@@ -417,7 +417,7 @@ const OrderDetailScreen = () => {
                 ) : (
                   <>
                     <Ionicons name="checkmark-circle" size={18} color="#fff" style={styles.footerConfirmIcon} />
-                    <Text style={styles.footerConfirmButtonText}>Confirm Cancellation</Text>
+                    <Text style={styles.footerConfirmButtonText}>Confirm </Text>
                   </>
                 )}
               </TouchableOpacity>

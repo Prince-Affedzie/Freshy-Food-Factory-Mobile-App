@@ -12,10 +12,10 @@ import {
   Alert,
   Dimensions,
   ScrollView,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { getMyOrder } from '../apis/orderApi';
@@ -385,21 +385,12 @@ const OrdersScreen = () => {
             }
           </Text>
         </View>
-        <TouchableOpacity 
-          style={styles.filterMenuButton}
-          onPress={() => setShowFilterDropdown(!showFilterDropdown)}
-        >
-          <Ionicons name="options-outline" size={20} color="#2E7D32" />
-        </TouchableOpacity>
       </View>
 
       {/* Stats Overview Cards */}
       {stats.total > 0 && (
         <View style={styles.statsOverview}>
           <View style={styles.statCard}>
-            {/*<View style={[styles.statIconContainer, { backgroundColor: '#4CAF50' }]}>
-              <Ionicons name="bag-handle-outline" size={20} color="#FFFFFF" />
-            </View>*/}
             <View style={styles.statInfo}>
               <Text style={styles.statValue}>{stats.total}</Text>
               <Text style={styles.statLabel}>Total</Text>
@@ -407,9 +398,6 @@ const OrdersScreen = () => {
           </View>
 
           <View style={styles.statCard}>
-            {/*<View style={[styles.statIconContainer, { backgroundColor: '#FF9800' }]}>
-              <Ionicons name="time-outline" size={20} color="#FFFFFF" />
-            </View>*/}
             <View style={styles.statInfo}>
               <Text style={styles.statValue}>{stats.pending + stats.processing + stats.out_for_delivery}</Text>
               <Text style={styles.statLabel}>Active</Text>
@@ -417,9 +405,6 @@ const OrdersScreen = () => {
           </View>
 
           <View style={styles.statCard}>
-           {/* <View style={[styles.statIconContainer, { backgroundColor: '#2E7D32' }]}>
-              <Ionicons name="checkmark-circle-outline" size={20} color="#FFFFFF" />
-            </View>*/}
             <View style={styles.statInfo}>
               <Text style={styles.statValue}>{stats.delivered}</Text>
               <Text style={styles.statLabel}>Delivered</Text>
@@ -498,12 +483,25 @@ const OrdersScreen = () => {
 
   if (!isAuthenticated && !loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <Header
-          title="My Orders"
-          showBack
-          onBackPress={() => navigation.goBack()}
-        />
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <StatusBar backgroundColor="#2E7D32" barStyle="light-content" />
+        
+        {/* Green Header */}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={22} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.topBarTitle}>My Orders</Text>
+          <View style={styles.headerRight}>
+            <TouchableOpacity 
+              style={styles.headerIconBtn}
+              onPress={() => navigation.navigate('MainTabs', { screen: 'Home' })}
+            >
+              <Ionicons name="home-outline" size={22} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </View>
+        
         <View style={styles.emptyContainer}>
           <View style={styles.emptyIconContainer}>
             <Ionicons name="receipt-outline" size={80} color="#BDBDBD" />
@@ -528,27 +526,58 @@ const OrdersScreen = () => {
 
   if (loading && !refreshing && orders.length === 0) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4CAF50" />
-        <Text style={styles.loadingText}>Loading your orders...</Text>
-      </View>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <StatusBar backgroundColor="#2E7D32" barStyle="light-content" />
+        
+        {/* Green Header */}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={22} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.topBarTitle}>My Orders</Text>
+          <View style={styles.headerRight}>
+            <TouchableOpacity 
+              style={styles.headerIconBtn}
+              onPress={() => navigation.navigate('MainTabs', { screen: 'Home' })}
+            >
+              <Ionicons name="home-outline" size={22} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </View>
+        
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#4CAF50" />
+          <Text style={styles.loadingText}>Loading your orders...</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Header
-        title="My Orders"
-        showBack
-        onBackPress={() => navigation.goBack()}
-        rightComponent={
-          <TouchableOpacity onPress={onRefresh} style={styles.refreshButton}>
-            <View style={styles.refreshGradient}>
-              <Ionicons name="refresh-outline" size={20} color="#2E7D32" />
-            </View>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar backgroundColor="#2E7D32" barStyle="light-content" />
+      
+      {/* Green Header - Matching all other screens */}
+      <View style={styles.topBar}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={22} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.topBarTitle}>My Orders</Text>
+        <View style={styles.headerRight}>
+          <TouchableOpacity 
+            style={styles.headerIconBtn}
+            onPress={onRefresh}
+          >
+            <Ionicons name="refresh" size={22} color="#fff" />
           </TouchableOpacity>
-        }
-      />
+          <TouchableOpacity 
+            style={styles.headerIconBtn}
+            onPress={() => navigation.navigate('MainTabs', { screen: 'Home' })}
+          >
+            <Ionicons name="home-outline" size={22} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      </View>
 
       <FlatList
         data={filteredOrders}
@@ -576,6 +605,38 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8F9FA',
   },
+  
+  // ── TOP BAR (Green header like other screens) ──
+  topBar: {
+    backgroundColor: '#2E7D32',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopLeftRadius:12,
+    borderTopRightRadius:12,
+  },
+  backBtn: { 
+    padding: 4,
+  },
+  topBarTitle: { 
+    fontSize: 18, 
+    fontWeight: '700', 
+    color: '#fff', 
+    flex: 1, 
+    textAlign: 'center' 
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerIconBtn: {
+    padding: 4,
+    position: 'relative',
+  },
+  
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',

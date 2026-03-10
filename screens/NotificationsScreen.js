@@ -14,11 +14,12 @@ import {
   Platform,
   Modal,
   TextInput,
+  ScrollView,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
-import Header from '../components/Header';
 import { getNotifications, markNotificationAsRead, deleteNotification, deleteBulkNotifications } from '../apis/notificationApi';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -34,6 +35,8 @@ const NotificationScreen = ({ navigation }) => {
   const [filter, setFilter] = useState('all'); // 'all', 'unread', 'read'
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [notificationToDelete, setNotificationToDelete] = useState(null);
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState(null);
   const fadeAnim = useState(new Animated.Value(0))[0];
 
   useFocusEffect(
@@ -229,8 +232,19 @@ const NotificationScreen = ({ navigation }) => {
     }
   };
 
+  const handleNotificationPress = async (item) => {
+    // Mark as read if unread
+    if (!item.isRead) {
+      await handleMarkAsRead(item._id);
+    }
+    
+    // Show details modal
+    setSelectedNotification(item);
+    setDetailModalVisible(true);
+  };
+
   const getNotificationIcon = (type) => {
-    switch (type) {
+    switch (type?.toLowerCase()) {
       case 'order':
         return { icon: 'cart-outline', color: '#4CAF50', bgColor: '#E8F5E8' };
       case 'delivery':
@@ -247,6 +261,7 @@ const NotificationScreen = ({ navigation }) => {
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return '';
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = (now - date) / (1000 * 60 * 60);
@@ -262,8 +277,22 @@ const NotificationScreen = ({ navigation }) => {
       return date.toLocaleDateString('en-GB', {
         day: 'numeric',
         month: 'short',
+        year: 'numeric',
       });
     }
+  };
+
+  const formatFullDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   const renderRightActions = (progress, dragX, notificationId) => {
@@ -305,11 +334,7 @@ const NotificationScreen = ({ navigation }) => {
           if (selectMode) {
             toggleSelectNotification(item._id);
           } else {
-            handleMarkAsRead(item._id);
-            // Navigate based on notification type
-            if (item.link) {
-              navigation.navigate(item.link.screen, item.link.params);
-            }
+            handleNotificationPress(item);
           }
         }}
         onLongPress={() => setSelectMode(true)}
@@ -391,58 +416,66 @@ const NotificationScreen = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Header 
-        title="Notifications" 
-        showBack
-        onBackPress={() => navigation.goBack()}
-        rightComponent={
-          <View style={styles.headerRight}>
-            {selectMode ? (
-              <>
-                <TouchableOpacity 
-                  style={styles.headerIcon}
-                  onPress={toggleSelectAll}
-                >
-                  <Text style={styles.selectAllText}>
-                    {selectedNotifications.length === filteredNotifications.length ? 'Deselect All' : 'Select All'}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={styles.headerIcon}
-                  onPress={() => {
-                    setSelectMode(false);
-                    setSelectedNotifications([]);
-                  }}
-                >
-                  <Text style={styles.cancelText}>Cancel</Text>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                <TouchableOpacity 
-                  style={styles.headerIcon}
-                  onPress={() => setFilter('all')}
-                >
-                  <Ionicons name="filter-outline" size={24} color="#2E7D32" />
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={styles.headerIcon}
-                  onPress={handleMarkAllAsRead}
-                >
-                  <Ionicons name="checkmark-done-outline" size={24} color="#2E7D32" />
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={styles.headerIcon}
-                  onPress={() => setSelectMode(true)}
-                >
-                  <Ionicons name="checkmark-circle-outline" size={24} color="#2E7D32" />
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        }
-      />
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar backgroundColor="#2E7D32" barStyle="light-content" />
+      
+      {/* Green Header - Matching all other screens */}
+      <View style={styles.topBar}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={22} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.topBarTitle}>Notifications</Text>
+        <View style={styles.headerRight}>
+          {selectMode ? (
+            <>
+              <TouchableOpacity 
+                style={styles.headerIconBtn}
+                onPress={toggleSelectAll}
+              >
+                <Text style={styles.selectAllText}>
+                  {selectedNotifications.length === filteredNotifications.length ? 'Deselect All' : 'Select All'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.headerIconBtn}
+                onPress={() => {
+                  setSelectMode(false);
+                  setSelectedNotifications([]);
+                }}
+              >
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <TouchableOpacity 
+                style={styles.headerIconBtn}
+                onPress={() => setFilter('all')}
+              >
+                <Ionicons name="filter-outline" size={22} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.headerIconBtn}
+                onPress={handleMarkAllAsRead}
+              >
+                <Ionicons name="checkmark-done-outline" size={22} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.headerIconBtn}
+                onPress={() => setSelectMode(true)}
+              >
+                <Ionicons name="checkmark-circle-outline" size={22} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.headerIconBtn}
+                onPress={() => navigation.navigate('MainTabs', { screen: 'Home' })}
+              >
+                <Ionicons name="home-outline" size={22} color="#fff" />
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      </View>
 
       {/* Search Bar */}
       {!selectMode && (
@@ -636,42 +669,170 @@ const NotificationScreen = ({ navigation }) => {
           </View>
         </View>
       </Modal>
+
+      {/* Notification Detail Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={detailModalVisible}
+        onRequestClose={() => setDetailModalVisible(false)}
+      >
+        <View style={styles.detailModalOverlay}>
+          <View style={styles.detailModalContainer}>
+            <View style={styles.detailModalHeader}>
+              <TouchableOpacity
+                style={styles.detailModalCloseBtn}
+                onPress={() => setDetailModalVisible(false)}
+              >
+                <Ionicons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+              <Text style={styles.detailModalTitle}>Notification Details</Text>
+              <View style={{ width: 40 }} />
+            </View>
+
+            {selectedNotification && (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <View style={styles.detailModalContent}>
+                  {/* Icon and Type */}
+                  <View style={styles.detailIconSection}>
+                    <View style={[styles.detailIconContainer, { 
+                      backgroundColor: getNotificationIcon(selectedNotification.type).bgColor 
+                    }]}>
+                      <Ionicons 
+                        name={getNotificationIcon(selectedNotification.type).icon} 
+                        size={48} 
+                        color={getNotificationIcon(selectedNotification.type).color} 
+                      />
+                    </View>
+                    <View style={styles.detailTypeContainer}>
+                      <Text style={styles.detailType}>
+                        {selectedNotification.type?.charAt(0).toUpperCase() + 
+                         selectedNotification.type?.slice(1) || 'Notification'}
+                      </Text>
+                      <View style={[
+                        styles.detailStatusBadge,
+                        selectedNotification.isRead ? styles.readBadge : styles.unreadBadge
+                      ]}>
+                        <Text style={[
+                          styles.detailStatusText,
+                          selectedNotification.isRead ? styles.readStatusText : styles.unreadStatusText
+                        ]}>
+                          {selectedNotification.isRead ? 'Read' : 'Unread'}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Title */}
+                  <Text style={styles.detailTitle}>{selectedNotification.title}</Text>
+
+                  {/* Date */}
+                  <View style={styles.detailDateContainer}>
+                    <Ionicons name="calendar-outline" size={16} color="#666" />
+                    <Text style={styles.detailDate}>
+                      {formatFullDate(selectedNotification.createdAt || selectedNotification.date)}
+                    </Text>
+                  </View>
+
+                  {/* Message */}
+                  <View style={styles.detailMessageContainer}>
+                    <Text style={styles.detailMessageLabel}>Message</Text>
+                    <Text style={styles.detailMessage}>
+                      {selectedNotification.message}
+                    </Text>
+                  </View>
+
+                  {/* Additional Info (if available) */}
+                  {selectedNotification.data && (
+                    <View style={styles.detailDataContainer}>
+                      <Text style={styles.detailDataLabel}>Additional Information</Text>
+                      <View style={styles.detailDataContent}>
+                        {Object.entries(selectedNotification.data).map(([key, value]) => (
+                          <View key={key} style={styles.detailDataRow}>
+                            <Text style={styles.detailDataKey}>{key}:</Text>
+                            <Text style={styles.detailDataValue}>{String(value)}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Action Button (if link exists) */}
+                  {selectedNotification.link && (
+                    <TouchableOpacity
+                      style={styles.detailActionButton}
+                      onPress={() => {
+                        setDetailModalVisible(false);
+                        navigation.navigate(selectedNotification.link.screen, selectedNotification.link.params);
+                      }}
+                    >
+                      <Text style={styles.detailActionButtonText}>
+                        View {selectedNotification.link.screen}
+                      </Text>
+                      <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
-
-// Import ScrollView at the top
-import { ScrollView } from 'react-native';
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
   },
+  
+  // ── TOP BAR (Green header like other screens) ──
+  topBar: {
+    backgroundColor: '#2E7D32',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  backBtn: { 
+    padding: 4,
+  },
+  topBarTitle: { 
+    fontSize: 18, 
+    fontWeight: '700', 
+    color: '#fff', 
+    flex: 1, 
+    textAlign: 'center' 
+  },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
   },
-  headerIcon: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+  headerIconBtn: {
+    padding: 4,
+    position: 'relative',
   },
   selectAllText: {
-    color: '#4CAF50',
+    color: '#fff',
     fontSize: 14,
     fontWeight: '600',
   },
   cancelText: {
-    color: '#666',
+    color: '#fff',
     fontSize: 14,
     fontWeight: '600',
   },
+  
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     marginHorizontal: 16,
-    marginTop: 8,
+    marginTop: 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
@@ -948,6 +1109,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 8,
   },
+  
+  // Delete Modal
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -1009,6 +1172,179 @@ const styles = StyleSheet.create({
   modalButtonText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+
+  // Detail Modal
+  detailModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  detailModalContainer: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    minHeight: '60%',
+    maxHeight: '90%',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  detailModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  detailModalCloseBtn: {
+    padding: 4,
+  },
+  detailModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#212121',
+  },
+  detailModalContent: {
+    padding: 20,
+  },
+  detailIconSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  detailIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  detailTypeContainer: {
+    flex: 1,
+  },
+  detailType: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#212121',
+    marginBottom: 8,
+  },
+  detailStatusBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 16,
+  },
+  readBadge: {
+    backgroundColor: '#F1F8E9',
+  },
+  unreadBadge: {
+    backgroundColor: '#FFF3E0',
+  },
+  detailStatusText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  readStatusText: {
+    color: '#2E7D32',
+  },
+  unreadStatusText: {
+    color: '#F57C00',
+  },
+  detailTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#212121',
+    marginBottom: 12,
+  },
+  detailDateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    backgroundColor: '#F5F5F5',
+    padding: 12,
+    borderRadius: 12,
+  },
+  detailDate: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 8,
+    flex: 1,
+  },
+  detailMessageContainer: {
+    marginBottom: 20,
+  },
+  detailMessageLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#212121',
+    marginBottom: 8,
+  },
+  detailMessage: {
+    fontSize: 16,
+    color: '#666',
+    lineHeight: 24,
+    backgroundColor: '#F8F9FA',
+    padding: 16,
+    borderRadius: 12,
+  },
+  detailDataContainer: {
+    marginBottom: 20,
+  },
+  detailDataLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#212121',
+    marginBottom: 8,
+  },
+  detailDataContent: {
+    backgroundColor: '#F8F9FA',
+    padding: 16,
+    borderRadius: 12,
+  },
+  detailDataRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  detailDataKey: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
+  detailDataValue: {
+    fontSize: 14,
+    color: '#212121',
+    fontWeight: '600',
+  },
+  detailActionButton: {
+    backgroundColor: '#4CAF50',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginTop: 20,
+    marginBottom: 30,
+  },
+  detailActionButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginRight: 8,
   },
 });
 

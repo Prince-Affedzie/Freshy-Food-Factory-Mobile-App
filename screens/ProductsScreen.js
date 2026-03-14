@@ -25,7 +25,7 @@ const { width } = Dimensions.get('window');
 
 // Hero images per category
 const HERO_IMAGES = {
-  all: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1773487837/thomas-le-pRJhn4MbsMM-unsplash_xoh451.jpg',
+  all: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1773523455/grocerry2_eul0ez.jpg',
   vegetables: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1769990080/vegetables_cpp5n5.jpg',
   fruits: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1773488413/fruits_1_shqhh2.jpg',
   staples: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1770886305/staple_food_xlgo92.jpg',

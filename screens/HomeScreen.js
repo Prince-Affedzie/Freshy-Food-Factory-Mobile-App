@@ -1,5 +1,5 @@
 // src/screens/main/HomeScreen.js
-import React, { useState, useEffect, useCallback, useContext } from 'react';
+import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import {
   TextInput,
   StatusBar,
   TouchableWithoutFeedback,
+  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,6 +27,57 @@ import { NotificationContext } from '../context/NotificationContext';
 import { useNavigation } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
+
+// ─────────────────────────────────────────────
+// HERO CAROUSEL SLIDES
+// Each slide has its own image, headline, sub-
+// text, button label, and accent colour so each
+// one feels distinct.
+// ─────────────────────────────────────────────
+const HERO_SLIDES = [
+  {
+    id: '1',
+    image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&q=80',
+    tag: '🚚  Fast Delivery',
+    title: 'Fresh Groceries\nAt Your Door',
+    subtitle: 'Order before 12 pm and get same-day delivery',
+    btnText: 'Order Now',
+    accentColor: '#fff',
+    overlayColor: 'rgba(0,0,0,0.35)',
+  },
+  {
+    id: '2',
+    image: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1769990080/vegetables_cpp5n5.jpg',
+    tag: '🥦  Farm Fresh',
+    title: 'Straight From\nThe Farm',
+    subtitle: 'Hand-picked vegetables delivered fresh daily',
+    btnText: 'Shop Veggies',
+    accentColor: '#A5D6A7',
+    overlayColor: 'rgba(0,60,0,0.42)',
+  },
+  {
+    id: '3',
+    image: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1770885485/colorful-fruits-tasty-fresh-ripe-juicy-white-desk_utdxnl.jpg',
+    tag: '🍎  Seasonal Picks',
+    title: 'Juicy Fruits,\nEvery Season',
+    subtitle: 'Tropical & local fruits sourced weekly',
+    btnText: 'Explore Fruits',
+    accentColor: '#FFCC80',
+    overlayColor: 'rgba(80,20,0,0.38)',
+  },
+  {
+    id: '4',
+    image: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1770886305/staple_food_xlgo92.jpg',
+    tag: '⚡  Special Deal',
+    title: 'Free Delivery\nOver GH₵ 200',
+    subtitle: 'Stock up on staples and save on shipping',
+    btnText: 'Shop Staples',
+    accentColor: '#FFE082',
+    overlayColor: 'rgba(20,10,0,0.44)',
+  },
+];
+
+const AUTO_SCROLL_INTERVAL = 4000; // ms between slides
 
 const CATEGORY_IMAGES = {
   vegetables: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1769990080/vegetables_cpp5n5.jpg',
@@ -42,7 +94,6 @@ const CATEGORY_IMAGES = {
   default: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1769990080/vegetables_cpp5n5.jpg',
 };
 
-// Category icons mapping
 const CATEGORY_ICONS = {
   fruits: '🍎',
   vegetables: '🥦',
@@ -59,6 +110,117 @@ const CATEGORY_ICONS = {
   default: '🛒',
 };
 
+// ─────────────────────────────────────────────
+// HERO CAROUSEL COMPONENT
+// ─────────────────────────────────────────────
+const HeroCarousel = ({ onSlidePress }) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const flatListRef = useRef(null);
+  const timerRef = useRef(null);
+
+  const startAutoScroll = useCallback(() => {
+    timerRef.current = setInterval(() => {
+      setActiveIndex(prev => {
+        const next = (prev + 1) % HERO_SLIDES.length;
+        flatListRef.current?.scrollToIndex({ index: next, animated: true });
+        return next;
+      });
+    }, AUTO_SCROLL_INTERVAL);
+  }, []);
+
+  useEffect(() => {
+    startAutoScroll();
+    return () => clearInterval(timerRef.current);
+  }, [startAutoScroll]);
+
+  // Restart timer when user manually swipes
+  const handleMomentumScrollEnd = (e) => {
+    const index = Math.round(e.nativeEvent.contentOffset.x / width);
+    setActiveIndex(index);
+    clearInterval(timerRef.current);
+    startAutoScroll();
+  };
+
+  const renderSlide = ({ item }) => (
+    <TouchableOpacity
+      activeOpacity={0.92}
+      onPress={() => onSlidePress(item)}
+      style={styles.slideWrapper}
+    >
+      <Image source={{ uri: item.image }} style={styles.slideImage} resizeMode="cover" />
+
+      {/* Scrim */}
+      <View style={[styles.slideScrim, { backgroundColor: item.overlayColor }]} />
+
+      {/* Content */}
+      <View style={styles.slideContent}>
+        {/* Tag pill */}
+        <View style={styles.slideTagPill}>
+          <Text style={styles.slideTagText}>{item.tag}</Text>
+        </View>
+
+        <Text style={styles.slideTitle}>{item.title}</Text>
+        <Text style={styles.slideSubtitle}>{item.subtitle}</Text>
+
+        <TouchableOpacity
+          style={[styles.slideBtn, { borderColor: item.accentColor }]}
+          onPress={() => onSlidePress(item)}
+          activeOpacity={0.85}
+        >
+          <Text style={[styles.slideBtnText, { color: item.accentColor }]}>{item.btnText}</Text>
+          <Ionicons name="arrow-forward" size={13} color={item.accentColor} />
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={styles.carouselWrapper}>
+      <FlatList
+        ref={flatListRef}
+        data={HERO_SLIDES}
+        renderItem={renderSlide}
+        keyExtractor={item => item.id}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleMomentumScrollEnd}
+        scrollEventThrottle={16}
+        getItemLayout={(_, index) => ({
+          length: width - 32,
+          offset: (width - 32) * index,
+          index,
+        })}
+      />
+
+      {/* Dot indicators */}
+      <View style={styles.dotsRow}>
+        {HERO_SLIDES.map((_, i) => (
+          <TouchableOpacity
+            key={i}
+            onPress={() => {
+              flatListRef.current?.scrollToIndex({ index: i, animated: true });
+              setActiveIndex(i);
+              clearInterval(timerRef.current);
+              startAutoScroll();
+            }}
+          >
+            <View
+              style={[
+                styles.dot,
+                i === activeIndex ? styles.dotActive : styles.dotInactive,
+              ]}
+            />
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+};
+
+// ─────────────────────────────────────────────
+// MAIN HOME SCREEN
+// ─────────────────────────────────────────────
 const HomeScreen = () => {
   const navigation = useNavigation();
   const { user, isAuthenticated } = useAuth();
@@ -81,8 +243,8 @@ const HomeScreen = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
 
-   const unreadNotifications = notifications?.filter(n => !n.read);
-   const notificationCount = unreadNotifications.length > 0 ? unreadNotifications.length :0
+  const unreadNotifications = notifications?.filter(n => !n.read);
+  const notificationCount = unreadNotifications.length > 0 ? unreadNotifications.length : 0;
 
   useEffect(() => {
     loadHomeData();
@@ -107,15 +269,14 @@ const HomeScreen = () => {
       if (categoriesResponse.success) {
         setCategories(categoriesResponse.data.slice(1, 7));
       }
-      const params = { limit: 6, page: 1 };
       const [featuredRes, newRes, bestRes] = await Promise.all([
-        productService.getProductByTag("featured"),
-        productService.getProductByTag("new_arrival"),
-        productService.getProductByTag("best_selling"),
+        productService.getProductByTag('featured'),
+        productService.getProductByTag('new_arrival'),
+        productService.getProductByTag('best_selling'),
       ]);
-      if (featuredRes.status===200) setFeaturedProducts(featuredRes.data.data);
-      if (newRes.status===200) setNewArrivals(newRes.data.data);
-      if (bestRes.status===200) setBestSellers(bestRes.data.data);
+      if (featuredRes.status === 200) setFeaturedProducts(featuredRes.data.data);
+      if (newRes.status === 200) setNewArrivals(newRes.data.data);
+      if (bestRes.status === 200) setBestSellers(bestRes.data.data);
     } catch (error) {
       console.error('Error loading home data:', error);
       Alert.alert('Error', 'Failed to load home data. Please try again.');
@@ -159,16 +320,11 @@ const HomeScreen = () => {
     setShowSearchResults(false);
   };
 
-  // New function to handle closing search results
-  const closeSearchResults = () => {
-    setShowSearchResults(false);
-    // Optionally clear search query as well
-    // setSearchQuery('');
-  };
+  const closeSearchResults = () => setShowSearchResults(false);
 
   const getQuantityInCart = (productId) => {
     const cartItem = cartItems.find(
-      (item) => item.product?._id === productId || item.productId === productId
+      (item) => item.product?._id === productId || item.productId === productId,
     );
     return cartItem ? cartItem.quantity : 0;
   };
@@ -180,14 +336,10 @@ const HomeScreen = () => {
         return;
       }
       if (!isAuthenticated) {
-        Alert.alert(
-          'Login Required',
-          'Please login to add items to cart.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Login', onPress: () => navigation.navigate('Login') },
-          ]
-        );
+        Alert.alert('Login Required', 'Please login to add items to cart.', [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Login', onPress: () => navigation.navigate('Login') },
+        ]);
         return;
       }
       setAddingProductId(product.id || product._id);
@@ -207,7 +359,17 @@ const HomeScreen = () => {
     }
   };
 
- 
+  // Handle carousel CTA per slide
+  const handleSlidePress = (slide) => {
+    switch (slide.id) {
+      case '1': navigation.navigate('Products'); break;
+      case '2': navigation.navigate('Products', { category: 'vegetables' }); break;
+      case '3': navigation.navigate('Products', { category: 'fruits' }); break;
+      case '4': navigation.navigate('Products', { category: 'staples' }); break;
+      default:  navigation.navigate('Products');
+    }
+  };
+
   const getCategoryIcon = (categoryName) => {
     if (!categoryName) return CATEGORY_ICONS.default;
     const name = categoryName.toLowerCase();
@@ -235,20 +397,12 @@ const HomeScreen = () => {
       <TouchableOpacity
         key={product.id || product._id}
         style={styles.dealCard}
-        onPress={() =>
-          navigation.navigate('ProductDetail', {
-            productId: product.id || product._id,
-            product,
-          })
-        }
+        onPress={() => navigation.navigate('ProductDetail', { productId: product.id || product._id, product })}
         activeOpacity={0.85}
         disabled={isAdding}
       >
         <Image
-          source={{
-            uri: product.image || product.images?.[0] ||
-              'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80',
-          }}
+          source={{ uri: product.image || product.images?.[0] || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80' }}
           style={styles.dealImage}
           resizeMode="cover"
         />
@@ -258,11 +412,7 @@ const HomeScreen = () => {
           <View style={styles.dealFooter}>
             <Text style={styles.dealPrice}>GH₵{product.price?.toFixed(2)}</Text>
             <TouchableOpacity
-              style={[
-                styles.dealAddButton,
-                isInCart && styles.dealAddButtonActive,
-                isAdding && styles.dealAddButtonLoading,
-              ]}
+              style={[styles.dealAddButton, isInCart && styles.dealAddButtonActive, isAdding && styles.dealAddButtonLoading]}
               onPress={() => handleAddToCart(product)}
               disabled={isAdding}
             >
@@ -270,14 +420,8 @@ const HomeScreen = () => {
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
                 <>
-                  <Ionicons
-                    name={isInCart ? 'checkmark' : 'cart-outline'}
-                    size={13}
-                    color="#fff"
-                  />
-                  <Text style={styles.dealAddButtonText}>
-                    {isInCart ? 'Added' : 'Add'}
-                  </Text>
+                  <Ionicons name={isInCart ? 'checkmark' : 'cart-outline'} size={13} color="#fff" />
+                  <Text style={styles.dealAddButtonText}>{isInCart ? 'Added' : 'Add'}</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -296,20 +440,12 @@ const HomeScreen = () => {
       <TouchableOpacity
         key={product.id || product._id}
         style={styles.featuredCard}
-        onPress={() =>
-          navigation.navigate('ProductDetail', {
-            productId: product.id || product._id,
-            product,
-          })
-        }
+        onPress={() => navigation.navigate('ProductDetail', { productId: product.id || product._id, product })}
         activeOpacity={0.85}
         disabled={isAdding}
       >
         <Image
-          source={{
-            uri: product.image || product.images?.[0] ||
-              'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80',
-          }}
+          source={{ uri: product.image || product.images?.[0] || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80' }}
           style={styles.featuredImage}
           resizeMode="cover"
         />
@@ -348,35 +484,21 @@ const HomeScreen = () => {
       <StatusBar backgroundColor="#2E7D32" barStyle="light-content" />
 
       {/* Cart Success Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
+      <Modal animationType="fade" transparent visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.successModal}>
             <View style={styles.successIcon}>
               <Ionicons name="checkmark-circle" size={50} color="#4CAF50" />
             </View>
             <Text style={styles.successTitle}>Added to Cart!</Text>
-            <Text style={styles.successMessage}>
-              {addedProductName} has been added to your cart
-            </Text>
+            <Text style={styles.successMessage}>{addedProductName} has been added to your cart</Text>
             <TouchableOpacity
               style={styles.viewCartButton}
-              onPress={() => {
-                setModalVisible(false);
-                setTimeout(() => setShowCartSuccessModal(false), 300);
-                navigation.navigate('Cart');
-              }}
+              onPress={() => { setModalVisible(false); setTimeout(() => setShowCartSuccessModal(false), 300); navigation.navigate('Cart'); }}
             >
               <Text style={styles.viewCartButtonText}>View Cart</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.continueButton}
-              onPress={() => setModalVisible(false)}
-            >
+            <TouchableOpacity style={styles.continueButton} onPress={() => setModalVisible(false)}>
               <Text style={styles.continueButtonText}>Continue Shopping</Text>
             </TouchableOpacity>
           </View>
@@ -390,26 +512,14 @@ const HomeScreen = () => {
             <Text style={styles.headerTitle}>FreshyFood Factory</Text>
           </View>
           <View style={styles.headerActions}>
-            <TouchableOpacity
-              style={styles.headerIconBtn}
-              onPress={() => navigation.navigate('Favorites')}
-            >
+            <TouchableOpacity style={styles.headerIconBtn} onPress={() => navigation.navigate('Favorites')}>
               <Ionicons name="heart-outline" size={22} color="#fff" />
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.headerIconBtn}
-              onPress={() => navigation.navigate('Notification')}
-            >
-              <Ionicons
-                name={notificationCount > 0 ? 'notifications' : 'notifications-outline'}
-                size={22}
-                color="#fff"
-              />
+            <TouchableOpacity style={styles.headerIconBtn} onPress={() => navigation.navigate('Notification')}>
+              <Ionicons name={notificationCount > 0 ? 'notifications' : 'notifications-outline'} size={22} color="#fff" />
               {notificationCount > 0 && (
                 <View style={styles.notifBadge}>
-                  <Text style={styles.notifBadgeText}>
-                    {notificationCount > 9 ? '9+' : notificationCount}
-                  </Text>
+                  <Text style={styles.notifBadgeText}>{notificationCount > 9 ? '9+' : notificationCount}</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -438,24 +548,19 @@ const HomeScreen = () => {
                 <Ionicons name="close-circle" size={18} color="#BDBDBD" />
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity
-                style={styles.filterBtn}
-                onPress={() => navigation.navigate('Products')}
-              >
+              <TouchableOpacity style={styles.filterBtn} onPress={() => navigation.navigate('Products')}>
                 <Ionicons name="options-outline" size={18} color="#fff" />
               </TouchableOpacity>
             )}
           </View>
         </View>
 
-        {/* Search Results Dropdown - Updated with close button and overlay */}
+        {/* Search Results Dropdown */}
         {showSearchResults && (
           <>
-            {/* Semi-transparent overlay to detect taps outside */}
             <TouchableWithoutFeedback onPress={closeSearchResults}>
               <View style={styles.searchOverlay} />
             </TouchableWithoutFeedback>
-            
             <View style={styles.searchResultsContainer}>
               <View style={styles.searchResultsHeader}>
                 <Text style={styles.searchResultsHeaderText}>
@@ -465,47 +570,23 @@ const HomeScreen = () => {
                   <Ionicons name="close" size={20} color="#757575" />
                 </TouchableOpacity>
               </View>
-              
               {searchResults.length > 0 ? (
-                <ScrollView
-                  style={styles.searchResultsList}
-                  keyboardShouldPersistTaps="handled"
-                  nestedScrollEnabled={true}
-                  showsVerticalScrollIndicator={false}
-                >
+                <ScrollView style={styles.searchResultsList} keyboardShouldPersistTaps="handled" nestedScrollEnabled showsVerticalScrollIndicator={false}>
                   {searchResults.map((product) => (
                     <TouchableOpacity
                       key={product.id || product._id}
                       style={styles.searchResultItem}
-                      onPress={() => {
-                        navigation.navigate('ProductDetail', {
-                          productId: product.id || product._id,
-                          product,
-                        });
-                        clearSearch();
-                      }}
+                      onPress={() => { navigation.navigate('ProductDetail', { productId: product.id || product._id, product }); clearSearch(); }}
                     >
-                      <Image
-                        source={{
-                          uri: product.image || product.images?.[0] ||
-                            'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80',
-                        }}
-                        style={styles.searchResultImage}
-                      />
+                      <Image source={{ uri: product.image || product.images?.[0] || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80' }} style={styles.searchResultImage} />
                       <View style={styles.searchResultInfo}>
-                        <Text style={styles.searchResultName} numberOfLines={1}>
-                          {product.name}
-                        </Text>
-                        <Text style={styles.searchResultPrice}>
-                          GH₵ {product.price?.toFixed(2)}
-                        </Text>
+                        <Text style={styles.searchResultName} numberOfLines={1}>{product.name}</Text>
+                        <Text style={styles.searchResultPrice}>GH₵ {product.price?.toFixed(2)}</Text>
                       </View>
                     </TouchableOpacity>
                   ))}
                   <TouchableOpacity style={styles.viewAllResults} onPress={handleSearchSubmit}>
-                    <Text style={styles.viewAllResultsText}>
-                      View all results for "{searchQuery}"
-                    </Text>
+                    <Text style={styles.viewAllResultsText}>View all results for "{searchQuery}"</Text>
                     <Ionicons name="arrow-forward" size={16} color="#2E7D32" />
                   </TouchableOpacity>
                 </ScrollView>
@@ -515,16 +596,7 @@ const HomeScreen = () => {
                     <Ionicons name="search-outline" size={40} color="#BDBDBD" />
                     <Text style={styles.noResultsText}>No products found</Text>
                     <Text style={styles.noResultsSubtext}>Try different keywords</Text>
-                    
-                    {/* Added "Try Again" button */}
-                    <TouchableOpacity 
-                      style={styles.tryAgainButton}
-                      onPress={() => {
-                        closeSearchResults();
-                        // Optional: Focus the search input again
-                        // You might need a ref to the TextInput to focus it
-                      }}
-                    >
+                    <TouchableOpacity style={styles.tryAgainButton} onPress={closeSearchResults}>
                       <Text style={styles.tryAgainButtonText}>Try New Search</Text>
                     </TouchableOpacity>
                   </View>
@@ -536,115 +608,69 @@ const HomeScreen = () => {
       </View>
 
       <ScrollView
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2E7D32" />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2E7D32" />}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
-        // Add this to close search results when scrolling
         onScrollBeginDrag={closeSearchResults}
         scrollEventThrottle={16}
       >
-        {/* ── HERO BANNER ── */}
-        <TouchableOpacity
-          style={styles.heroBanner}
-          activeOpacity={0.9}
-          onPress={() => navigation.navigate('Products')}
-        >
-          <Image
-            source={{
-              uri: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&q=80',
-            }}
-            style={styles.heroBannerImage}
-            resizeMode="cover"
-          />
-          <View style={styles.heroBannerOverlay}>
-            <View style={styles.heroBannerContent}>
-              <Text style={styles.heroBannerTitle}>Fresh Delivery{'\n'}to Your Door</Text>
-              <TouchableOpacity
-                style={styles.heroBannerBtn}
-                onPress={() => navigation.navigate('Products')}
-              >
-                <Text style={styles.heroBannerBtnText}>Order Now</Text>
-                <Ionicons name="arrow-forward" size={14} color="#2E7D32" />
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableOpacity>
+        {/* ══════════════════════════════════════════
+            HERO CAROUSEL — replaces the old static banner
+            ══════════════════════════════════════════ */}
+        <View style={styles.carouselSection}>
+          <HeroCarousel onSlidePress={handleSlidePress} />
+        </View>
 
         {/* ── CATEGORIES ── */}
         {categories.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Categories</Text>
-              <TouchableOpacity
-                style={styles.seeAllRow}
-                onPress={() => navigation.navigate('Products')}
-              >
+              <TouchableOpacity style={styles.seeAllRow} onPress={() => navigation.navigate('Products')}>
                 <Text style={styles.seeAllText}>See All</Text>
                 <Ionicons name="chevron-forward" size={14} color="#2E7D32" />
               </TouchableOpacity>
             </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.categoriesScroll}
-            >
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesScroll}>
               {categories.map((category) => (
                 <TouchableOpacity
                   key={category.id || category._id}
                   style={styles.categoryPill}
-                  onPress={() =>
-                    navigation.navigate('Category', { category: category.name })
-                  }
+                  onPress={() => navigation.navigate('Category', { category: category.name })}
                 >
                   <View style={styles.categoryIconCircle}>
-                    <Text style={styles.categoryEmoji}>
-                      {getCategoryIcon(category.name)}
-                    </Text>
+                    <Text style={styles.categoryEmoji}>{getCategoryIcon(category.name)}</Text>
                   </View>
-                  <Text style={styles.categoryPillName} numberOfLines={1}>
-                    {category.name}
-                  </Text>
+                  <Text style={styles.categoryPillName} numberOfLines={1}>{category.name}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
           </View>
         )}
 
-        {/* ── FEATURED / TOP VENDORS style ── */}
+        {/* ── FEATURED PRODUCTS ── */}
         {featuredProducts.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Featured Products</Text>
-              <TouchableOpacity
-                style={styles.seeAllRow}
-                onPress={() => navigation.navigate('Products', { category: 'featured' })}
-              >
+              <TouchableOpacity style={styles.seeAllRow} onPress={() => navigation.navigate('Products', { category: 'featured' })}>
                 <Text style={styles.seeAllText}>See All</Text>
                 <Ionicons name="chevron-forward" size={14} color="#2E7D32" />
               </TouchableOpacity>
             </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.featuredScroll}
-            >
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredScroll}>
               {featuredProducts.map(renderFeaturedCard)}
             </ScrollView>
           </View>
         )}
 
-        {/* ── POPULAR DEALS (2-column grid) ── */}
+        {/* ── POPULAR DEALS ── */}
         {bestSellers.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Popular Deals</Text>
-              <TouchableOpacity
-                style={styles.seeAllRow}
-                onPress={() => navigation.navigate('Products', { sortBy: 'stock-desc' })}
-              >
+              <TouchableOpacity style={styles.seeAllRow} onPress={() => navigation.navigate('Products', { sortBy: 'stock-desc' })}>
                 <Text style={styles.seeAllText}>See All</Text>
                 <Ionicons name="chevron-forward" size={14} color="#2E7D32" />
               </TouchableOpacity>
@@ -655,24 +681,17 @@ const HomeScreen = () => {
           </View>
         )}
 
-        {/* ── NEW ARRIVALS horizontal ── */}
+        {/* ── NEW ARRIVALS ── */}
         {newArrivals.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>New Arrivals</Text>
-              <TouchableOpacity
-                style={styles.seeAllRow}
-                onPress={() => navigation.navigate('Products', { sortBy: 'newest' })}
-              >
+              <TouchableOpacity style={styles.seeAllRow} onPress={() => navigation.navigate('Products', { sortBy: 'newest' })}>
                 <Text style={styles.seeAllText}>See All</Text>
                 <Ionicons name="chevron-forward" size={14} color="#2E7D32" />
               </TouchableOpacity>
             </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.featuredScroll}
-            >
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredScroll}>
               {newArrivals.map(renderFeaturedCard)}
             </ScrollView>
           </View>
@@ -680,11 +699,7 @@ const HomeScreen = () => {
 
         {/* ── FREE DELIVERY OFFER BANNER ── */}
         <View style={styles.offerBannerSection}>
-          <TouchableOpacity
-            style={styles.offerBanner}
-            activeOpacity={0.9}
-            onPress={() => navigation.navigate('Products')}
-          >
+          <TouchableOpacity style={styles.offerBanner} activeOpacity={0.9} onPress={() => navigation.navigate('Products')}>
             <View style={styles.offerBannerLeft}>
               <View style={styles.offerTag}>
                 <Ionicons name="flash" size={12} color="#fff" />
@@ -698,9 +713,7 @@ const HomeScreen = () => {
               </View>
             </View>
             <Image
-              source={{
-                uri: 'https://images.unsplash.com/photo-1601600571002-6e1e0c6e3d6f?w=800',
-              }}
+              source={{ uri: 'https://images.unsplash.com/photo-1601600571002-6e1e0c6e3d6f?w=800' }}
               style={styles.offerBannerImage}
               resizeMode="cover"
             />
@@ -713,23 +726,13 @@ const HomeScreen = () => {
   );
 };
 
+// ─────────────────────────────────────────────
+// STYLES
+// ─────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#616161',
-    fontWeight: '500',
-  },
+  container: { flex: 1, backgroundColor: '#F5F5F5' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F5F5F5' },
+  loadingText: { marginTop: 16, fontSize: 16, color: '#616161', fontWeight: '500' },
 
   // ── HEADER ──
   header: {
@@ -737,568 +740,266 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 16,
-    borderTopLeftRadius:12,
-    borderTopRightRadius:12,
-    marginHorizontal:2,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    marginHorizontal: 2,
     zIndex: 100,
   },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  headerTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
-    letterSpacing: 0.2,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    gap: 4,
-  },
-  headerIconBtn: {
-    padding: 6,
-    position: 'relative',
-  },
+  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#fff', letterSpacing: 0.2 },
+  headerActions: { flexDirection: 'row', gap: 4 },
+  headerIconBtn: { padding: 6, position: 'relative' },
   notifBadge: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    backgroundColor: '#D32F2F',
-    borderRadius: 10,
-    minWidth: 16,
-    height: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#2E7D32',
+    position: 'absolute', top: 2, right: 2,
+    backgroundColor: '#D32F2F', borderRadius: 10,
+    minWidth: 16, height: 16, justifyContent: 'center',
+    alignItems: 'center', borderWidth: 1.5, borderColor: '#2E7D32',
   },
-  notifBadgeText: {
-    color: '#fff',
-    fontSize: 9,
-    fontWeight: 'bold',
-    paddingHorizontal: 3,
-  },
+  notifBadgeText: { color: '#fff', fontSize: 9, fontWeight: 'bold', paddingHorizontal: 3 },
 
   // ── SEARCH ──
-  searchWrapper: {
-    position: 'relative',
-    zIndex: 200,
-  },
+  searchWrapper: { position: 'relative', zIndex: 200 },
   searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    gap: 10,
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#fff', borderRadius: 12,
+    paddingHorizontal: 14, paddingVertical: 10, gap: 10,
   },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    color: '#212121',
-    padding: 0,
-  },
-  filterBtn: {
-    backgroundColor: '#4CAF50',
-    borderRadius: 8,
-    padding: 6,
-    marginLeft: 4,
-  },
-  
-  // New overlay styles
+  searchInput: { flex: 1, fontSize: 14, color: '#212121', padding: 0 },
+  filterBtn: { backgroundColor: '#4CAF50', borderRadius: 8, padding: 6, marginLeft: 4 },
   searchOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: -1000, // Extend beyond the screen
-    backgroundColor: 'transparent',
-    zIndex: 998,
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: -1000,
+    backgroundColor: 'transparent', zIndex: 998,
   },
-  
   searchResultsContainer: {
-    position: 'absolute',
-    top: 56,
-    left: 0,
-    right: 0,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 8,
-    maxHeight: 380,
-    zIndex: 999,
+    position: 'absolute', top: 56, left: 0, right: 0,
+    backgroundColor: '#fff', borderRadius: 12,
+    borderWidth: 1, borderColor: '#E0E0E0',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12, shadowRadius: 8, elevation: 8,
+    maxHeight: 380, zIndex: 999,
   },
-  
-  // New header for search results
   searchResultsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 16, paddingVertical: 12,
+    borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
-  searchResultsHeaderText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#424242',
-  },
-  closeResultsBtn: {
-    padding: 4,
-  },
-  
-  searchResultsList: {
-    padding: 8,
-  },
-  searchResultItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    borderRadius: 10,
-  },
-  searchResultImage: {
-    width: 44,
-    height: 44,
-    borderRadius: 8,
-    marginRight: 12,
-  },
+  searchResultsHeaderText: { fontSize: 14, fontWeight: '600', color: '#424242' },
+  closeResultsBtn: { padding: 4 },
+  searchResultsList: { padding: 8 },
+  searchResultItem: { flexDirection: 'row', alignItems: 'center', padding: 10, borderRadius: 10 },
+  searchResultImage: { width: 44, height: 44, borderRadius: 8, marginRight: 12 },
   searchResultInfo: { flex: 1 },
-  searchResultName: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#212121',
-    marginBottom: 2,
-  },
-  searchResultPrice: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#2E7D32',
-  },
+  searchResultName: { fontSize: 13, fontWeight: '600', color: '#212121', marginBottom: 2 },
+  searchResultPrice: { fontSize: 13, fontWeight: '700', color: '#2E7D32' },
   viewAllResults: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-    gap: 6,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 14, borderTopWidth: 1, borderTopColor: '#F0F0F0', gap: 6,
   },
-  viewAllResultsText: {
-    fontSize: 13,
-    color: '#2E7D32',
-    fontWeight: '600',
-  },
-  noResults: {
-    alignItems: 'center',
-    padding: 28,
-  },
-  noResultsText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#424242',
-    marginTop: 10,
-  },
-  noResultsSubtext: {
-    fontSize: 13,
-    color: '#757575',
-    marginTop: 4,
-  },
-  
-  // New "Try Again" button
-  tryAgainButton: {
-    marginTop: 20,
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderRadius: 25,
-  },
-  tryAgainButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
+  viewAllResultsText: { fontSize: 13, color: '#2E7D32', fontWeight: '600' },
+  noResults: { alignItems: 'center', padding: 28 },
+  noResultsText: { fontSize: 15, fontWeight: '600', color: '#424242', marginTop: 10 },
+  noResultsSubtext: { fontSize: 13, color: '#757575', marginTop: 4 },
+  tryAgainButton: { marginTop: 20, backgroundColor: '#4CAF50', paddingHorizontal: 24, paddingVertical: 10, borderRadius: 25 },
+  tryAgainButtonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
 
-  // ── SCROLL & SECTIONS ──
-  scrollContent: {
-    paddingBottom: 40,
-  },
-  section: {
-    backgroundColor: '#fff',
-    marginTop: 10,
-    paddingTop: 18,
-    paddingBottom: 20,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    marginBottom: 14,
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#1B5E20',
-  },
-  seeAllRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  seeAllText: {
-    fontSize: 13,
-    color: '#2E7D32',
-    fontWeight: '600',
-  },
-
-  // ── HERO BANNER ──
-  heroBanner: {
-    marginHorizontal: 16,
+  // ══════════════════════════════════
+  // HERO CAROUSEL
+  // ══════════════════════════════════
+  carouselSection: {
     marginTop: 14,
+    marginHorizontal: 16,
+  },
+  carouselWrapper: {
     borderRadius: 18,
     overflow: 'hidden',
-    height: 160,
-    backgroundColor: '#C8E6C9',
-  },
-  heroBannerImage: {
-    ...StyleSheet.absoluteFillObject,
-    width: '100%',
-    height: '100%',
-  },
-  heroBannerOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.32)',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  heroBannerContent: {},
-  heroBannerTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#fff',
-    lineHeight: 28,
-    marginBottom: 12,
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-  heroBannerBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    gap: 6,
-  },
-  heroBannerBtnText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#2E7D32',
   },
 
-  // ── CATEGORIES ──
-  categoriesScroll: {
-    paddingHorizontal: 16,
-    gap: 12,
+  // Each slide is exactly (screen-width - 32) wide so the FlatList pages correctly
+  slideWrapper: {
+    width: width - 32,
+    height: 185,
+    position: 'relative',
+    backgroundColor: '#1B5E20',
   },
-  categoryPill: {
-    alignItems: 'center',
-    width: 74,
-  },
-  categoryIconCircle: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: '#F1F8E9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: '#E8F5E9',
-  },
-  categoryEmoji: {
-    fontSize: 26,
-  },
-  categoryPillName: {
-    fontSize: 11.5,
-    fontWeight: '600',
-    color: '#424242',
-    textAlign: 'center',
-  },
-
-  // ── FEATURED CARDS ──
-  featuredScroll: {
-    paddingHorizontal: 16,
-    gap: 12,
-  },
-  featuredCard: {
-    width: 160,
-    height: 190,
-    borderRadius: 16,
-    overflow: 'hidden',
-    backgroundColor: '#E8F5E9',
-  },
-  featuredImage: {
+  slideImage: {
     width: '100%',
     height: '100%',
     position: 'absolute',
   },
-  featuredOverlay: {
+  slideScrim: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  slideContent: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0,0,0,0.42)',
-    padding: 12,
+    padding: 18,
   },
-  featuredName: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 6,
-  },
-  featuredBottom: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  featuredPrice: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#A5D6A7',
-  },
-  featuredAddBtn: {
-    backgroundColor: '#4CAF50',
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  featuredAddBtnActive: {
-    backgroundColor: '#2E7D32',
-  },
-
-  // ── DEALS GRID ──
-  dealsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 12,
-    gap: 10,
-  },
-  dealCard: {
-    width: (width - 34) / 2,
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  dealImage: {
-    width: '100%',
-    height: 130,
-  },
-  dealInfo: {
-    padding: 10,
-  },
-  dealName: {
-    fontSize: 13.5,
-    fontWeight: '600',
-    color: '#212121',
-    marginBottom: 2,
-    lineHeight: 18,
-  },
-  dealUnit: {
-    fontSize: 11,
-    color: '#9E9E9E',
-    marginBottom: 8,
-  },
-  dealFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  dealPrice: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#1B5E20',
-  },
-  dealAddButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 4,
-  },
-  dealAddButtonActive: {
-    backgroundColor: '#2E7D32',
-  },
-  dealAddButtonLoading: {
-    backgroundColor: '#81C784',
-  },
-  dealAddButtonText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#fff',
-  },
-
-  // ── OFFER BANNER ──
-  offerBannerSection: {
-    paddingHorizontal: 16,
-    marginTop: 10,
-    marginBottom: 4,
-  },
-  offerBanner: {
-    backgroundColor: '#2E7D32',
-    borderRadius: 18,
-    flexDirection: 'row',
-    overflow: 'hidden',
-    minHeight: 150,
-  },
-  offerBannerLeft: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-  },
-  offerTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.2)',
+  slideTagPill: {
     alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.35)',
+    borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 20,
     marginBottom: 8,
-    gap: 4,
   },
-  offerTagText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  offerBannerTitle: {
-    fontSize: 22,
+  slideTagText: { fontSize: 11, color: '#fff', fontWeight: '600' },
+  slideTitle: {
+    fontSize: 21,
     fontWeight: '800',
     color: '#fff',
+    lineHeight: 26,
     marginBottom: 4,
+    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
-  offerBannerSub: {
-    fontSize: 13,
-    color: '#C8E6C9',
-    marginBottom: 16,
+  slideSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.85)',
+    marginBottom: 12,
+    lineHeight: 16,
   },
-  offerBannerBtn: {
+  slideBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
     alignSelf: 'flex-start',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    borderWidth: 1.5,
     borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    gap: 6,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+  },
+  slideBtnText: { fontSize: 13, fontWeight: '700' },
+
+  // Dot indicators
+  dotsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 10,
+    backgroundColor: '#fff',
     gap: 6,
   },
-  offerBannerBtnText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#2E7D32',
+  dot: { borderRadius: 4, height: 6 },
+  dotActive: { width: 22, backgroundColor: '#2E7D32' },
+  dotInactive: { width: 6, backgroundColor: '#C8E6C9' },
+
+  // ── SCROLL & SECTIONS ──
+  scrollContent: { paddingBottom: 40 },
+  section: { backgroundColor: '#fff', marginTop: 10, paddingTop: 18, paddingBottom: 20 },
+  sectionHeader: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 16, marginBottom: 14,
   },
-  offerBannerImage: {
-    width: '40%',
-    opacity: 0.25,
+  sectionTitle: { fontSize: 17, fontWeight: '700', color: '#1B5E20' },
+  seeAllRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  seeAllText: { fontSize: 13, color: '#2E7D32', fontWeight: '600' },
+
+  // ── CATEGORIES ──
+  categoriesScroll: { paddingHorizontal: 16, gap: 12 },
+  categoryPill: { alignItems: 'center', width: 74 },
+  categoryIconCircle: {
+    width: 58, height: 58, borderRadius: 29,
+    backgroundColor: '#F1F8E9', justifyContent: 'center', alignItems: 'center',
+    marginBottom: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06, shadowRadius: 3, elevation: 2,
+    borderWidth: 1, borderColor: '#E8F5E9',
   },
+  categoryEmoji: { fontSize: 26 },
+  categoryPillName: { fontSize: 11.5, fontWeight: '600', color: '#424242', textAlign: 'center' },
+
+  // ── FEATURED CARDS ──
+  featuredScroll: { paddingHorizontal: 16, gap: 12 },
+  featuredCard: { width: 160, height: 190, borderRadius: 16, overflow: 'hidden', backgroundColor: '#E8F5E9' },
+  featuredImage: { width: '100%', height: '100%', position: 'absolute' },
+  featuredOverlay: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    backgroundColor: 'rgba(0,0,0,0.42)', padding: 12,
+  },
+  featuredName: { fontSize: 13, fontWeight: '700', color: '#fff', marginBottom: 6 },
+  featuredBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  featuredPrice: { fontSize: 14, fontWeight: '800', color: '#A5D6A7' },
+  featuredAddBtn: {
+    backgroundColor: '#4CAF50', width: 30, height: 30,
+    borderRadius: 15, justifyContent: 'center', alignItems: 'center',
+  },
+  featuredAddBtnActive: { backgroundColor: '#2E7D32' },
+
+  // ── DEALS GRID ──
+  dealsGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: 10 },
+  dealCard: {
+    width: (width - 34) / 2, backgroundColor: '#fff',
+    borderRadius: 16, overflow: 'hidden',
+    borderWidth: 1, borderColor: '#F0F0F0',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07, shadowRadius: 6, elevation: 2,
+  },
+  dealImage: { width: '100%', height: 130 },
+  dealInfo: { padding: 10 },
+  dealName: { fontSize: 13.5, fontWeight: '600', color: '#212121', marginBottom: 2, lineHeight: 18 },
+  dealUnit: { fontSize: 11, color: '#9E9E9E', marginBottom: 8 },
+  dealFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  dealPrice: { fontSize: 15, fontWeight: '800', color: '#1B5E20' },
+  dealAddButton: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#4CAF50', paddingHorizontal: 10, paddingVertical: 6,
+    borderRadius: 20, gap: 4,
+  },
+  dealAddButtonActive: { backgroundColor: '#2E7D32' },
+  dealAddButtonLoading: { backgroundColor: '#81C784' },
+  dealAddButtonText: { fontSize: 12, fontWeight: '700', color: '#fff' },
+
+  // ── OFFER BANNER ──
+  offerBannerSection: { paddingHorizontal: 16, marginTop: 10, marginBottom: 4 },
+  offerBanner: {
+    backgroundColor: '#2E7D32', borderRadius: 18,
+    flexDirection: 'row', overflow: 'hidden', minHeight: 150,
+  },
+  offerBannerLeft: { flex: 1, padding: 20, justifyContent: 'center' },
+  offerTag: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.2)', alignSelf: 'flex-start',
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, marginBottom: 8, gap: 4,
+  },
+  offerTagText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  offerBannerTitle: { fontSize: 22, fontWeight: '800', color: '#fff', marginBottom: 4 },
+  offerBannerSub: { fontSize: 13, color: '#C8E6C9', marginBottom: 16 },
+  offerBannerBtn: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
+    alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, gap: 6,
+  },
+  offerBannerBtnText: { fontSize: 13, fontWeight: '700', color: '#2E7D32' },
+  offerBannerImage: { width: '40%', opacity: 0.25 },
 
   // ── MODAL ──
   modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center', alignItems: 'center', padding: 20,
   },
   successModal: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 30,
-    alignItems: 'center',
-    width: '100%',
-    maxWidth: 340,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
+    backgroundColor: '#fff', borderRadius: 20, padding: 30, alignItems: 'center',
+    width: '100%', maxWidth: 340, elevation: 5,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8,
   },
   successIcon: { marginBottom: 20 },
-  successTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1B5E20',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  successMessage: {
-    fontSize: 15,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 22,
-  },
+  successTitle: { fontSize: 22, fontWeight: '700', color: '#1B5E20', marginBottom: 10, textAlign: 'center' },
+  successMessage: { fontSize: 15, color: '#666', textAlign: 'center', marginBottom: 24, lineHeight: 22 },
   viewCartButton: {
-    backgroundColor: '#4CAF50',
-    width: '100%',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 12,
+    backgroundColor: '#4CAF50', width: '100%',
+    paddingVertical: 14, borderRadius: 12, alignItems: 'center', marginBottom: 12,
   },
-  viewCartButtonText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '600',
-  },
+  viewCartButtonText: { color: '#fff', fontSize: 15, fontWeight: '600' },
   continueButton: {
-    width: '100%',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#4CAF50',
+    width: '100%', paddingVertical: 14, borderRadius: 12,
+    alignItems: 'center', borderWidth: 2, borderColor: '#4CAF50',
   },
-  continueButtonText: {
-    color: '#4CAF50',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-
+  continueButtonText: { color: '#4CAF50', fontSize: 15, fontWeight: '600' },
   bottomSpacer: { height: 80 },
 });
 

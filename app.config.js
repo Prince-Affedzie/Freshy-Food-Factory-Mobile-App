@@ -17,7 +17,10 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.freshyfood.factory",
-      googleServicesFile: "./GoogleService-Info.plist"
+      googleServicesFile: "./GoogleService-Info.plist",
+      infoPlist: {
+      ITSAppUsesNonExemptEncryption: false
+     },
     },
     android: {
       package: "com.freshyfood.factory",

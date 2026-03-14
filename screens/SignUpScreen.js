@@ -42,8 +42,7 @@ const SignUpScreen = ({ navigation }) => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [appleLoading, setAppleLoading] = useState(false);
-  const { login: authLogin, google_signUp ,apple_signUp} = useAuth();
+  const { login: authLogin, google_signUp } = useAuth();
   
   // Refs
   const scrollViewRef = useRef(null);
@@ -135,45 +134,6 @@ const SignUpScreen = ({ navigation }) => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
-
-  
-
-const handleAppleSignUp = async () => {
-  try {
-    setAppleLoading(true);
-    const credential = await AppleAuthentication.signInAsync({
-      requestedScopes: [
-        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-        AppleAuthentication.AppleAuthenticationScope.EMAIL,
-      ],
-    });
-
-    // The credential contains an identityToken
-    if (credential.identityToken) {
-      const response = await apple_signUp({ 
-        token: credential.identityToken,
-        firstName: credential.fullName?.givenName,
-        lastName: credential.fullName?.familyName
-      });
-
-      if (response.success) {
-        navigation.navigate('MainTabs');
-        Alert.alert('Welcome!', 'Account created with Apple successfully.');
-      } else {
-        Alert.alert('Registration Failed', response.message || 'Apple Sign-In failed.');
-      }
-    }
-  } catch (e) {
-    if (e.code === 'ERR_REQUEST_CANCELED') {
-      // User cancelled the login flow
-    } else {
-      Alert.alert('Apple Sign-In Error', 'An unexpected error occurred.');
-    }
-  } finally {
-    setAppleLoading(false);
-  }
-};
 
   const handleGoogleSignUp = async () => {
     if (isLoading) return; // Prevent multiple clicks
@@ -373,28 +333,6 @@ const handleAppleSignUp = async () => {
                 </>
               )}
             </TouchableOpacity>
-            {/* Apple Button (iOS Only) */}
-       {Platform.OS === 'ios' && (
-       <TouchableOpacity 
-        style={[styles.appleButton, appleLoading && styles.socialButtonDisabled]}
-         onPress={handleAppleSignUp}
-        disabled={isLoading}
-        activeOpacity={0.7}
-       >
-        {appleLoading ? (
-        <View style={styles.socialButtonLoading}>
-          <Animated.View style={{ transform: [{ rotate: spin }] }}>
-            <Ionicons name="refresh" size={20} color="#000" />
-          </Animated.View>
-        </View>
-      ) : (
-        <>
-          <Ionicons name="logo-apple" size={22} color="#000" style={styles.appleIcon} />
-          <Text style={styles.socialButtonText}>Continue with Apple</Text>
-        </>
-      )}
-    </TouchableOpacity>
-  )}
           </View>
 
           {/* Divider with better styling */}
@@ -542,7 +480,9 @@ const handleAppleSignUp = async () => {
               style={styles.termsContainer}
               disabled={isLoading}
               activeOpacity={0.7}
-              onPress={() => navigation.navigate('PrivacyPolicy')} 
+              onPress={() => {
+                // Handle terms agreement if needed
+              }}
             >
               <View style={styles.checkboxContainer}>
                 <View style={[styles.checkbox, isLoading && styles.checkboxDisabled]}>
@@ -888,26 +828,6 @@ const styles = StyleSheet.create({
     color: '#666',
     marginLeft: 12,
   },
-  appleButton: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'center',
-  backgroundColor: '#FFFFFF', // Or #000000 for the dark look
-  borderRadius: 12,
-  paddingVertical: 14,
-  borderWidth: 1,
-  borderColor: '#E0E0E0',
-  marginTop: 12, // Space between Google and Apple buttons
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.05,
-  shadowRadius: 4,
-  elevation: 2,
-},
-appleIcon: {
-  marginRight: 10,
-  marginTop: -2, // Optical alignment for the Apple logo
-},
 });
 
 export default SignUpScreen;

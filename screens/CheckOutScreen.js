@@ -63,8 +63,8 @@ const OrderScreen = ({ route }) => {
     ).start();
   }, []);
 
-  const deliveryFee = cartTotal >= 200 ? 0 : 40;
-  const total = cartTotal; //+ deliveryFee;
+  const deliveryFee = cartTotal >= 200 ? 0 : 25;
+  const total = cartTotal; + deliveryFee;
 
   const deliveryDays = [
     { id: 'monday', label: 'Mon' },

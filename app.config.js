@@ -16,7 +16,7 @@ export default {
     },
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.freshyfood.factory",
+      bundleIdentifier: "com.freshyfood.factory.gh",
       googleServicesFile: "./GoogleService-Info.plist",
       infoPlist: {
       ITSAppUsesNonExemptEncryption: false
@@ -25,14 +25,14 @@ export default {
     android: {
       package: "com.freshyfood.factory",
       adaptiveIcon: {
-        foregroundImage: "./assets/adaptive-icon.png",
+        foregroundImage: "./assets/FreshyFoodFactory_App_Icon.png",
         backgroundColor: "#ffffff"
       },
       edgeToEdgeEnabled: true,
       googleServicesFile: "./google-services.json"
     },
     web: {
-      favicon: "./assets/favicon.png"
+      favicon: "./assets/FreshyFoodFactory_App_Icon.png"
     },
     updates: {
       url: "https://u.expo.dev/91d657de-bd96-4749-aa49-34001b7b4191"

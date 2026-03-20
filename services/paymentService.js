@@ -24,7 +24,7 @@ export const triggerPayment = async ({
 
         onSuccess: async () => {
           try {
-            const verifyRes = await verifyPayment(reference, {
+            /*const verifyRes = await verifyPayment(reference, {
               amount,
             });
 
@@ -34,18 +34,19 @@ export const triggerPayment = async ({
               if (!payment?._id) {
                 Alert.alert("Error", "Payment recorded but ID missing.");
                 return resolve({ success: false });
-              }
+              }*/
 
               Alert.alert("Payment Successful", "Funds secured.");
 
               resolve({
                 success: true,
-                paymentId: payment._id,
+                //paymentId: payment._id,
               });
-            } else {
+
+           /* } else {
               Alert.alert("Verification Failed");
               resolve({ success: false });
-            }
+            }*/
           } catch (err) {
             console.error("Verification Error:", err);
             Alert.alert("Error", "Payment verification failed.");

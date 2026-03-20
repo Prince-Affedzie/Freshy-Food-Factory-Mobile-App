@@ -64,7 +64,7 @@ const OrderScreen = ({ route }) => {
   }, []);
 
   const deliveryFee = cartTotal >= 200 ? 0 : 40;
-  const total = cartTotal + deliveryFee;
+  const total = cartTotal; //+ deliveryFee;
 
   const deliveryDays = [
     { id: 'monday', label: 'Mon' },
@@ -127,7 +127,7 @@ const OrderScreen = ({ route }) => {
       product: item.product?._id || item.productId || item.id,
     }));
 
-  const prepareOrderData = (paymentId) => ({
+  const prepareOrderData = () => ({
     orderItems: prepareOrderItems(),
     shippingAddress: {
       address: selectedAddress.address,
@@ -138,7 +138,7 @@ const OrderScreen = ({ route }) => {
     },
     deliverySchedule: { preferredDay: deliveryDay, preferredTime: deliveryTime },
     deliveryNote: deliveryNote.trim(),
-    paymentId,
+    //paymentId,
     paymentMethod: 'paystack',
     ...(packageInfo && {
       package: {
@@ -206,9 +206,9 @@ const OrderScreen = ({ route }) => {
       });
       if (!paymentResult?.success) { setPlacingOrder(false); return; }
 
-      const orderData = prepareOrderData(paymentResult.paymentId);
+      const orderData = prepareOrderData();
       const res = await order(orderData, authToken);
-      if (res.data?.success) {
+      if (res.status===200) {
         clearCart();
         Alert.alert(
           'Order Confirmed! 🎉',
@@ -218,7 +218,7 @@ const OrderScreen = ({ route }) => {
             { text: 'Continue Shopping', onPress: () => navigation.navigate('MainTabs', { screen: 'Home' }) },
           ]
         );
-        navigation.navigate('OrderConfirmation', { orderId: res.data.data.id, orderData: res.data.data });
+       
       } else {
         Alert.alert('Order Failed', res.data?.message || 'Something went wrong.');
       }

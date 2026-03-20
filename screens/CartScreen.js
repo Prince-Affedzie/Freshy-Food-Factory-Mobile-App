@@ -337,19 +337,30 @@ const CartScreen = () => {
         { opacity: fadeAnim }
       ]}
     >
-      {/* Compact Order Summary */}
+      {/* Order Summary Row */}
       <View style={styles.summaryRow}>
         <View style={styles.summaryLeft}>
           <Text style={styles.summaryItemCount}>
             {cartCount} {cartCount === 1 ? 'item' : 'items'}
           </Text>
           <View style={styles.summaryDivider} />
-          <Text style={styles.summaryDelivery}>
-            {cartTotal >= 200 ? 'Free Delivery' : 'GH₵ 40 delivery'}
-          </Text>
+          {/* Delivery fee — informational only, not added to total */}
+          <View style={styles.summaryDeliveryWrap}>
+            <Ionicons name="bicycle-outline" size={13} color="#F57F17" />
+            <Text style={styles.summaryDelivery}>Delivery GH₵ 20–80</Text>
+          </View>
         </View>
+        {/* Total shows cart total only, no delivery fee added */}
         <Text style={styles.summaryTotal}>
-          GH₵ {(cartTotal + (cartTotal >= 200 ? 0 : 40)).toFixed(2)}
+          GH₵ {cartTotal.toFixed(2)}
+        </Text>
+      </View>
+
+      {/* Delivery fee disclaimer */}
+      <View style={styles.deliveryFeeNote}>
+        <Ionicons name="information-circle-outline" size={13} color="#F57F17" />
+        <Text style={styles.deliveryFeeNoteText}>
+          Delivery fee (GH₵ 20–80) is paid separately to the rider on delivery
         </Text>
       </View>
 
@@ -369,10 +380,7 @@ const CartScreen = () => {
             <Text style={styles.checkoutButtonText}>Processing...</Text>
           </View>
         ) : (
-          <>
-            <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
-            
-          </>
+          <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
         )}
       </TouchableOpacity>
     </Animated.View>
@@ -417,7 +425,7 @@ const CartScreen = () => {
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar backgroundColor="#2E7D32" barStyle="light-content" />
       
-      {/* Green Header - Matching Home and Products screens */}
+      {/* Green Header */}
       <View style={styles.topBar}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={22} color="#fff" />
@@ -499,7 +507,7 @@ const CartScreen = () => {
                 </View>
                 <View style={styles.deliveryContent}>
                   <Text style={styles.deliveryText}>
-                    • Free delivery on orders over GH₵ 200
+                    • Delivery fee (GH₵ 20–80) paid to rider on delivery
                   </Text>
                   <Text style={styles.deliveryText}>
                     • Next-day delivery available
@@ -526,7 +534,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
   },
   
-  // ── TOP BAR (Green header like Home and Products) ──
+  // ── TOP BAR ──
   topBar: {
     backgroundColor: '#2E7D32',
     flexDirection: 'row',
@@ -534,8 +542,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderTopLeftRadius:12,
-    borderTopRightRadius:12,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
   },
   backBtn: { 
     padding: 4,
@@ -813,7 +821,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   summaryLeft: {
     flexDirection: 'row',
@@ -830,21 +838,42 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8E8E8',
     marginHorizontal: 10,
   },
+  // Delivery fee badge in summary row — informational only
+  summaryDeliveryWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   summaryDelivery: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
+    fontSize: 13,
+    color: '#F57F17',
+    fontWeight: '600',
   },
   summaryTotal: {
     fontSize: 20,
     fontWeight: '700',
     color: '#2E7D32',
   },
+  // Disclaimer note below the summary row
+  deliveryFeeNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#FFF8E1',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    marginBottom: 10,
+  },
+  deliveryFeeNoteText: {
+    flex: 1,
+    fontSize: 11,
+    color: '#F57F17',
+    lineHeight: 16,
+  },
   checkoutButton: {
     backgroundColor: '#4CAF50',
-    
     alignItems: 'center',
-    
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderRadius: 10,
@@ -859,7 +888,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
   },
   checkoutButtonContent: {
-    
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
@@ -868,7 +896,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
-   
   },
 });
 

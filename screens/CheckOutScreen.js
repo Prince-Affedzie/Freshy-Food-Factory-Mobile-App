@@ -63,8 +63,8 @@ const OrderScreen = ({ route }) => {
     ).start();
   }, []);
 
-  const deliveryFee = cartTotal >= 200 ? 0 : 25;
-  const total = cartTotal; + deliveryFee;
+  // Total is just the cart total — delivery fee is collected separately on delivery
+  const total = cartTotal;
 
   const deliveryDays = [
     { id: 'monday', label: 'Mon' },
@@ -373,7 +373,6 @@ const OrderScreen = ({ route }) => {
 
           {/* ══════════════════════════════════════════
               REQUIRED FIELDS CALLOUT BANNER
-              Shown at the very top so users see it immediately
               ══════════════════════════════════════════ */}
           {(!selectedAddress || !paymentEmail) && (
             <View style={styles.requiredCallout}>
@@ -401,7 +400,6 @@ const OrderScreen = ({ route }) => {
               filled={!!selectedAddress}
             />
 
-            {/* Empty-state nudge when no address is set */}
             {!selectedAddress && !showAddAddress && (
               <View style={styles.emptyFieldNudge}>
                 <Ionicons name="home-outline" size={36} color="#BDBDBD" />
@@ -507,7 +505,6 @@ const OrderScreen = ({ route }) => {
               </Text>
             </View>
 
-            {/* Empty-state nudge */}
             {!paymentEmail && (
               <View style={styles.emptyEmailNudge}>
                 <Text style={styles.emptyEmailNudgeText}>
@@ -536,7 +533,6 @@ const OrderScreen = ({ route }) => {
               autoCorrect={false}
             />
 
-            {/* Inline validation feedback */}
             {paymentEmailError ? (
               <View style={styles.fieldFeedbackRow}>
                 <Ionicons name="close-circle" size={16} color="#D32F2F" />
@@ -572,22 +568,24 @@ const OrderScreen = ({ route }) => {
                 <Text style={styles.summaryLabel}>Subtotal ({cartItems.length} item{cartItems.length !== 1 ? 's' : ''})</Text>
                 <Text style={styles.summaryValue}>GH₵ {cartTotal.toFixed(2)}</Text>
               </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Delivery fee</Text>
-                <Text style={[styles.summaryValue, deliveryFee === 0 && styles.freeText]}>
-                  {deliveryFee === 0 ? '🎉 FREE' : `GH₵ ${deliveryFee.toFixed(2)}`}
+
+              {/* Delivery fee — informational only, not added to total */}
+              <View style={styles.deliveryInfoRow}>
+                <View style={styles.deliveryInfoLeft}>
+                  <Ionicons name="bicycle-outline" size={15} color="#F57F17" />
+                  <Text style={styles.deliveryInfoLabel}>Delivery fee</Text>
+                </View>
+                <Text style={styles.deliveryInfoValue}>GH₵ 20–80</Text>
+              </View>
+              <View style={styles.deliveryInfoNote}>
+                <Ionicons name="information-circle-outline" size={13} color="#F57F17" />
+                <Text style={styles.deliveryInfoNoteText}>
+                  Delivery fee (GH₵ 20–80) is paid separately to the rider on delivery and is not included in your order total.
                 </Text>
               </View>
-              {deliveryFee > 0 && (
-                <View style={styles.freeDeliveryHint}>
-                  <Ionicons name="information-circle-outline" size={14} color="#F57F17" />
-                  <Text style={styles.freeDeliveryHintText}>
-                    Add GH₵ {(200 - cartTotal).toFixed(2)} more for free delivery
-                  </Text>
-                </View>
-              )}
+
               <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Total</Text>
+                <Text style={styles.totalLabel}>Total (excl. delivery)</Text>
                 <Text style={styles.totalAmount}>GH₵ {total.toFixed(2)}</Text>
               </View>
             </View>
@@ -648,7 +646,7 @@ const OrderScreen = ({ route }) => {
           FIXED BOTTOM BAR
           ══════════════════════════════════════════ */}
       <View style={styles.bottomBar}>
-        {/* Mini checklist so user knows what's still missing */}
+        {/* Mini checklist */}
         <View style={styles.checklistRow}>
           <View style={styles.checklistItem}>
             <Ionicons
@@ -678,10 +676,8 @@ const OrderScreen = ({ route }) => {
 
         <View style={styles.bottomSummary}>
           <View>
-            <Text style={styles.bottomLabel}>Total to pay</Text>
-            <Text style={styles.bottomDelivery}>
-              {deliveryFee === 0 ? '✅ Free delivery included' : `+ GH₵${deliveryFee.toFixed(2)} delivery`}
-            </Text>
+            <Text style={styles.bottomLabel}>Total to pay now</Text>
+            <Text style={styles.bottomDelivery}>🚴 Delivery fee (GH₵ 20–80) paid to rider</Text>
           </View>
           <Text style={styles.bottomTotal}>GH₵ {total.toFixed(2)}</Text>
         </View>
@@ -810,7 +806,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  // Orange-tinted border when a required card is empty
   cardHighlighted: {
     borderWidth: 2,
     borderColor: '#FF8F00',
@@ -828,14 +823,12 @@ const styles = StyleSheet.create({
   sectionIconWrapFilled: { backgroundColor: '#2E7D32' },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: '#1B5E20', flex: 1 },
 
-  // Pulsing "REQUIRED" badge
   requiredBadge: {
     backgroundColor: '#D32F2F',
     borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3,
   },
   requiredBadgeText: { color: '#fff', fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
 
-  // "Done" badge
   filledBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#E8F5E9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
   filledBadgeText: { color: '#2E7D32', fontSize: 11, fontWeight: '700' },
 
@@ -933,12 +926,21 @@ const styles = StyleSheet.create({
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
   summaryLabel: { fontSize: 14, color: '#616161' },
   summaryValue: { fontSize: 14, fontWeight: '600', color: '#212121' },
-  freeText: { color: '#2E7D32', fontWeight: '800' },
-  freeDeliveryHint: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
+
+  // Delivery info row — informational, not part of total
+  deliveryInfoRow: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', marginBottom: 6,
+  },
+  deliveryInfoLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  deliveryInfoLabel: { fontSize: 14, color: '#616161' },
+  deliveryInfoValue: { fontSize: 14, fontWeight: '600', color: '#F57F17' },
+  deliveryInfoNote: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 6,
     backgroundColor: '#FFF8E1', borderRadius: 8, padding: 10, marginBottom: 10,
   },
-  freeDeliveryHintText: { fontSize: 12, color: '#F57F17', fontWeight: '500' },
+  deliveryInfoNoteText: { flex: 1, fontSize: 12, color: '#F57F17', lineHeight: 17 },
+
   totalRow: {
     flexDirection: 'row', justifyContent: 'space-between',
     marginTop: 10, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#E0E0E0',
@@ -1002,7 +1004,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', marginBottom: 12,
   },
   bottomLabel: { fontSize: 14, color: '#616161', fontWeight: '500' },
-  bottomDelivery: { fontSize: 12, color: '#757575', marginTop: 2 },
+  bottomDelivery: { fontSize: 12, color: '#F57F17', marginTop: 2, fontWeight: '500' },
   bottomTotal: { fontSize: 24, fontWeight: '800', color: '#1B5E20' },
 
   confirmBtn: {

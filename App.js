@@ -56,7 +56,7 @@ export default function App() {
           <NotificationProvider>
         <CartProvider>
        
-        <StatusBar style="auto" />
+        <StatusBar backgroundColor="#2E7D32" barStyle="light-content" />
         <PaystackProvider debug 
          publicKey={PayStack_Public_Key}
          currency="GHS"

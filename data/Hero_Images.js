@@ -1,0 +1,14 @@
+// ─── Hero images per category ─────────────────────────────────────────────────
+export const HERO_IMAGES = {
+  all: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1773523455/grocerry2_eul0ez.jpg',
+  vegetables: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1769990080/vegetables_cpp5n5.jpg',
+  fruits: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1773488413/fruits_1_shqhh2.jpg',
+  staples: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1770886305/staple_food_xlgo92.jpg',
+  herb: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1770885919/spices_and_herbs_srdlvf.jpg',
+  tuber: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1773487837/thomas-le-pRJhn4MbsMM-unsplash_xoh451.jpg',
+  dairy: 'https://images.unsplash.com/photo-1628088062854-d1870b4553da?w=800&q=80',
+  meat: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=800&q=80',
+  seafood: 'https://images.unsplash.com/photo-1559563458-527698bf5295?w=800&q=80',
+  bakery: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&q=80',
+  beverages: 'https://images.unsplash.com/photo-1543255255-b03b8f7a6d39?w=800&q=80',
+};

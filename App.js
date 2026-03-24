@@ -1,13 +1,13 @@
 // App.js
 import React, {useEffect,useContext} from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaView } from 'react-native-safe-area-context';
+//import { SafeAreaView } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 //import { store } from './src/store/store';
 import Constants from "expo-constants";
 
 import AppNavigator from './navigation/AppNavigator';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider,SafeAreaView } from 'react-native-safe-area-context';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { PaystackProvider } from "react-native-paystack-webview";
@@ -52,18 +52,21 @@ export default function App() {
     return (
     
       <SafeAreaProvider>
+        <StatusBar style="light" backgroundColor="#2E7D32" translucent={true} />
         <AuthProvider>
           <NotificationProvider>
         <CartProvider>
        
-        <StatusBar backgroundColor="#2E7D32" barStyle="light-content" />
+        
         <PaystackProvider debug 
          publicKey={PayStack_Public_Key}
          currency="GHS"
          defaultChannels={['card','mobile_money','bank_transfer']}
          > 
          <PushNotificationInitializer/>
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#2E7D32' }} edges={['top']}>
         <AppNavigator />
+        </SafeAreaView>
         </PaystackProvider>
         </CartProvider>
         </NotificationProvider>

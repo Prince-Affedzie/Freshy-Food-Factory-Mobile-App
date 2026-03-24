@@ -25,6 +25,7 @@ import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 import SupportScreen from '../screens/SupportScreen';
 import AboutScreen from '../screens/AboutScreen';
 import NotificationScreen from '../screens/NotificationsScreen'
+import ForgotPasswordScreen from  '../screens/ForgetPasswordScreen'
 //import CartScreen from '../screens/CartScreen'; // You'll need to create this
 //import ProfileScreen from '../screens/ProfileScreen'; // You'll need to create this
 //import OrdersScreen from '../screens/OrdersScreen'; // You'll need to create this
@@ -47,6 +48,7 @@ function AuthNavigator() {
     >
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen name="SignUp" component={SignUpScreen} />
+      <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <AuthStack.Screen 
              name="PrivacyPolicy" 
               component={PrivacyPolicyScreen} 

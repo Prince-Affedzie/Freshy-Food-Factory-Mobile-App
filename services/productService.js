@@ -157,9 +157,6 @@ async getProducts(filters = {}) {
     // Based on your backend, you need to create this endpoint or use static
     // For now, using categories that match backend's category logic
    const categories = [
-  // Navigation & All
-  { id: 'all', name: 'All Products', icon: '🛒' },
-  
   // Produce
   { id: 'vegetables', name: 'Vegetables', icon: '🥦' },
   { id: 'fruits', name: 'Fruits', icon: '🍎' },

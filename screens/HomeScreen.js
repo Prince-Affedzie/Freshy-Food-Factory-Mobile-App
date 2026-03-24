@@ -267,7 +267,7 @@ const HomeScreen = () => {
       setLoading(true);
       const categoriesResponse = await productService.getCategories();
       if (categoriesResponse.success) {
-        setCategories(categoriesResponse.data.slice(1, 7));
+        setCategories(categoriesResponse.data.slice(0, 7));
       }
       const [featuredRes, newRes, bestRes] = await Promise.all([
         productService.getProductByTag('featured'),
@@ -504,6 +504,15 @@ const HomeScreen = () => {
           </View>
         </View>
       </Modal>
+      
+       <ScrollView
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2E7D32" />}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        onScrollBeginDrag={closeSearchResults}
+        scrollEventThrottle={16}
+      >
 
       {/* ── GREEN HEADER ── */}
       <View style={styles.header}>
@@ -607,14 +616,7 @@ const HomeScreen = () => {
         )}
       </View>
 
-      <ScrollView
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2E7D32" />}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        onScrollBeginDrag={closeSearchResults}
-        scrollEventThrottle={16}
-      >
+     
         {/* ══════════════════════════════════════════
             HERO CAROUSEL — replaces the old static banner
             ══════════════════════════════════════════ */}

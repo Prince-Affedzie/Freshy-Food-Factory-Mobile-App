@@ -5,6 +5,7 @@ import {
   Animated,
   StyleSheet,
   Dimensions,
+  Easing,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -13,19 +14,21 @@ const { width, height } = Dimensions.get('window');
 const FullScreenLoader = ({
   visible = false,
   loadingText = 'Loading...',
-  subText = 'Please wait while we fetch your data',
-  loadingType = 'default', // 'default', 'category', 'search'
+  subText = 'Please wait...',
+  loadingType = 'default',
   categoryName = '',
   searchQuery = '',
   loadedCount = 0,
   totalCount = 0,
   icon = 'leaf',
   iconColor = '#4CAF50',
-  backgroundColor = 'rgba(255, 255, 255, 0.95)',
+  backgroundColor = 'rgba(255, 255, 255, 0.98)',
 }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const scaleAnim = useRef(new Animated.Value(0.92)).current;
   const spinAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  
   const spin = spinAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
@@ -33,29 +36,45 @@ const FullScreenLoader = ({
 
   useEffect(() => {
     if (visible) {
-      // Fade in animation
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 300,
+          duration: 280,
           useNativeDriver: true,
+          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
         }),
         Animated.spring(scaleAnim, {
           toValue: 1,
-          friction: 8,
-          tension: 40,
+          friction: 7,
+          tension: 50,
           useNativeDriver: true,
         }),
         Animated.loop(
           Animated.timing(spinAnim, {
             toValue: 1,
-            duration: 2000,
+            duration: 1400,
             useNativeDriver: true,
+            easing: Easing.linear,
           })
+        ),
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(pulseAnim, {
+              toValue: 1.08,
+              duration: 800,
+              useNativeDriver: true,
+              easing: Easing.inOut(Easing.ease),
+            }),
+            Animated.timing(pulseAnim, {
+              toValue: 1,
+              duration: 800,
+              useNativeDriver: true,
+              easing: Easing.inOut(Easing.ease),
+            }),
+          ])
         ),
       ]).start();
     } else {
-      // Fade out animation
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 0,
@@ -63,7 +82,7 @@ const FullScreenLoader = ({
           useNativeDriver: true,
         }),
         Animated.timing(scaleAnim, {
-          toValue: 0.8,
+          toValue: 0.92,
           duration: 200,
           useNativeDriver: true,
         }),
@@ -73,13 +92,12 @@ const FullScreenLoader = ({
 
   if (!visible) return null;
 
-  // Determine text based on loading type
   const getLoadingTitle = () => {
     switch (loadingType) {
       case 'category':
-        return categoryName ? `Loading ${categoryName}...` : 'Switching Category...';
+        return categoryName || 'Loading Category';
       case 'search':
-        return searchQuery ? `Searching for "${searchQuery}"...` : 'Searching...';
+        return searchQuery ? `"${searchQuery}"` : 'Searching';
       default:
         return loadingText;
     }
@@ -88,9 +106,9 @@ const FullScreenLoader = ({
   const getLoadingSubtitle = () => {
     switch (loadingType) {
       case 'category':
-        return categoryName ? `Fetching ${categoryName} products...` : 'Getting category items...';
+        return categoryName ? `${categoryName} products` : 'Getting items...';
       case 'search':
-        return searchQuery ? `Finding matches for "${searchQuery}"...` : 'Searching through products...';
+        return searchQuery ? `Finding matches for "${searchQuery}"` : 'Searching products...';
       default:
         return subText;
     }
@@ -99,52 +117,72 @@ const FullScreenLoader = ({
   return (
     <Animated.View
       style={[
-        styles.fullScreenLoader,
+        styles.container,
         {
           opacity: fadeAnim,
-          transform: [{ scale: scaleAnim }],
           backgroundColor,
         },
       ]}
     >
-      <View style={styles.loaderContent}>
-        {/* Animated Logo/Icon */}
-        <View style={styles.loaderIconContainer}>
-          <Animated.View style={{ transform: [{ rotate: spin }] }}>
-            <Ionicons name={icon} size={60} color={iconColor} />
-          </Animated.View>
-          <View style={[styles.innerIcon, { backgroundColor: iconColor }]}>
-            <Ionicons name="basket" size={30} color="#FFFFFF" />
-          </View>
+      <Animated.View
+        style={[
+          styles.content,
+          {
+            transform: [{ scale: scaleAnim }],
+          },
+        ]}
+      >
+        {/* Curvy Background Shape */}
+        <View style={styles.curvyShape}>
+          <View style={styles.curvyTop} />
+          <View style={styles.curvyMiddle} />
+          <View style={styles.curvyBottom} />
         </View>
 
+        {/* Animated Icon with Pulse Effect */}
+        <Animated.View 
+          style={[
+            styles.iconContainer,
+            {
+              transform: [{ scale: pulseAnim }],
+            },
+          ]}
+        >
+          <Animated.View style={{ transform: [{ rotate: spin }] }}>
+            <Ionicons name={icon} size={34} color={iconColor} />
+          </Animated.View>
+          <View style={[styles.iconGlow, { backgroundColor: `${iconColor}15` }]} />
+        </Animated.View>
+
         {/* Loading Text */}
-        <Text style={styles.loaderTitle}>
+        <Text style={styles.title} numberOfLines={1}>
           {getLoadingTitle()}
         </Text>
 
-        <Text style={styles.loaderSubtitle}>
+        {/* Subtle Subtitle */}
+        <Text style={styles.subtitle} numberOfLines={1}>
           {getLoadingSubtitle()}
         </Text>
 
-        {/* Progress Dots Animation */}
-        <View style={styles.progressDots}>
+        {/* Minimal Dots Animation */}
+        <View style={styles.dotsContainer}>
           {[0, 1, 2].map((dot) => (
             <Animated.View
               key={dot}
               style={[
-                styles.progressDot,
+                styles.dot,
                 {
+                  backgroundColor: iconColor,
                   opacity: spinAnim.interpolate({
-                    inputRange: [0, 0.25, 0.5, 0.75, 1],
-                    outputRange: [0.3, 0.6, 0.9, 0.6, 0.3],
+                    inputRange: [0, 0.33, 0.66, 1],
+                    outputRange: [0.3, 0.8, 0.3, 0.8],
                     extrapolate: 'clamp',
                   }),
                   transform: [
                     {
                       translateY: spinAnim.interpolate({
-                        inputRange: [0, 0.25, 0.5, 0.75, 1],
-                        outputRange: [0, -8, 0, -8, 0],
+                        inputRange: [0, 0.33, 0.66, 1],
+                        outputRange: [0, -3, 0, -3],
                         extrapolate: 'clamp',
                       }),
                     },
@@ -154,124 +192,130 @@ const FullScreenLoader = ({
             />
           ))}
         </View>
-
-        {/* Optional: Loading percentage or progress bar */}
-        {totalCount > 0 && (
-          <View style={styles.loaderStats}>
-            <Text style={styles.loaderStatsText}>
-              {`${loadedCount} of ${totalCount} items loaded`}
-            </Text>
-          </View>
-        )}
-      </View>
-
-      {/* Background Pattern */}
-      <View style={styles.loaderPattern}>
-        {[...Array(6)].map((_, i) => (
-          <View key={i} style={styles.patternItem}>
-            <Ionicons name={`${icon}-outline`} size={24} color={`${iconColor}20`} />
-          </View>
-        ))}
-      </View>
+      </Animated.View>
     </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
-  fullScreenLoader: {
+  container: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    width: width,
-    height: height,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 9999,
     elevation: 9999,
   },
-  loaderContent: {
+  content: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 30,
-    borderRadius: 20,
+    paddingHorizontal: 28,
+    paddingVertical: 24,
+    borderRadius: 48,
     backgroundColor: 'white',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 8,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    maxWidth: width * 0.85,
-  },
-  loaderIconContainer: {
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 4,
+    minWidth: 220,
+    maxWidth: width * 0.75,
     position: 'relative',
-    marginBottom: 20,
+    overflow: 'hidden',
   },
-  innerIcon: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: [{ translateX: -15 }, { translateY: -15 }],
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loaderTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  loaderSubtitle: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 25,
-    lineHeight: 22,
-  },
-  progressDots: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  progressDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#4CAF50',
-    marginHorizontal: 6,
-  },
-  loaderStats: {
-    marginTop: 10,
-  },
-  loaderStatsText: {
-    fontSize: 14,
-    color: '#888',
-    textAlign: 'center',
-  },
-  loaderPattern: {
+  curvyShape: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    pointerEvents: 'none',
+    borderRadius: 78,
+    overflow: 'hidden',
   },
-  patternItem: {
-    margin: 20,
+  curvyTop: {
+    position: 'absolute',
+    top: -40,
+    right: -40,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#F8F9FA',
+  },
+  curvyMiddle: {
+    position: 'absolute',
+    bottom: -30,
+    left: -30,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#F5F7F5',
+  },
+  curvyBottom: {
+    position: 'absolute',
+    top: '30%',
+    left: -50,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: '#FAFBF8',
+  },
+  iconContainer: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+    position: 'relative',
+  },
+  iconGlow: {
+    position: 'absolute',
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     opacity: 0.5,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+    textAlign: 'center',
+    marginBottom: 6,
+    letterSpacing: -0.3,
+  },
+  subtitle: {
+    fontSize: 13,
+    fontWeight: '400',
+    color: '#9CA3AF',
+    textAlign: 'center',
+    marginBottom: 16,
+    letterSpacing: -0.1,
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  dot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
   },
 });
 

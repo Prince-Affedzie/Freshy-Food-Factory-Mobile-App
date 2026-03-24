@@ -1,6 +1,6 @@
 // ─── Hero images per category ─────────────────────────────────────────────────
 export const HERO_IMAGES = {
-  all: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1773523455/grocerry2_eul0ez.jpg',
+  all: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1774370636/try1_bo0pm4.jpg',
   vegetables: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1769990080/vegetables_cpp5n5.jpg',
   fruits: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1773488413/fruits_1_shqhh2.jpg',
   staples: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1770886305/staple_food_xlgo92.jpg',

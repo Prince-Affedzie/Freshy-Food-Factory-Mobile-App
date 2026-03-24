@@ -1,5 +1,5 @@
 // src/navigation/AppNavigator.js
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext'; // Import auth context
 import { useCart } from '../context/CartContext';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Import screens
 import HomeScreen from '../screens/HomeScreen';
@@ -26,10 +27,9 @@ import SupportScreen from '../screens/SupportScreen';
 import AboutScreen from '../screens/AboutScreen';
 import NotificationScreen from '../screens/NotificationsScreen'
 import ForgotPasswordScreen from  '../screens/ForgetPasswordScreen'
-//import CartScreen from '../screens/CartScreen'; // You'll need to create this
-//import ProfileScreen from '../screens/ProfileScreen'; // You'll need to create this
-//import OrdersScreen from '../screens/OrdersScreen'; // You'll need to create this
-//import OnboardingScreen from '../screens/OnboardingScreen'; // Optional onboarding
+import WelcomeScreen from '../screens/WelcomeScreen';
+import { checkIfFirstLaunch } from '../hooks/checkIfFirstLaunch';
+
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -161,13 +161,29 @@ function MainTabNavigator() {
 function MainStackNavigator() {
   const { user, loading } = useAuth();
 
-  // Show loading screen while checking auth status
-  if (loading) {
-    return null; // Or return a loading screen component
+  const [isFirstLaunch, setIsFirstLaunch] = useState(null);
+  
+  useEffect(() => {
+    const init = async () => {
+      const first = await checkIfFirstLaunch();
+      setIsFirstLaunch(first);
+    };
+    init();
+  }, []);
+
+  //  Wait until both auth + first launch are ready
+  if (loading || isFirstLaunch === null) {
+    return null; // or splash screen
   }
+
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
+
+      {isFirstLaunch && (
+        <Stack.Screen name="Welcome" component={WelcomeScreen} />
+      )}
+
       {user ? (
         // Authenticated user flow
         <>

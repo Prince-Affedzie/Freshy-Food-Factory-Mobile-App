@@ -567,7 +567,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
             <ActivityIndicator color="#fff" size="small" />
           ) : (
             <Text style={styles.addBtnText}>
-              {isInStock ? `Add To Basket  ·  GH₵ ${lineTotal}` : 'Out of Stock'}
+              {isInStock ? `Add To Cart  ·  GH₵ ${lineTotal}` : 'Out of Stock'}
             </Text>
           )}
         </TouchableOpacity>
@@ -823,7 +823,7 @@ const styles = StyleSheet.create({
   // ── BOTTOM BAR ───────────────────────────────────────────────────────────────
   bottomBar: {
     position: 'absolute',
-    bottom: 0, left: 0, right: 0,
+    bottom: 12, left: 0, right: 0,
     backgroundColor: '#fff',
     paddingHorizontal: 20,
     paddingTop: 14,

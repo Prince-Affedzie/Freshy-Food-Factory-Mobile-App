@@ -634,7 +634,7 @@ const styles = StyleSheet.create({
   // ── CHECKOUT BAR ─────────────────────────────────────────────────────────────
   checkoutBar: {
     position: 'absolute',
-    bottom: 10, left: 0, right: 0,
+    bottom: 0, left: 0, right: 0,
     backgroundColor: '#fff',
     paddingHorizontal: 16,
     paddingTop: 16,
@@ -648,7 +648,7 @@ const styles = StyleSheet.create({
   },
   checkoutSummary: {
     flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', marginBottom: 8,
+    alignItems: 'center', marginBottom: 4,
   },
   checkoutLeft: { flexDirection: 'row', alignItems: 'center', gap: 0 },
   checkoutItemCount: { fontSize: 13, color: '#9E9E9E', fontWeight: '600' },
@@ -660,7 +660,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 5,
     backgroundColor: '#FFF8E1', borderRadius: 8,
     paddingHorizontal: 10, paddingVertical: 7,
-    marginBottom: 12,
+    marginBottom: 6,
   },
   checkoutNoteText: { flex: 1, fontSize: 11, color: '#F57F17', lineHeight: 15 },
   checkoutBtn: {

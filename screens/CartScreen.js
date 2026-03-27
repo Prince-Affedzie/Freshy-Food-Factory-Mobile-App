@@ -634,7 +634,7 @@ const styles = StyleSheet.create({
   // ── CHECKOUT BAR ─────────────────────────────────────────────────────────────
   checkoutBar: {
     position: 'absolute',
-    bottom: 24, left: 0, right: 0,
+    bottom: 10, left: 0, right: 0,
     backgroundColor: '#fff',
     paddingHorizontal: 16,
     paddingTop: 16,

@@ -823,7 +823,7 @@ const styles = StyleSheet.create({
   // ── BOTTOM BAR ───────────────────────────────────────────────────────────────
   bottomBar: {
     position: 'absolute',
-    bottom: 12, left: 0, right: 0,
+    bottom: 24, left: 0, right: 0,
     backgroundColor: '#fff',
     paddingHorizontal: 20,
     paddingTop: 14,

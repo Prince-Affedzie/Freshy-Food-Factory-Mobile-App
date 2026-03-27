@@ -172,7 +172,7 @@ function MainStackNavigator() {
   }, []);
 
   //  Wait until both auth + first launch are ready
-  if (isFirstLaunch === null) {
+  if (loading || isFirstLaunch === null) {
     return null; // or splash screen
   }
 

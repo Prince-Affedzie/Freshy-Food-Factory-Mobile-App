@@ -1,9 +1,7 @@
 // App.js
 import React, {useEffect,useContext} from 'react';
 import { StatusBar } from 'expo-status-bar';
-//import { SafeAreaView } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
-//import { store } from './src/store/store';
 import Constants from "expo-constants";
 
 import AppNavigator from './navigation/AppNavigator';

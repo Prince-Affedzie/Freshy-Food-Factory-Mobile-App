@@ -14,6 +14,7 @@ import {
   Modal,
   TextInput,
   StatusBar,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +22,49 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { getOrderById, cancelOrder } from '../apis/orderApi';
 
+const { width } = Dimensions.get('window');
+
+// ─── Status config ────────────────────────────────────────────────────────────
+const STATUS_META = {
+  Pending:          { bg: '#FFF8E1', text: '#F57F17', border: '#FFE082', icon: 'time',             dotColor: '#F57F17' },
+  Processing:       { bg: '#E3F2FD', text: '#1565C0', border: '#90CAF9', icon: 'sync',             dotColor: '#1565C0' },
+  'Out for Delivery':{ bg: '#E8F5E9', text: '#2E7D32', border: '#A5D6A7', icon: 'bicycle',         dotColor: '#2E7D32' },
+  Delivered:        { bg: '#E8F5E9', text: '#1B5E20', border: '#A5D6A7', icon: 'checkmark-circle', dotColor: '#1B5E20' },
+  Cancelled:        { bg: '#FFEBEE', text: '#B71C1C', border: '#EF9A9A', icon: 'close-circle',     dotColor: '#B71C1C' },
+};
+
+const STEPS = ['Pending', 'Processing', 'Out for Delivery', 'Delivered'];
+
+// ─── Collapsible Section ──────────────────────────────────────────────────────
+const Section = ({ icon, title, expanded, onToggle, children }) => (
+  <View style={styles.section}>
+    <TouchableOpacity style={styles.sectionHeader} onPress={onToggle} activeOpacity={0.75}>
+      <View style={styles.sectionHeaderLeft}>
+        <View style={styles.sectionIconWrap}>
+          <Ionicons name={icon} size={16} color="#2E7D32" />
+        </View>
+        <Text style={styles.sectionTitle}>{title}</Text>
+      </View>
+      <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={18} color="#9E9E9E" />
+    </TouchableOpacity>
+    {expanded && <View style={styles.sectionBody}>{children}</View>}
+  </View>
+);
+
+// ─── Info Row ─────────────────────────────────────────────────────────────────
+const InfoRow = ({ icon, label, value, valueColor }) => (
+  <View style={styles.infoRow}>
+    <View style={styles.infoRowIcon}>
+      <Ionicons name={icon} size={15} color="#9E9E9E" />
+    </View>
+    <View style={styles.infoRowBody}>
+      <Text style={styles.infoRowLabel}>{label}</Text>
+      <Text style={[styles.infoRowValue, valueColor && { color: valueColor }]}>{value}</Text>
+    </View>
+  </View>
+);
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
 const OrderDetailScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
@@ -30,30 +74,20 @@ const OrderDetailScreen = () => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [expanded, setExpanded] = useState('status');
+  const [expanded, setExpanded] = useState('items');
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [customReason, setCustomReason] = useState('');
   const [cancelling, setCancelling] = useState(false);
 
-  // Cancellation reasons
   const cancellationReasons = [
-    { id: 'changed_mind', label: 'Changed my mind', icon: 'heart-dislike' },
-    { id: 'found_cheaper', label: 'Found cheaper elsewhere', icon: 'pricetag' },
-    { id: 'delivery_time', label: 'Delivery time too long', icon: 'time' },
-    { id: 'ordered_mistake', label: 'Ordered by mistake', icon: 'alert-circle' },
-    { id: 'payment_issues', label: 'Payment issues', icon: 'card' },
-    { id: 'other', label: 'Other reason', icon: 'chatbubble' },
+    { id: 'changed_mind',    label: 'Changed my mind',         icon: 'heart-dislike-outline' },
+    { id: 'found_cheaper',   label: 'Found cheaper elsewhere', icon: 'pricetag-outline' },
+    { id: 'delivery_time',   label: 'Delivery too slow',       icon: 'time-outline' },
+    { id: 'ordered_mistake', label: 'Ordered by mistake',      icon: 'alert-circle-outline' },
+    { id: 'payment_issues',  label: 'Payment issues',          icon: 'card-outline' },
+    { id: 'other',           label: 'Other reason',            icon: 'chatbubble-outline' },
   ];
-
-  // Status styling
-  const statusStyles = {
-    Pending: { bg: '#fff7ed', text: '#c2410c', border: '#fed7aa', icon: 'time' },
-    Processing: { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe', icon: 'sync' },
-    'Out for Delivery': { bg: '#f0fdf4', text: '#15803d', border: '#86efac', icon: 'bicycle' },
-    Delivered: { bg: '#f0fdf4', text: '#166534', border: '#86efac', icon: 'checkmark-circle' },
-    Cancelled: { bg: '#fef2f2', text: '#b91c1c', border: '#fecaca', icon: 'close-circle' },
-  };
 
   useEffect(() => {
     if (isAuthenticated) fetchOrder();
@@ -80,1178 +114,847 @@ const OrderDetailScreen = () => {
     }
   };
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchOrder();
-  };
+  const onRefresh = () => { setRefreshing(true); fetchOrder(); };
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleString('en-GH', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+  const formatDate = (ds) => {
+    if (!ds) return '—';
+    return new Date(ds).toLocaleString('en-GH', {
+      day: 'numeric', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
     });
   };
 
-  const toggleSection = (section) => {
-    setExpanded(expanded === section ? null : section);
-  };
+  const toggle = (s) => setExpanded(expanded === s ? null : s);
 
-  const handleContactSupport = () => {
-    Linking.openURL('tel:+233505671577');
-  };
+  const handleContactSupport = () => Linking.openURL('tel:+233505671577');
 
-  const handleTrackOrder = () => {
-    Alert.alert(
-      'Track Order',
-      'Real-time tracking will be available soon! You will be notified when your order is out for delivery.',
-      [{ text: 'OK' }]
-    );
-  };
+  const handleTrackOrder = () => Alert.alert(
+    'Track Order',
+    'Real-time tracking will be available soon! You will be notified when your order is out for delivery.',
+    [{ text: 'OK' }]
+  );
 
-  const handleReorder = (order) => {
-    Alert.alert(
-      'Reorder',
-      'Add all items from this order to your cart?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Reorder', 
-          onPress: () => {
-            Alert.alert('Coming Soon', 'Reorder feature will be available soon!');
-          }
-        }
-      ]
-    );
-  };
+  const handleReorder = () => Alert.alert(
+    'Reorder',
+    'Add all items from this order to your cart?',
+    [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Reorder', onPress: () => Alert.alert('Coming Soon', 'Reorder feature will be available soon!') },
+    ]
+  );
 
-  // Handle order cancellation
   const handleCancelOrder = () => {
     if (!order) return;
-    
-    // Check if order can be cancelled
     if (!['Pending', 'Processing'].includes(order.status?.current)) {
-      Alert.alert(
-        'Cannot Cancel',
-        `Orders with status "${order.status?.current}" cannot be cancelled.`
-      );
+      Alert.alert('Cannot Cancel', `Orders with status "${order.status?.current}" cannot be cancelled.`);
       return;
     }
-
     if (order.payment?.isPaid) {
-      Alert.alert(
-        'Paid Order',
-        'This order has already been paid. Please contact support for assistance with cancellation and refund.'
-      );
+      Alert.alert('Paid Order', 'This order has already been paid. Please contact support for assistance.');
       return;
     }
-
-    // Reset state and show modal
     setCancelReason('');
     setCustomReason('');
     setCancelModalVisible(true);
   };
 
-  const selectReason = (reasonId) => {
-    setCancelReason(reasonId);
-    if (reasonId !== 'other') {
-      setCustomReason('');
-    }
-  };
-
   const submitCancellation = async () => {
-    // Determine the final reason text
     let finalReason = '';
     if (cancelReason === 'other') {
-      if (!customReason.trim()) {
-        Alert.alert('Error', 'Please enter your reason for cancellation');
-        return;
-      }
+      if (!customReason.trim()) { Alert.alert('Error', 'Please enter your reason for cancellation'); return; }
       finalReason = customReason.trim();
     } else {
-      const selected = cancellationReasons.find(r => r.id === cancelReason);
-      if (!selected) {
-        Alert.alert('Error', 'Please select a reason for cancellation');
-        return;
-      }
-      finalReason = selected.label;
+      const sel = cancellationReasons.find(r => r.id === cancelReason);
+      if (!sel) { Alert.alert('Error', 'Please select a reason for cancellation'); return; }
+      finalReason = sel.label;
     }
-
     setCancelling(true);
     try {
-      const response = await cancelOrder(orderId, { reason: finalReason });
-      
-      if (response.status === 200 && response.data?.success) {
-        Alert.alert(
-          'Order Cancelled',
-          'Your order has been successfully cancelled.',
-          [{ text: 'OK', onPress: () => {
-            setCancelModalVisible(false);
-            fetchOrder(); // Refresh order details
-          }}]
-        );
+      const res = await cancelOrder(orderId, { reason: finalReason });
+      if (res.status === 200 && res.data?.success) {
+        Alert.alert('Order Cancelled', 'Your order has been successfully cancelled.', [{
+          text: 'OK', onPress: () => { setCancelModalVisible(false); fetchOrder(); }
+        }]);
       } else {
-        Alert.alert('Error', response.data?.message || 'Failed to cancel order');
+        Alert.alert('Error', res.data?.message || 'Failed to cancel order');
       }
-    } catch (error) {
-      console.error('Cancel order error:', error);
-      Alert.alert(
-        'Error',
-        error.response?.data?.message || 'Failed to cancel order. Please try again.'
-      );
+    } catch (err) {
+      Alert.alert('Error', err.response?.data?.message || 'Failed to cancel order. Please try again.');
     } finally {
       setCancelling(false);
     }
   };
 
-  const getStatusStyle = (status) => statusStyles[status] || statusStyles.Pending;
+  // ── NAV shared component ──────────────────────────────────────────────────
+  const FloatingNav = () => (
+    <SafeAreaView edges={['top']} style={{ zIndex: 10 }}>
+      <View style={styles.navRow}>
+        <TouchableOpacity style={styles.navBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="chevron-back" size={22} color="#1A1A1A" />
+        </TouchableOpacity>
+        <Text style={styles.navTitle}>Order Details</Text>
+        <TouchableOpacity style={styles.navBtn} onPress={onRefresh}>
+          <Ionicons name="refresh-outline" size={20} color="#1A1A1A" />
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
 
+  // ── LOADING ──────────────────────────────────────────────────────────────────
   if (loading && !refreshing) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <StatusBar backgroundColor="#2E7D32" barStyle="light-content" />
-        <View style={styles.topBar}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={22} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.topBarTitle}>Order Details</Text>
-          <View style={styles.headerRight}>
-            <TouchableOpacity 
-              style={styles.headerIconBtn}
-              onPress={() => navigation.navigate('MainTabs', { screen: 'Home' })}
-            >
-              <Ionicons name="home-outline" size={22} color="#fff" />
-            </TouchableOpacity>
+      <View style={styles.screen}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F7F8F7" />
+        <FloatingNav />
+        <View style={styles.centered}>
+          <View style={styles.loadingIconWrap}>
+            <ActivityIndicator size="large" color="#4CAF50" />
           </View>
+          <Text style={styles.loadingTitle}>Loading order</Text>
+          <Text style={styles.loadingSub}>Fetching your order details…</Text>
         </View>
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#2E7D32" />
-          <Text style={styles.centerText}>Loading order details...</Text>
-        </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
+  // ── NOT FOUND ────────────────────────────────────────────────────────────────
   if (!order) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <StatusBar backgroundColor="#2E7D32" barStyle="light-content" />
-        <View style={styles.topBar}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={22} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.topBarTitle}>Order Details</Text>
-          <View style={styles.headerRight}>
-            <TouchableOpacity 
-              style={styles.headerIconBtn}
-              onPress={() => navigation.navigate('MainTabs', { screen: 'Home' })}
-            >
-              <Ionicons name="home-outline" size={22} color="#fff" />
-            </TouchableOpacity>
+      <View style={styles.screen}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F7F8F7" />
+        <FloatingNav />
+        <View style={styles.centered}>
+          <View style={[styles.loadingIconWrap, { backgroundColor: '#FFEBEE' }]}>
+            <Ionicons name="alert-circle-outline" size={36} color="#E53935" />
           </View>
-        </View>
-        <View style={styles.center}>
-          <Ionicons name="alert-circle-outline" size={80} color="#ef4444" />
-          <Text style={styles.emptyTitle}>Order Not Found</Text>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.backButtonText}>← Back to Orders</Text>
+          <Text style={styles.loadingTitle}>Order Not Found</Text>
+          <TouchableOpacity style={styles.goBackBtn} onPress={() => navigation.goBack()}>
+            <Text style={styles.goBackBtnText}>Go Back</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   const status = order.status?.current || 'Pending';
-  const statusStyle = getStatusStyle(status);
+  const meta = STATUS_META[status] || STATUS_META.Pending;
   const canCancel = ['Pending', 'Processing'].includes(status) && !order.payment?.isPaid;
+  const stepIdx = STEPS.indexOf(status);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar backgroundColor="#2E7D32" barStyle="light-content" />
-      
-      {/* Green Header - Matching other screens */}
-      <View style={styles.topBar}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.topBarTitle}>Order Details</Text>
-        <View style={styles.headerRight}>
-          <TouchableOpacity 
-            style={styles.headerIconBtn}
-            onPress={onRefresh}
-          >
-            <Ionicons name="refresh" size={22} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.headerIconBtn}
-            onPress={() => navigation.navigate('MainTabs', { screen: 'Home' })}
-          >
-            <Ionicons name="home-outline" size={22} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      </View>
+    <View style={styles.screen}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F7F8F7" />
 
-      {/* Cancellation Modal */}
+      {/* ── Cancellation Modal ── */}
       <Modal
         animationType="slide"
-        transparent={true}
+        transparent
         visible={cancelModalVisible}
         onRequestClose={() => setCancelModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <View style={styles.modalHeaderLeft}>
-                <Ionicons name="close-circle-outline" size={28} color="#b91c1c" />
-                <Text style={styles.modalTitle}>Cancel Order</Text>
+        <TouchableOpacity
+          style={styles.modalBackdrop}
+          activeOpacity={1}
+          onPress={() => !cancelling && setCancelModalVisible(false)}
+        />
+        <View style={styles.modalSheet}>
+          <View style={styles.modalHandle} />
+          <View style={styles.modalHead}>
+            <View style={styles.modalHeadLeft}>
+              <View style={[styles.modalHeadIcon, { backgroundColor: '#FFEBEE' }]}>
+                <Ionicons name="close-circle-outline" size={20} color="#B71C1C" />
               </View>
-              <TouchableOpacity 
-                onPress={() => setCancelModalVisible(false)}
-                style={styles.modalCloseButton}
-              >
-                <Ionicons name="close" size={24} color="#64748b" />
-              </TouchableOpacity>
+              <Text style={styles.modalTitle}>Cancel Order</Text>
+            </View>
+            <TouchableOpacity onPress={() => setCancelModalVisible(false)} style={styles.modalCloseBtn}>
+              <Ionicons name="close" size={20} color="#9E9E9E" />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 16 }}>
+            {/* Order summary strip */}
+            <View style={styles.modalOrderStrip}>
+              <Text style={styles.modalOrderNum}>
+                Order #{order.orderNumber || order._id?.slice(-8).toUpperCase()}
+              </Text>
+              <Text style={styles.modalOrderTotal}>GH₵ {order.pricing?.totalPrice || '—'}</Text>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <View style={styles.modalBody}>
-                {/* Order Summary */}
-                <View style={styles.orderSummary}>
-                  <Text style={styles.summaryLabel}>Order #{order.orderNumber || order._id?.slice(-8).toUpperCase()}</Text>
-                  <Text style={styles.summaryTotal}>GH₵ {order.pricing?.totalPrice || '—'}</Text>
-                </View>
+            <Text style={styles.modalSubtitle}>Why are you cancelling this order?</Text>
 
-                <Text style={styles.modalSubtitle}>
-                  Please let us know why you're cancelling this order
-                </Text>
-
-                {/* Cancellation reasons grid */}
-                <View style={styles.reasonsGrid}>
-                  {cancellationReasons.map((reason) => (
-                    <TouchableOpacity
-                      key={reason.id}
-                      style={[
-                        styles.reasonCard,
-                        cancelReason === reason.id && styles.reasonCardSelected
-                      ]}
-                      onPress={() => selectReason(reason.id)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={[
-                        styles.reasonIconContainer,
-                        cancelReason === reason.id && styles.reasonIconContainerSelected
-                      ]}>
-                        <Ionicons 
-                          name={reason.icon} 
-                          size={24} 
-                          color={cancelReason === reason.id ? '#15803d' : '#64748b'} 
-                        />
+            <View style={styles.reasonGrid}>
+              {cancellationReasons.map(r => {
+                const active = cancelReason === r.id;
+                return (
+                  <TouchableOpacity
+                    key={r.id}
+                    style={[styles.reasonCard, active && styles.reasonCardActive]}
+                    onPress={() => { setCancelReason(r.id); if (r.id !== 'other') setCustomReason(''); }}
+                    activeOpacity={0.8}
+                  >
+                    <View style={[styles.reasonIconBg, active && styles.reasonIconBgActive]}>
+                      <Ionicons name={r.icon} size={20} color={active ? '#2E7D32' : '#9E9E9E'} />
+                    </View>
+                    <Text style={[styles.reasonLabel, active && styles.reasonLabelActive]} numberOfLines={2}>
+                      {r.label}
+                    </Text>
+                    {active && (
+                      <View style={styles.reasonCheck}>
+                        <Ionicons name="checkmark" size={10} color="#fff" />
                       </View>
-                      <Text style={[
-                        styles.reasonCardText,
-                        cancelReason === reason.id && styles.reasonCardTextSelected
-                      ]}>
-                        {reason.label}
-                      </Text>
-                      {cancelReason === reason.id && (
-                        <View style={styles.selectedIndicator}>
-                          <Ionicons name="checkmark-circle" size={20} color="#15803d" />
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  ))}
-                </View>
-
-                {/* Custom reason input for "Other" */}
-                {cancelReason === 'other' && (
-                  <View style={styles.customReasonContainer}>
-                    <Text style={styles.customReasonLabel}>Please specify your reason:</Text>
-                    <TextInput
-                      style={styles.customReasonInput}
-                      placeholder="Enter your reason here..."
-                      placeholderTextColor="#94a3b8"
-                      value={customReason}
-                      onChangeText={setCustomReason}
-                      multiline
-                      numberOfLines={3}
-                      textAlignVertical="top"
-                      autoFocus
-                    />
-                  </View>
-                )}
-
-                {/* Cancellation policy notice */}
-                <View style={styles.policyNotice}>
-                  <Ionicons name="information-circle-outline" size={20} color="#3b82f6" />
-                  <Text style={styles.policyNoticeText}>
-                    By cancelling this order, any pending payments will be voided and items will be returned to stock.
-                  </Text>
-                </View>
-              </View>
-            </ScrollView>
-
-            {/* Modal Footer with Actions */}
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={styles.footerCancelButton}
-                onPress={() => setCancelModalVisible(false)}
-                disabled={cancelling}
-              >
-                <Text style={styles.footerCancelButtonText}>Keep Order</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.footerConfirmButton, 
-                  (!cancelReason || (cancelReason === 'other' && !customReason.trim()) || cancelling) && 
-                  styles.footerConfirmButtonDisabled
-                ]}
-                onPress={submitCancellation}
-                disabled={!cancelReason || (cancelReason === 'other' && !customReason.trim()) || cancelling}
-              >
-                {cancelling ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <>
-                    <Ionicons name="checkmark-circle" size={18} color="#fff" style={styles.footerConfirmIcon} />
-                    <Text style={styles.footerConfirmButtonText}>Confirm </Text>
-                  </>
-                )}
-              </TouchableOpacity>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
+
+            {cancelReason === 'other' && (
+              <View style={styles.customReasonWrap}>
+                <Text style={styles.customReasonLabel}>Please describe your reason</Text>
+                <TextInput
+                  style={styles.customReasonInput}
+                  placeholder="Enter your reason here…"
+                  placeholderTextColor="#BDBDBD"
+                  value={customReason}
+                  onChangeText={setCustomReason}
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                  autoFocus
+                />
+              </View>
+            )}
+
+            <View style={styles.policyBanner}>
+              <Ionicons name="information-circle-outline" size={16} color="#1565C0" />
+              <Text style={styles.policyText}>
+                Cancelling will void any pending payments and return items to stock.
+              </Text>
+            </View>
+          </ScrollView>
+
+          <View style={styles.modalFooter}>
+            <TouchableOpacity
+              style={styles.keepBtn}
+              onPress={() => setCancelModalVisible(false)}
+              disabled={cancelling}
+            >
+              <Text style={styles.keepBtnText}>Keep Order</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.confirmCancelBtn,
+                (!cancelReason || (cancelReason === 'other' && !customReason.trim()) || cancelling) && styles.confirmCancelBtnDisabled,
+              ]}
+              onPress={submitCancellation}
+              disabled={!cancelReason || (cancelReason === 'other' && !customReason.trim()) || cancelling}
+            >
+              {cancelling ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="close-circle-outline" size={16} color="#fff" />
+                  <Text style={styles.confirmCancelBtnText}>Cancel Order</Text>
+                </>
+              )}
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
+      {/* ── Floating Nav ── */}
+      <FloatingNav />
+
       <ScrollView
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2E7D32" />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4CAF50" colors={['#4CAF50']} />}
         contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        {/* STATUS CARD - Enhanced */}
-        <View style={[styles.statusCard, { backgroundColor: statusStyle.bg, borderColor: statusStyle.border }]}>
-          <View style={styles.statusHeader}>
-            <View style={[styles.statusIconContainer, { backgroundColor: statusStyle.text }]}>
-              <Ionicons name={statusStyle.icon} size={24} color="#fff" />
+        {/* ════════════════════════
+            STATUS HERO CARD
+            ════════════════════════ */}
+        <View style={[styles.statusHero, { backgroundColor: meta.bg, borderColor: meta.border }]}>
+          {/* Order ID + status */}
+          <View style={styles.statusHeroTop}>
+            <View style={[styles.statusIconBg, { backgroundColor: meta.text }]}>
+              <Ionicons name={meta.icon} size={22} color="#fff" />
             </View>
-            <View style={styles.statusInfo}>
-              <Text style={[styles.statusMain, { color: statusStyle.text }]}>
-                {status}
+            <View style={styles.statusHeroInfo}>
+              <Text style={[styles.statusText, { color: meta.text }]}>{status}</Text>
+              <Text style={styles.orderNumText}>
+                #{order.orderNumber || order._id?.slice(-8).toUpperCase()}
               </Text>
-              <Text style={styles.orderNumber}>
-                Order #{order.orderNumber || order._id?.slice(-8).toUpperCase()}
-              </Text>
+            </View>
+            <View style={[styles.statusPill, { backgroundColor: meta.text }]}>
+              <Text style={styles.statusPillText}>{status}</Text>
             </View>
           </View>
 
-          {/* Simple timeline dots */}
-          <View style={styles.timeline}>
-            {['Pending', 'Processing', 'Out for Delivery', 'Delivered'].map((s, i) => {
-              const isActive = s === status;
-              const isPast = 
-                (status === 'Processing' && s === 'Pending') ||
-                (status === 'Out for Delivery' && (s === 'Pending' || s === 'Processing')) ||
-                (status === 'Delivered' && s !== 'Delivered');
-              
-              return (
-                <View key={s} style={styles.timelineStep}>
-                  <View style={[
-                    styles.timelineDot,
-                    isActive ? styles.timelineDotActive : 
-                    isPast ? styles.timelineDotPast : 
-                    styles.timelineDotInactive
-                  ]} />
-                  <Text style={[
-                    styles.timelineLabel,
-                    isActive && { color: statusStyle.text, fontWeight: '600' }
-                  ]}>
-                    {s === 'Out for Delivery' ? 'Out for' : s}
-                    {s === 'Out for Delivery' && <Text style={styles.timelineLabelSmall}> Delivery</Text>}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
+          {/* Progress stepper */}
+          {status !== 'Cancelled' && (
+            <View style={styles.progressRow}>
+              {STEPS.map((s, i) => {
+                const done = stepIdx > i;
+                const active = stepIdx === i;
+                return (
+                  <React.Fragment key={s}>
+                    <View style={styles.stepWrap}>
+                      <View style={[
+                        styles.stepBubble,
+                        done && { backgroundColor: meta.text },
+                        active && { backgroundColor: meta.text, shadowColor: meta.text, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.4, shadowRadius: 5, elevation: 3 },
+                        !done && !active && styles.stepBubbleInactive,
+                      ]}>
+                        {done
+                          ? <Ionicons name="checkmark" size={11} color="#fff" />
+                          : <View style={[styles.stepInnerDot, active && { backgroundColor: '#fff' }, !active && { backgroundColor: '#D0D0D0' }]} />
+                        }
+                      </View>
+                      <Text style={[styles.stepLabel, (done || active) && { color: meta.text, fontWeight: '700' }]} numberOfLines={1}>
+                        {s === 'Out for Delivery' ? 'On Way' : s}
+                      </Text>
+                    </View>
+                    {i < STEPS.length - 1 && (
+                      <View style={[styles.stepConnector, done && { backgroundColor: meta.text }]} />
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </View>
+          )}
 
-          {/* Tracking info placeholder */}
+          {/* Tracking nudge */}
           {status === 'Out for Delivery' && (
-            <TouchableOpacity style={styles.trackingPreview} onPress={handleTrackOrder}>
-              <Ionicons name="location" size={16} color="#15803d" />
-              <Text style={styles.trackingPreviewText}>Tap to track your order</Text>
-              <Ionicons name="chevron-forward" size={16} color="#15803d" />
+            <TouchableOpacity style={styles.trackNudge} onPress={handleTrackOrder} activeOpacity={0.8}>
+              <Ionicons name="location" size={15} color="#2E7D32" />
+              <Text style={styles.trackNudgeText}>Tap to track your order in real-time</Text>
+              <Ionicons name="chevron-forward" size={15} color="#2E7D32" />
             </TouchableOpacity>
           )}
-        </View>
 
-        {/* ORDER ITEMS */}
-        <View style={styles.section}>
-          <TouchableOpacity style={styles.sectionHeader} onPress={() => toggleSection('items')}>
-            <View style={styles.sectionHeaderLeft}>
-              <Ionicons name="basket-outline" size={20} color="#2E7D32" />
-              <Text style={styles.sectionTitle}>Items ({order.orderItems?.length || 0})</Text>
-            </View>
-            <Ionicons name={expanded === 'items' ? 'chevron-up' : 'chevron-down'} size={20} color="#64748b" />
-          </TouchableOpacity>
-
-          {expanded === 'items' && (
-            <View style={styles.itemsList}>
-              {order.orderItems?.map((item, idx) => (
-                <View key={idx} style={styles.itemRow}>
-                  <Image
-                    source={{ uri: item.image || 'https://via.placeholder.com/64' }}
-                    style={styles.itemThumb}
-                  />
-                  <View style={styles.itemInfo}>
-                    <Text style={styles.itemName} numberOfLines={2}>
-                      {item.name}
-                    </Text>
-                    <Text style={styles.itemMeta}>
-                      {item.quantity} × {item.unit || 'unit'} • GH₵{item.price}
-                    </Text>
-                    <Text style={styles.itemTotal}>
-                      GH₵ {(item.quantity * item.price).toFixed(2)}
-                    </Text>
-                  </View>
-                </View>
-              ))}
+          {/* Delivered confirmation */}
+          {status === 'Delivered' && (
+            <View style={styles.deliveredBanner}>
+              <Ionicons name="checkmark-circle" size={16} color="#1B5E20" />
+              <Text style={styles.deliveredBannerText}>
+                Delivered on {formatDate(order.deliveredAt)}
+              </Text>
             </View>
           )}
+
+          {/* Order placed date */}
+          <View style={styles.placedRow}>
+            <Ionicons name="calendar-outline" size={13} color="#9E9E9E" />
+            <Text style={styles.placedText}>Placed {formatDate(order.createdAt)}</Text>
+          </View>
         </View>
 
-        {/* DELIVERY INFO */}
-        <View style={styles.section}>
-          <TouchableOpacity style={styles.sectionHeader} onPress={() => toggleSection('delivery')}>
-            <View style={styles.sectionHeaderLeft}>
-              <Ionicons name="location-outline" size={20} color="#2E7D32" />
-              <Text style={styles.sectionTitle}>Delivery</Text>
+        {/* ════════════════════════
+            ORDER ITEMS
+            ════════════════════════ */}
+        <Section
+          icon="basket-outline"
+          title={`Items (${order.orderItems?.length || 0})`}
+          expanded={expanded === 'items'}
+          onToggle={() => toggle('items')}
+        >
+          {order.orderItems?.map((item, idx) => (
+            <View
+              key={idx}
+              style={[styles.itemRow, idx === (order.orderItems.length - 1) && { borderBottomWidth: 0 }]}
+            >
+              <Image
+                source={{ uri: item.image || 'https://via.placeholder.com/64' }}
+                style={styles.itemThumb}
+              />
+              <View style={styles.itemBody}>
+                <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
+                <Text style={styles.itemMeta}>{item.quantity} × {item.unit || 'unit'} · GH₵{item.price}</Text>
+              </View>
+              <Text style={styles.itemTotal}>
+                GH₵ {(item.quantity * item.price).toFixed(2)}
+              </Text>
             </View>
-            <Ionicons name={expanded === 'delivery' ? 'chevron-up' : 'chevron-down'} size={20} color="#64748b" />
-          </TouchableOpacity>
+          ))}
+        </Section>
 
-          {expanded === 'delivery' && (
-            <View style={styles.infoBlock}>
-              <View style={styles.infoLine}>
-                <Ionicons name="location-outline" size={18} color="#64748b" />
-                <View style={styles.infoText}>
-                  <Text style={styles.infoLabel}>Address</Text>
-                  <Text style={styles.infoValue}>
-                    {order.shippingAddress?.address}, {order.shippingAddress?.city}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.infoLine}>
-                <Ionicons name="call-outline" size={18} color="#64748b" />
-                <View style={styles.infoText}>
-                  <Text style={styles.infoLabel}>Phone</Text>
-                  <Text style={styles.infoValue}>{order.shippingAddress?.phone || user?.phone}</Text>
-                </View>
-              </View>
-
-              <View style={styles.infoLine}>
-                <Ionicons name="calendar-outline" size={18} color="#64748b" />
-                <View style={styles.infoText}>
-                  <Text style={styles.infoLabel}>Scheduled</Text>
-                  <Text style={styles.infoValue}>
-                    {order.deliverySchedule?.preferredDay?.charAt(0).toUpperCase() + order.deliverySchedule?.preferredDay?.slice(1) || '—'}{' '}
-                    • {order.deliverySchedule?.preferredTime || '—'}
-                  </Text>
-                </View>
-              </View>
-
-              {order.deliveryNote && (
-                <View style={styles.infoLine}>
-                  <Ionicons name="document-text-outline" size={18} color="#64748b" />
-                  <View style={styles.infoText}>
-                    <Text style={styles.infoLabel}>Note</Text>
-                    <Text style={styles.infoValue}>{order.deliveryNote}</Text>
-                  </View>
-                </View>
-              )}
-            </View>
+        {/* ════════════════════════
+            DELIVERY
+            ════════════════════════ */}
+        <Section
+          icon="location-outline"
+          title="Delivery"
+          expanded={expanded === 'delivery'}
+          onToggle={() => toggle('delivery')}
+        >
+          <InfoRow icon="location-outline" label="Address"
+            value={`${order.shippingAddress?.address}, ${order.shippingAddress?.city}`} />
+          <InfoRow icon="call-outline" label="Phone"
+            value={order.shippingAddress?.phone || user?.phone || '—'} />
+          <InfoRow icon="calendar-outline" label="Scheduled"
+            value={`${(order.deliverySchedule?.preferredDay || '').charAt(0).toUpperCase() + (order.deliverySchedule?.preferredDay || '').slice(1)} · ${order.deliverySchedule?.preferredTime || '—'}`} />
+          {order.deliveryNote && (
+            <InfoRow icon="document-text-outline" label="Note" value={order.deliveryNote} />
           )}
-        </View>
+        </Section>
 
-        {/* PAYMENT INFO */}
-        <View style={styles.section}>
-          <TouchableOpacity style={styles.sectionHeader} onPress={() => toggleSection('payment')}>
-            <View style={styles.sectionHeaderLeft}>
-              <Ionicons name="card-outline" size={20} color="#2E7D32" />
-              <Text style={styles.sectionTitle}>Payment</Text>
-            </View>
-            <Ionicons name={expanded === 'payment' ? 'chevron-up' : 'chevron-down'} size={20} color="#64748b" />
-          </TouchableOpacity>
-
-          {expanded === 'payment' && (
-            <View style={styles.infoBlock}>
-              <View style={styles.infoLine}>
-                <Ionicons name="card-outline" size={18} color="#64748b" />
-                <View style={styles.infoText}>
-                  <Text style={styles.infoLabel}>Method</Text>
-                  <Text style={styles.infoValue}>{order.payment?.method || 'Paystack'}</Text>
-                </View>
-              </View>
-
-              <View style={styles.infoLine}>
-                <Ionicons
-                  name={order.payment?.isPaid ? 'checkmark-circle' : 'time-outline'}
-                  size={18}
-                  color={order.payment?.isPaid ? '#15803d' : '#ca8a04'}
-                />
-                <View style={styles.infoText}>
-                  <Text style={styles.infoLabel}>Status</Text>
-                  <Text style={[
-                    styles.infoValue,
-                    { color: order.payment?.isPaid ? '#15803d' : '#ca8a04' }
-                  ]}>
-                    {order.payment?.isPaid ? 'Paid' : 'Pending'}
-                  </Text>
-                </View>
-              </View>
-
-              {order.payment?.paidAt && (
-                <View style={styles.infoLine}>
-                  <Ionicons name="calendar-check-outline" size={18} color="#64748b" />
-                  <View style={styles.infoText}>
-                    <Text style={styles.infoLabel}>Paid on</Text>
-                    <Text style={styles.infoValue}>{formatDate(order.payment.paidAt)}</Text>
-                  </View>
-                </View>
-              )}
-            </View>
+        {/* ════════════════════════
+            PAYMENT
+            ════════════════════════ */}
+        <Section
+          icon="card-outline"
+          title="Payment"
+          expanded={expanded === 'payment'}
+          onToggle={() => toggle('payment')}
+        >
+          <InfoRow icon="card-outline" label="Method" value={order.payment?.method || 'Paystack'} />
+          <InfoRow
+            icon={order.payment?.isPaid ? 'checkmark-circle-outline' : 'time-outline'}
+            label="Status"
+            value={order.payment?.isPaid ? 'Paid' : 'Pending'}
+            valueColor={order.payment?.isPaid ? '#2E7D32' : '#F57F17'}
+          />
+          {order.payment?.paidAt && (
+            <InfoRow icon="calendar-outline" label="Paid on" value={formatDate(order.payment.paidAt)} />
           )}
-        </View>
+        </Section>
 
-        {/* SUMMARY */}
-        <View style={styles.section}>
-          <TouchableOpacity style={styles.sectionHeader} onPress={() => toggleSection('summary')}>
-            <View style={styles.sectionHeaderLeft}>
-              <Ionicons name="calculator-outline" size={20} color="#2E7D32" />
-              <Text style={styles.sectionTitle}>Summary</Text>
+        {/* ════════════════════════
+            PRICE SUMMARY
+            ════════════════════════ */}
+        <Section
+          icon="receipt-outline"
+          title="Price Summary"
+          expanded={expanded === 'summary'}
+          onToggle={() => toggle('summary')}
+        >
+          <View style={styles.priceLine}>
+            <Text style={styles.priceLineLabel}>Items total</Text>
+            <Text style={styles.priceLineValue}>GH₵ {order.pricing?.itemsPrice || '—'}</Text>
+          </View>
+          <View style={styles.priceLine}>
+            <View style={styles.priceLineLabelRow}>
+              <Ionicons name="bicycle-outline" size={13} color="#F57F17" />
+              <Text style={[styles.priceLineLabel, { color: '#F57F17' }]}>Delivery fee</Text>
             </View>
-            <Ionicons name={expanded === 'summary' ? 'chevron-up' : 'chevron-down'} size={20} color="#64748b" />
-          </TouchableOpacity>
+            <Text style={[styles.priceLineValue, { color: '#F57F17' }]}>
+              {order.pricing?.deliveryFee === 0 ? 'Free' : `GH₵ ${order.pricing?.deliveryFee || '—'}`}
+            </Text>
+          </View>
+          <View style={styles.priceDivider} />
+          <View style={styles.priceGrandRow}>
+            <Text style={styles.priceGrandLabel}>Grand Total</Text>
+            <Text style={styles.priceGrandValue}>GH₵ {order.pricing?.totalPrice || '—'}</Text>
+          </View>
+        </Section>
 
-          {expanded === 'summary' && (
-            <View style={styles.summaryBlock}>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Items total</Text>
-                <Text style={styles.summaryValue}>GH₵ {order.pricing?.itemsPrice || '—'}</Text>
+        {/* ════════════════════════
+            TIMELINE
+            ════════════════════════ */}
+        <Section
+          icon="time-outline"
+          title="Order Timeline"
+          expanded={expanded === 'timeline'}
+          onToggle={() => toggle('timeline')}
+        >
+          {[
+            { label: 'Order Placed', sub: formatDate(order.createdAt), active: true },
+            { label: 'Order Confirmed', sub: 'Processing started', active: ['Processing','Out for Delivery','Delivered'].includes(status) },
+            { label: 'Out for Delivery', sub: 'Your order is on the way', active: ['Out for Delivery','Delivered'].includes(status) },
+            { label: 'Delivered', sub: formatDate(order.deliveredAt), active: status === 'Delivered' },
+          ].map((tl, i, arr) => (
+            <View key={i} style={styles.tlRow}>
+              <View style={styles.tlLeft}>
+                <View style={[styles.tlDot, tl.active && { backgroundColor: '#4CAF50' }]} />
+                {i < arr.length - 1 && (
+                  <View style={[styles.tlLine, tl.active && arr[i + 1].active && { backgroundColor: '#4CAF50' }]} />
+                )}
               </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Delivery</Text>
-                <Text style={styles.summaryValue}>
-                  {order.pricing?.deliveryFee === 0 ? 'Free' : `GH₵ ${order.pricing?.deliveryFee|| '—'}`}
+              <View style={[styles.tlContent, i < arr.length - 1 && { paddingBottom: 18 }]}>
+                <Text style={[styles.tlLabel, tl.active && { color: '#1A1A1A', fontWeight: '700' }]}>
+                  {tl.label}
                 </Text>
-              </View>
-              <View style={styles.totalDivider} />
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Grand Total</Text>
-                <Text style={styles.grandTotal}>GH₵ {order.pricing?.totalPrice || '—'}</Text>
+                {tl.active && tl.sub && tl.sub !== '—' && (
+                  <Text style={styles.tlSub}>{tl.sub}</Text>
+                )}
               </View>
             </View>
-          )}
-        </View>
+          ))}
+        </Section>
 
-        {/* ORDER TIMELINE */}
-        <View style={styles.section}>
-          <TouchableOpacity style={styles.sectionHeader} onPress={() => toggleSection('timeline')}>
-            <View style={styles.sectionHeaderLeft}>
-              <Ionicons name="time-outline" size={20} color="#2E7D32" />
-              <Text style={styles.sectionTitle}>Order Timeline</Text>
-            </View>
-            <Ionicons name={expanded === 'timeline' ? 'chevron-up' : 'chevron-down'} size={20} color="#64748b" />
-          </TouchableOpacity>
-
-          {expanded === 'timeline' && (
-            <View style={styles.timelineBlock}>
-              <View style={styles.timelineItem}>
-                <View style={styles.timelineItemLeft}>
-                  <View style={styles.timelineItemDot} />
-                  <View style={styles.timelineItemLine} />
-                </View>
-                <View style={styles.timelineItemContent}>
-                  <Text style={styles.timelineItemTitle}>Order Placed</Text>
-                  <Text style={styles.timelineItemTime}>{formatDate(order.createdAt)}</Text>
-                </View>
-              </View>
-
-              <View style={styles.timelineItem}>
-                <View style={styles.timelineItemLeft}>
-                  <View style={[
-                    styles.timelineItemDot,
-                    ['Processing', 'Out for Delivery', 'Delivered'].includes(status) && styles.timelineItemDotActive
-                  ]} />
-                  <View style={[
-                    styles.timelineItemLine,
-                    ['Out for Delivery', 'Delivered'].includes(status) && styles.timelineItemLineActive
-                  ]} />
-                </View>
-                <View style={styles.timelineItemContent}>
-                  <Text style={[
-                    styles.timelineItemTitle,
-                    ['Processing', 'Out for Delivery', 'Delivered'].includes(status) && styles.timelineItemTitleActive
-                  ]}>Order Confirmed</Text>
-                  {['Processing', 'Out for Delivery', 'Delivered'].includes(status) && (
-                    <Text style={styles.timelineItemTime}>Processing started</Text>
-                  )}
-                </View>
-              </View>
-
-              <View style={styles.timelineItem}>
-                <View style={styles.timelineItemLeft}>
-                  <View style={[
-                    styles.timelineItemDot,
-                    ['Out for Delivery', 'Delivered'].includes(status) && styles.timelineItemDotActive
-                  ]} />
-                  <View style={[
-                    styles.timelineItemLine,
-                    status === 'Delivered' && styles.timelineItemLineActive
-                  ]} />
-                </View>
-                <View style={styles.timelineItemContent}>
-                  <Text style={[
-                    styles.timelineItemTitle,
-                    ['Out for Delivery', 'Delivered'].includes(status) && styles.timelineItemTitleActive
-                  ]}>Out for Delivery</Text>
-                  {status === 'Out for Delivery' && (
-                    <Text style={styles.timelineItemTime}>Your order is on the way</Text>
-                  )}
-                </View>
-              </View>
-
-              <View style={styles.timelineItem}>
-                <View style={styles.timelineItemLeft}>
-                  <View style={[
-                    styles.timelineItemDot,
-                    status === 'Delivered' && styles.timelineItemDotActive
-                  ]} />
-                </View>
-                <View style={styles.timelineItemContent}>
-                  <Text style={[
-                    styles.timelineItemTitle,
-                    status === 'Delivered' && styles.timelineItemTitleActive
-                  ]}>Delivered</Text>
-                  {status === 'Delivered' && (
-                    <Text style={styles.timelineItemTime}>{formatDate(order.deliveredAt)}</Text>
-                  )}
-                </View>
-              </View>
-            </View>
-          )}
-        </View>
-
-        <View style={{ height: 100 }} />
+        <View style={{ height: 120 }} />
       </ScrollView>
 
-      {/* BOTTOM ACTIONS - Enhanced */}
-      <View style={styles.bottomActions}>
-        <TouchableOpacity style={styles.actionSupport} onPress={handleContactSupport}>
-          <Ionicons name="help-circle-outline" size={20} color="#fff" />
-          <Text style={styles.actionText}>Support</Text>
+      {/* ════════════════════════
+          BOTTOM ACTION BAR
+          ════════════════════════ */}
+      <View style={styles.bottomBar}>
+        {/* Support — always shown */}
+        <TouchableOpacity style={[styles.actionBtn, styles.actionBtnBlue]} onPress={handleContactSupport} activeOpacity={0.85}>
+          <Ionicons name="help-circle-outline" size={17} color="#fff" />
+          <Text style={styles.actionBtnText}>Support</Text>
         </TouchableOpacity>
 
-        {(status === 'Out for Delivery') && (
-          <TouchableOpacity style={styles.actionTrack} onPress={handleTrackOrder}>
-            <Ionicons name="location-outline" size={20} color="#fff" />
-            <Text style={styles.actionText}>Track</Text>
+        {status === 'Out for Delivery' && (
+          <TouchableOpacity style={[styles.actionBtn, styles.actionBtnGreen]} onPress={handleTrackOrder} activeOpacity={0.85}>
+            <Ionicons name="navigate-outline" size={17} color="#fff" />
+            <Text style={styles.actionBtnText}>Track</Text>
           </TouchableOpacity>
         )}
 
         {status === 'Delivered' && (
-          <TouchableOpacity style={styles.actionReorder} onPress={() => handleReorder(order)}>
-            <Ionicons name="repeat-outline" size={20} color="#fff" />
-            <Text style={styles.actionText}>Reorder</Text>
+          <TouchableOpacity style={[styles.actionBtn, styles.actionBtnAmber]} onPress={handleReorder} activeOpacity={0.85}>
+            <Ionicons name="refresh-outline" size={17} color="#fff" />
+            <Text style={styles.actionBtnText}>Reorder</Text>
           </TouchableOpacity>
         )}
 
         {canCancel && (
-          <TouchableOpacity style={styles.actionCancel} onPress={handleCancelOrder}>
-            <Ionicons name="close-circle-outline" size={20} color="#fff" />
-            <Text style={styles.actionText}>Cancel</Text>
+          <TouchableOpacity style={[styles.actionBtn, styles.actionBtnRed]} onPress={handleCancelOrder} activeOpacity={0.85}>
+            <Ionicons name="close-circle-outline" size={17} color="#fff" />
+            <Text style={styles.actionBtnText}>Cancel</Text>
           </TouchableOpacity>
         )}
 
         {!order.payment?.isPaid && status !== 'Cancelled' && !canCancel && status !== 'Delivered' && (
-          <TouchableOpacity style={styles.actionPay} onPress={() => Alert.alert('Pay Now', 'Redirecting to payment...')}>
-            <Ionicons name="card-outline" size={20} color="#fff" />
-            <Text style={styles.actionText}>Pay Now</Text>
+          <TouchableOpacity
+            style={[styles.actionBtn, styles.actionBtnGreen]}
+            onPress={() => Alert.alert('Pay Now', 'Redirecting to payment…')}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="card-outline" size={17} color="#fff" />
+            <Text style={styles.actionBtnText}>Pay Now</Text>
           </TouchableOpacity>
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  
-  // ── TOP BAR (Green header like other screens) ──
-  topBar: {
-    backgroundColor: '#2E7D32',
-    flexDirection: 'row',
-    alignItems: 'center',
+  screen: { flex: 1, backgroundColor: '#F7F8F7' },
+
+  // ── NAV ────────────────────────────────────────────────────────────────────
+  navRow: {
+    flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopLeftRadius:12,
-    borderTopRightRadius:12,
+    paddingHorizontal: 16, paddingVertical: 10,
   },
-  backBtn: { 
-    padding: 4,
+  navBtn: {
+    width: 42, height: 42, borderRadius: 21,
+    backgroundColor: '#fff',
+    justifyContent: 'center', alignItems: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07, shadowRadius: 6, elevation: 3,
   },
-  topBarTitle: { 
-    fontSize: 18, 
-    fontWeight: '700', 
-    color: '#fff', 
-    flex: 1, 
-    textAlign: 'center' 
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  headerIconBtn: {
-    padding: 4,
-    position: 'relative',
-  },
-  
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
-  centerText: { marginTop: 16, fontSize: 16, color: '#64748b' },
-  emptyTitle: { fontSize: 22, fontWeight: '700', color: '#1e293b', marginTop: 16 },
-  backButton: { marginTop: 24, backgroundColor: '#2E7D32', paddingVertical: 14, paddingHorizontal: 32, borderRadius: 12 },
-  backButtonText: { color: 'white', fontSize: 16, fontWeight: '600' },
+  navTitle: { fontSize: 17, fontWeight: '800', color: '#1A1A1A', letterSpacing: 0.1 },
 
-  scrollContent: { paddingBottom: 140 },
+  // ── LOADING / ERROR ─────────────────────────────────────────────────────────
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
+  loadingIconWrap: {
+    width: 80, height: 80, borderRadius: 40,
+    backgroundColor: '#F1F8E9',
+    justifyContent: 'center', alignItems: 'center', marginBottom: 18,
+  },
+  loadingTitle: { fontSize: 18, fontWeight: '800', color: '#1A1A1A', marginBottom: 6 },
+  loadingSub: { fontSize: 13, color: '#9E9E9E', textAlign: 'center' },
+  goBackBtn: {
+    marginTop: 20, backgroundColor: '#4CAF50',
+    paddingVertical: 13, paddingHorizontal: 28, borderRadius: 14,
+  },
+  goBackBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
 
-  // Status Card - Enhanced
-  statusCard: {
-    margin: 16,
-    borderRadius: 16,
-    padding: 20,
+  scrollContent: { paddingBottom: 24 },
+
+  // ── STATUS HERO ─────────────────────────────────────────────────────────────
+  statusHero: {
+    marginHorizontal: 14,
+    marginTop: 4,
+    marginBottom: 10,
+    borderRadius: 20,
+    padding: 18,
     borderWidth: 1,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07,
     shadowRadius: 10,
-    elevation: 4,
+    elevation: 3,
   },
-  statusHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  statusIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+  statusHeroTop: {
+    flexDirection: 'row', alignItems: 'center',
+    marginBottom: 18,
+  },
+  statusIconBg: {
+    width: 46, height: 46, borderRadius: 23,
+    justifyContent: 'center', alignItems: 'center',
     marginRight: 12,
   },
-  statusInfo: { flex: 1 },
-  statusMain: { fontSize: 20, fontWeight: '700' },
-  orderNumber: { fontSize: 14, color: '#64748b', marginTop: 4 },
+  statusHeroInfo: { flex: 1 },
+  statusText: { fontSize: 18, fontWeight: '800' },
+  orderNumText: { fontSize: 13, color: '#9E9E9E', marginTop: 2, fontWeight: '500' },
+  statusPill: {
+    paddingHorizontal: 10, paddingVertical: 4,
+    borderRadius: 20,
+  },
+  statusPillText: { fontSize: 11, color: '#fff', fontWeight: '700' },
 
-  timeline: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
+  // Progress stepper
+  progressRow: {
+    flexDirection: 'row', alignItems: 'center',
+    marginBottom: 14,
   },
-  timelineStep: { alignItems: 'center', flex: 1 },
-  timelineDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginBottom: 6,
+  stepWrap: { alignItems: 'center', flex: 1 },
+  stepBubble: {
+    width: 24, height: 24, borderRadius: 12,
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: 5,
   },
-  timelineDotActive: { backgroundColor: '#15803d', width: 14, height: 14, borderRadius: 7 },
-  timelineDotPast: { backgroundColor: '#15803d', opacity: 0.5 },
-  timelineDotInactive: { backgroundColor: '#cbd5e1' },
-  timelineLabel: { fontSize: 11, color: '#64748b', textAlign: 'center' },
-  timelineLabelSmall: { fontSize: 9 },
+  stepBubbleInactive: { backgroundColor: '#E8E8E8' },
+  stepInnerDot: { width: 8, height: 8, borderRadius: 4 },
+  stepConnector: {
+    flex: 1, height: 2, backgroundColor: '#E8E8E8',
+    marginHorizontal: 2, marginBottom: 20,
+  },
+  stepLabel: { fontSize: 10, color: '#9E9E9E', fontWeight: '500', textAlign: 'center' },
 
-  trackingPreview: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 16,
-    padding: 12,
-    backgroundColor: '#f0fdf4',
-    borderRadius: 12,
-    gap: 8,
+  trackNudge: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9,
+    gap: 6, marginBottom: 10,
   },
-  trackingPreviewText: {
-    fontSize: 14,
-    color: '#15803d',
-    fontWeight: '600',
-  },
+  trackNudgeText: { flex: 1, fontSize: 13, color: '#2E7D32', fontWeight: '600' },
 
-  // Sections
+  deliveredBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9,
+    marginBottom: 10,
+  },
+  deliveredBannerText: { fontSize: 13, color: '#1B5E20', fontWeight: '600' },
+
+  placedRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  placedText: { fontSize: 12, color: '#9E9E9E', fontWeight: '500' },
+
+  // ── SECTIONS ─────────────────────────────────────────────────────────────────
   section: {
-    backgroundColor: 'white',
-    marginHorizontal: 16,
-    marginVertical: 8,
-    borderRadius: 16,
+    backgroundColor: '#fff',
+    marginHorizontal: 14,
+    marginVertical: 5,
+    borderRadius: 18,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#f8fafc',
+    paddingHorizontal: 18, paddingVertical: 16,
   },
-  sectionHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  sectionHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  sectionIconWrap: {
+    width: 32, height: 32, borderRadius: 9,
+    backgroundColor: '#E8F5E9',
+    justifyContent: 'center', alignItems: 'center',
   },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#1e293b' },
-
-  itemsList: { padding: 16 },
-  itemRow: { flexDirection: 'row', marginBottom: 16 },
-  itemThumb: { width: 60, height: 60, borderRadius: 10, backgroundColor: '#f1f5f9' },
-  itemInfo: { flex: 1, marginLeft: 16 },
-  itemName: { fontSize: 15, fontWeight: '600', color: '#1e293b', marginBottom: 4 },
-  itemMeta: { fontSize: 13, color: '#64748b', marginBottom: 4 },
-  itemTotal: { fontSize: 14, fontWeight: '700', color: '#15803d' },
-
-  infoBlock: { padding: 16 },
-  infoLine: { flexDirection: 'row', marginBottom: 16, alignItems: 'flex-start' },
-  infoText: { flex: 1, marginLeft: 12 },
-  infoLabel: { fontSize: 13, color: '#64748b', marginBottom: 2 },
-  infoValue: { fontSize: 15, color: '#1e293b', fontWeight: '500' },
-
-  summaryBlock: { padding: 16 },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-  summaryLabel: { fontSize: 14, color: '#475569' },
-  summaryValue: { fontSize: 14, fontWeight: '600', color: '#1e293b' },
-  totalDivider: { height: 1, backgroundColor: '#e2e8f0', marginVertical: 12 },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  totalLabel: { fontSize: 16, fontWeight: '700', color: '#1e293b' },
-  grandTotal: { fontSize: 20, fontWeight: '800', color: '#15803d' },
-
-  // Timeline Block
-  timelineBlock: {
-    padding: 16,
-  },
-  timelineItem: {
-    flexDirection: 'row',
-    marginBottom: 8,
-  },
-  timelineItemLeft: {
-    width: 30,
-    alignItems: 'center',
-  },
-  timelineItemDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#cbd5e1',
-    zIndex: 1,
-  },
-  timelineItemDotActive: {
-    backgroundColor: '#15803d',
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-  },
-  timelineItemLine: {
-    width: 2,
-    flex: 1,
-    backgroundColor: '#cbd5e1',
-    marginTop: 2,
-    marginBottom: 2,
-  },
-  timelineItemLineActive: {
-    backgroundColor: '#15803d',
-  },
-  timelineItemContent: {
-    flex: 1,
-    paddingBottom: 16,
-  },
-  timelineItemTitle: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#64748b',
-    marginBottom: 2,
-  },
-  timelineItemTitleActive: {
-    color: '#1e293b',
-    fontWeight: '600',
-  },
-  timelineItemTime: {
-    fontSize: 12,
-    color: '#94a3b8',
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#1A1A1A' },
+  sectionBody: {
+    paddingHorizontal: 18, paddingBottom: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#F0F0F0',
+    paddingTop: 14,
   },
 
-  // Modal Styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalContainer: {
-    backgroundColor: 'white',
-    borderRadius: 24,
-    width: '100%',
-    maxHeight: '80%',
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 24,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-    backgroundColor: '#f8fafc',
-  },
-  modalHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1e293b',
-    marginLeft: 12,
-  },
-  modalCloseButton: {
-    padding: 4,
-  },
-  modalBody: {
-    padding: 20,
-  },
-  orderSummary: {
-    backgroundColor: '#f1f5f9',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  summaryLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1e293b',
-  },
-  summaryTotal: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#15803d',
-  },
-  modalSubtitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#334155',
-    marginBottom: 16,
-  },
-  reasonsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  reasonCard: {
-    width: '48%',
-    backgroundColor: '#f8fafc',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 2,
-    borderColor: '#e2e8f0',
-    position: 'relative',
-  },
-  reasonCardSelected: {
-    borderColor: '#15803d',
-    backgroundColor: '#f0fdf4',
-  },
-  reasonIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  reasonIconContainerSelected: {
-    backgroundColor: '#dcfce7',
-    borderColor: '#15803d',
-  },
-  reasonCardText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#334155',
-  },
-  reasonCardTextSelected: {
-    color: '#15803d',
-  },
-  selectedIndicator: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-  },
-  customReasonContainer: {
-    marginBottom: 20,
-  },
-  customReasonLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#334155',
-    marginBottom: 8,
-  },
-  customReasonInput: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 16,
-    padding: 16,
-    fontSize: 15,
-    color: '#1e293b',
-    borderWidth: 2,
-    borderColor: '#e2e8f0',
-    minHeight: 100,
-  },
-  policyNotice: {
-    flexDirection: 'row',
-    backgroundColor: '#eff6ff',
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
-    marginBottom: 8,
-  },
-  policyNoticeText: {
-    flex: 1,
-    marginLeft: 12,
-    fontSize: 14,
-    color: '#1e40af',
-    lineHeight: 20,
-  },
-  modalFooter: {
-    flexDirection: 'row',
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-    backgroundColor: 'white',
+  // ── ITEMS ────────────────────────────────────────────────────────────────────
+  itemRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#F5F5F5',
     gap: 12,
   },
-  footerCancelButton: {
-    flex: 1,
-    backgroundColor: '#f1f5f9',
-    paddingVertical: 16,
-    borderRadius: 14,
-    alignItems: 'center',
-  },
-  footerCancelButtonText: {
-    color: '#475569',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  footerConfirmButton: {
-    flex: 1,
-    backgroundColor: '#b91c1c',
-    paddingVertical: 16,
-    borderRadius: 14,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  footerConfirmButtonDisabled: {
-    backgroundColor: '#94a3b8',
-  },
-  footerConfirmIcon: {
-    marginRight: 8,
-  },
-  footerConfirmButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  itemThumb: { width: 58, height: 58, borderRadius: 12, backgroundColor: '#F5F5F5' },
+  itemBody: { flex: 1 },
+  itemName: { fontSize: 14, fontWeight: '600', color: '#1A1A1A', marginBottom: 4 },
+  itemMeta: { fontSize: 12, color: '#9E9E9E', fontWeight: '500' },
+  itemTotal: { fontSize: 15, fontWeight: '800', color: '#2E7D32' },
 
-  // Bottom Actions
-  bottomActions: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'white',
+  // ── INFO ROWS ────────────────────────────────────────────────────────────────
+  infoRow: {
+    flexDirection: 'row', alignItems: 'flex-start',
+    gap: 12, marginBottom: 14,
+  },
+  infoRowIcon: {
+    width: 30, height: 30, borderRadius: 8,
+    backgroundColor: '#F7F8F7',
+    justifyContent: 'center', alignItems: 'center',
+    flexShrink: 0,
+  },
+  infoRowBody: { flex: 1 },
+  infoRowLabel: { fontSize: 11, color: '#9E9E9E', fontWeight: '600', marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.4 },
+  infoRowValue: { fontSize: 14, color: '#1A1A1A', fontWeight: '600', lineHeight: 20 },
+
+  // ── PRICE SUMMARY ────────────────────────────────────────────────────────────
+  priceLine: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', marginBottom: 10,
+  },
+  priceLineLabel: { fontSize: 14, color: '#757575' },
+  priceLineLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  priceLineValue: { fontSize: 14, fontWeight: '600', color: '#1A1A1A' },
+  priceDivider: { height: 1, backgroundColor: '#F0F0F0', marginVertical: 12 },
+  priceGrandRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  priceGrandLabel: { fontSize: 15, fontWeight: '700', color: '#1A1A1A' },
+  priceGrandValue: { fontSize: 22, fontWeight: '900', color: '#2E7D32' },
+
+  // ── TIMELINE ────────────────────────────────────────────────────────────────
+  tlRow: { flexDirection: 'row', gap: 12 },
+  tlLeft: { width: 20, alignItems: 'center' },
+  tlDot: {
+    width: 12, height: 12, borderRadius: 6,
+    backgroundColor: '#D0D0D0', flexShrink: 0,
+  },
+  tlLine: { flex: 1, width: 2, backgroundColor: '#EEEEEE', marginTop: 3 },
+  tlContent: { flex: 1, paddingBottom: 4 },
+  tlLabel: { fontSize: 14, color: '#9E9E9E', fontWeight: '500', marginBottom: 2 },
+  tlSub: { fontSize: 12, color: '#BDBDBD' },
+
+  // ── BOTTOM BAR ───────────────────────────────────────────────────────────────
+  bottomBar: {
+    position: 'absolute', bottom: 36, left: 0, right: 0,
+    backgroundColor: '#fff',
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
+    paddingHorizontal: 14, paddingTop: 12,
+    paddingBottom: Platform.OS === 'ios' ? 30 : 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#EBEBEB',
+    gap: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.07,
     shadowRadius: 12,
-    elevation: 16,
+    elevation: 14,
   },
-  actionSupport: { 
-    flex: 1, 
-    backgroundColor: '#3b82f6', 
-    paddingVertical: 14, 
-    borderRadius: 12, 
-    marginRight: 8, 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center',
-    marginBottom: 24, 
+  actionBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'center', paddingVertical: 13,
+    borderRadius: 13, gap: 5,
   },
-  actionTrack: { 
-    flex: 1, 
-    backgroundColor: '#10b981', 
-    paddingVertical: 14, 
-    borderRadius: 12, 
-    marginRight: 8, 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center',
-    marginBottom: 24, 
+  actionBtnBlue:  { backgroundColor: '#1565C0' },
+  actionBtnGreen: {
+    backgroundColor: '#2E7D32',
+    shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25, shadowRadius: 6, elevation: 3,
   },
-  actionReorder: { 
-    flex: 1, 
-    backgroundColor: '#f59e0b', 
-    paddingVertical: 14, 
-    borderRadius: 12, 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center',
-    marginBottom: 24, 
+  actionBtnAmber: { backgroundColor: '#F57F17' },
+  actionBtnRed:   { backgroundColor: '#B71C1C' },
+  actionBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+
+  // ── CANCEL MODAL ─────────────────────────────────────────────────────────────
+  modalBackdrop: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.45)',
   },
-  actionCancel: { 
-    flex: 1, 
-    backgroundColor: '#b91c1c', 
-    paddingVertical: 14, 
-    borderRadius: 12, 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center',
-    marginBottom: 24, 
+  modalSheet: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 26, borderTopRightRadius: 26,
+    paddingHorizontal: 20, paddingTop: 12,
+    maxHeight: '85%',
+    shadowColor: '#000', shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1, shadowRadius: 14, elevation: 20,
   },
-  actionPay: { 
-    flex: 1, 
-    backgroundColor: '#15803d', 
-    paddingVertical: 14, 
-    borderRadius: 12, 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center',
-    marginBottom: 24, 
+  modalHandle: {
+    width: 40, height: 4, borderRadius: 2,
+    backgroundColor: '#E0E0E0',
+    alignSelf: 'center', marginBottom: 16,
   },
-  actionText: { color: 'white', fontWeight: '700', marginLeft: 8, fontSize: 14 },
+  modalHead: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', marginBottom: 18,
+  },
+  modalHeadLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  modalHeadIcon: {
+    width: 38, height: 38, borderRadius: 19,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  modalTitle: { fontSize: 18, fontWeight: '800', color: '#1A1A1A' },
+  modalCloseBtn: {
+    width: 34, height: 34, borderRadius: 17,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  modalOrderStrip: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    backgroundColor: '#F7F8F7', borderRadius: 12,
+    paddingHorizontal: 16, paddingVertical: 12, marginBottom: 18,
+  },
+  modalOrderNum: { fontSize: 14, fontWeight: '700', color: '#1A1A1A' },
+  modalOrderTotal: { fontSize: 16, fontWeight: '800', color: '#2E7D32' },
+  modalSubtitle: { fontSize: 14, color: '#757575', marginBottom: 14, fontWeight: '500' },
+
+  reasonGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
+  reasonCard: {
+    width: '47%',
+    backgroundColor: '#F7F8F7',
+    borderRadius: 14, padding: 14,
+    borderWidth: 1.5, borderColor: '#EEEEEE',
+    position: 'relative',
+  },
+  reasonCardActive: { borderColor: '#4CAF50', backgroundColor: '#F1F8E9' },
+  reasonIconBg: {
+    width: 42, height: 42, borderRadius: 21,
+    backgroundColor: '#fff',
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: 10, borderWidth: 1, borderColor: '#EEEEEE',
+  },
+  reasonIconBgActive: { backgroundColor: '#E8F5E9', borderColor: '#4CAF50' },
+  reasonLabel: { fontSize: 13, fontWeight: '600', color: '#757575', lineHeight: 17 },
+  reasonLabelActive: { color: '#2E7D32' },
+  reasonCheck: {
+    position: 'absolute', top: 10, right: 10,
+    width: 18, height: 18, borderRadius: 9, backgroundColor: '#4CAF50',
+    justifyContent: 'center', alignItems: 'center',
+  },
+
+  customReasonWrap: { marginBottom: 16 },
+  customReasonLabel: { fontSize: 13, fontWeight: '700', color: '#1A1A1A', marginBottom: 8 },
+  customReasonInput: {
+    backgroundColor: '#F7F8F7', borderRadius: 14,
+    paddingHorizontal: 14, paddingVertical: 12,
+    fontSize: 14, color: '#1A1A1A',
+    borderWidth: 1.5, borderColor: '#EEEEEE',
+    minHeight: 90, textAlignVertical: 'top',
+  },
+
+  policyBanner: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
+    backgroundColor: '#E3F2FD', borderRadius: 12,
+    padding: 12, marginBottom: 8,
+  },
+  policyText: { flex: 1, fontSize: 12, color: '#1565C0', lineHeight: 17 },
+
+  modalFooter: {
+    flexDirection: 'row', gap: 10,
+    bottom:36,
+    paddingVertical: 14,
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#EBEBEB',
+  },
+  keepBtn: {
+    flex: 1, backgroundColor: '#F5F5F5',
+    paddingVertical: 14, borderRadius: 13, alignItems: 'center',
+  },
+  keepBtnText: { color: '#757575', fontWeight: '700', fontSize: 14 },
+  confirmCancelBtn: {
+    flex: 1, backgroundColor: '#B71C1C',
+    paddingVertical: 14, borderRadius: 13,
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'center', gap: 6,
+  },
+  confirmCancelBtnDisabled: { backgroundColor: '#BDBDBD' },
+  confirmCancelBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 });
 
 export default OrderDetailScreen;

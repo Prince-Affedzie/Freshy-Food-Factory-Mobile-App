@@ -192,6 +192,7 @@ const OrdersScreen = () => {
             <Text style={styles.greetingText}>My Orders</Text>
           </View>
           
+          
           {/* Avatar Image - Perfectly Fitted */}
           <View style={styles.avatarContainer}>
             <Image 

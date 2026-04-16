@@ -20,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SignUp } from '../apis/userApi';
 import { useAuth } from '../context/AuthContext';
 import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
+import * as AppleAuthentication from 'expo-apple-authentication';
 import FullScreenLoader from '../components/FullScreenLoader';
 import usePushNotifications from "../hooks/usePushNotification"; 
 
@@ -39,6 +40,7 @@ const SignUpScreen = ({ navigation }) => {
   const { expoPushToken, sendTokenToBackend } = usePushNotifications();
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -80,7 +82,7 @@ const SignUpScreen = ({ navigation }) => {
 
   useEffect(() => {
     // Start spinning animation when loading
-    if (loading || googleLoading) {
+    if (loading || googleLoading || appleLoading) {
       Animated.loop(
         Animated.timing(spinValue, {
           toValue: 1,
@@ -91,7 +93,7 @@ const SignUpScreen = ({ navigation }) => {
     } else {
       spinValue.setValue(0);
     }
-  }, [loading, googleLoading]);
+  }, [loading, googleLoading, appleLoading]);
 
   const spin = spinValue.interpolate({
     inputRange: [0, 1],
@@ -206,6 +208,86 @@ const SignUpScreen = ({ navigation }) => {
     }
   };
 
+  const handleAppleSignUp = async () => {
+    if (isLoading) return; // Prevent multiple clicks
+    
+    setAppleLoading(true);
+    
+    try {
+      // Check if Apple Authentication is available (iOS only)
+      const isAvailable = await AppleAuthentication.isAvailableAsync();
+      
+      if (!isAvailable) {
+        Alert.alert(
+          'Not Available',
+          'Apple Sign-In is only available on iOS devices.'
+        );
+        return;
+      }
+
+      // Perform Apple Sign-In
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      
+      const { identityToken, email, fullName, user } = credential;
+      
+      if (!identityToken) {
+        throw new Error('No identity token received from Apple');
+      }
+
+      // Prepare data for your backend
+      const appleSignUpData = {
+        token: identityToken,
+        email: email || '',
+        firstName: fullName?.givenName || '',
+        lastName: fullName?.familyName || '',
+        appleUserId: user,
+      };
+
+      // TODO: Implement your Apple Sign-In API call here
+      // const response = await apple_signUp(appleSignUpData);
+      
+      // Temporary placeholder - replace with your actual API call
+      console.log('Apple Sign-In Data:', appleSignUpData);
+      
+      // Simulate API call (remove this when implementing)
+      setTimeout(() => {
+       // const userId = 'temp_apple_user_id_' + user;
+       // const tokenSent = sendTokenToBackend(userId, expoPushToken);
+        
+        setTimeout(() => {
+          //navigation.navigate('MainTabs');
+          Alert.alert(
+            'Welcome to FreshyFoodFactory!',
+            `Welcome${fullName?.givenName ? ' ' + fullName.givenName : ''}! Your account has been created successfully 🎉`,
+            [{ text: 'Continue' }]
+          );
+        }, 100);
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Apple Sign-Up Error:', error);
+      
+      if (error.code === 'ERR_CANCELED') {
+        Alert.alert('Apple Sign-In Cancelled', 'You cancelled the sign-in process.');
+      } else if (error.code === 'ERR_NOT_AVAILABLE') {
+        Alert.alert('Not Available', 'Apple Sign-In is not available on this device.');
+      } else {
+        Alert.alert(
+          'Apple Sign-Up Failed',
+          error.message || 'An error occurred during Apple Sign-Up. Please try again.'
+        );
+      }
+    } finally {
+      setAppleLoading(false);
+    }
+  };
+
   const handleSignUp = async () => {
     // Prevent multiple clicks while loading
     if (isLoading) return;
@@ -270,7 +352,7 @@ const SignUpScreen = ({ navigation }) => {
   };
 
   // Combined loading state
-  const isLoading = loading || googleLoading;
+  const isLoading = loading || googleLoading || appleLoading;
 
   return (
     <KeyboardAvoidingView
@@ -310,6 +392,7 @@ const SignUpScreen = ({ navigation }) => {
 
           {/* Social Sign Up */}
           <View style={styles.socialContainer}>
+            {/* Google Button */}
             <TouchableOpacity 
               style={[styles.socialButton, googleLoading && styles.socialButtonDisabled]}
               onPress={handleGoogleSignUp}
@@ -333,6 +416,34 @@ const SignUpScreen = ({ navigation }) => {
                 </>
               )}
             </TouchableOpacity>
+
+            {/* Apple Sign-In Button - iOS only */}
+            {Platform.OS === 'ios' && (
+              <TouchableOpacity 
+                style={[styles.socialButton, styles.appleButton, appleLoading && styles.socialButtonDisabled]}
+                onPress={handleAppleSignUp}
+                disabled={isLoading}
+                activeOpacity={0.7}
+              >
+                {appleLoading ? (
+                  <View style={styles.socialButtonLoading}>
+                    <Animated.View style={{ transform: [{ rotate: spin }] }}>
+                      <Ionicons name="refresh" size={20} color="#FFFFFF" />
+                    </Animated.View>
+                    <Text style={[styles.socialButtonText, styles.appleButtonText]}>
+                      Connecting...
+                    </Text>
+                  </View>
+                ) : (
+                  <>
+                    <Ionicons name="logo-apple" size={22} color="#FFFFFF" style={styles.appleIcon} />
+                    <Text style={[styles.socialButtonText, styles.appleButtonText]}>
+                      Continue with Apple
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Divider with better styling */}
@@ -378,7 +489,7 @@ const SignUpScreen = ({ navigation }) => {
                     editable={!isLoading}
                     maxLength={30}
                     returnKeyType="next"
-                    blurOnSubmit={false}
+                  
                   />
                 </View>
                 {errors.lastName && <Text style={styles.errorText}>{errors.lastName}</Text>}
@@ -475,24 +586,37 @@ const SignUpScreen = ({ navigation }) => {
               )}
             </View>
 
-            {/* Terms Agreement with Checkbox */}
+            {/* Terms Agreement */}
             <TouchableOpacity 
               style={styles.termsContainer}
               disabled={isLoading}
               activeOpacity={0.7}
-              onPress={() => {
-                // Handle terms agreement if needed
-              }}
             >
               <View style={styles.checkboxContainer}>
                 <View style={[styles.checkbox, isLoading && styles.checkboxDisabled]}>
                   <Ionicons name="checkmark" size={14} color="#FFFFFF" />
                 </View>
               </View>
+
               <Text style={styles.termsText}>
                 I agree to the{' '}
-                <Text style={styles.linkText}>Terms of Service</Text> and{' '}
-                <Text style={styles.linkText}>Privacy Policy</Text>
+                
+                <Text 
+                  style={styles.linkText}
+                  onPress={() => navigation.navigate('TermsOfService')}
+                >
+                  Terms of Service
+                </Text>
+
+                {' '}and{' '}
+
+                <Text 
+                  style={styles.linkText}
+                  onPress={() => navigation.navigate('PrivacyPolicy')}
+                >
+                  Privacy Policy
+                </Text>
+
               </Text>
             </TouchableOpacity>
 
@@ -541,16 +665,26 @@ const SignUpScreen = ({ navigation }) => {
         loadingType="auth"
         loadingText={
           googleLoading ? "Creating account with Google..." : 
+          appleLoading ? "Creating account with Apple..." :
           loading ? "Creating your account..." : 
           "Please wait..."
         }
         subText={
           googleLoading ? "Setting up your FreshyFood Factory account..." : 
+          appleLoading ? "Setting up your FreshyFood Factory account..." :
           loading ? "We're creating your account..." : 
           "Processing your request..."
         }
-        icon={googleLoading ? "logo-google" : "person-add"}
-        iconColor={googleLoading ? "#DB4437" : "#4CAF50"}
+        icon={
+          googleLoading ? "logo-google" : 
+          appleLoading ? "logo-apple" : 
+          "person-add"
+        }
+        iconColor={
+          googleLoading ? "#DB4437" : 
+          appleLoading ? "#000000" : 
+          "#4CAF50"
+        }
         backgroundColor="rgba(255, 255, 255, 0.98)"
       />
     </KeyboardAvoidingView>
@@ -783,6 +917,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     fontWeight: '500',
+  },
+  appleButton: {
+    backgroundColor: '#000000',
+    borderColor: '#000000',
+    marginTop: 12,
+  },
+  appleButtonText: {
+    color: '#FFFFFF',
+  },
+  appleIcon: {
+    marginRight: 12,
   },
   loginLinkContainer: {
     flexDirection: 'row',

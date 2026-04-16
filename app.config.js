@@ -16,11 +16,13 @@ export default {
     },
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.freshyfood.factory.gh",
+      bundleIdentifier: "com.freshyfood.factory.ios",
       googleServicesFile: "./GoogleService-Info.plist",
+      usesAppleSignIn: true,
       infoPlist: {
       ITSAppUsesNonExemptEncryption: false
      },
+    
     },
     android: {
       package: "com.freshyfood.factory",

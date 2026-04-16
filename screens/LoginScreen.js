@@ -18,6 +18,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
+import * as AppleAuthentication from 'expo-apple-authentication';
 
 const GoogleLogo = require('../assets/Google-logo.png');
 const BrandLogo = require('../assets/FreshyFoodFactory_App_Icon.png');
@@ -83,6 +84,7 @@ const LoginScreen = ({ navigation }) => {
   });
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const { login: authLogin, google_login } = useAuth();
@@ -112,6 +114,8 @@ const LoginScreen = ({ navigation }) => {
   };
 
   const handleGoogleLogin = async () => {
+    if (isLoading) return;
+    
     setGoogleLoading(true);
     
     try {
@@ -179,6 +183,82 @@ const LoginScreen = ({ navigation }) => {
     }
   };
 
+  const handleAppleLogin = async () => {
+    if (isLoading) return;
+    
+    setAppleLoading(true);
+    
+    try {
+      // Check if Apple Authentication is available (iOS only)
+      const isAvailable = await AppleAuthentication.isAvailableAsync();
+      
+      if (!isAvailable) {
+        Alert.alert(
+          'Not Available',
+          'Apple Sign-In is only available on iOS devices.'
+        );
+        return;
+      }
+
+      // Perform Apple Sign-In
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+     
+      
+      const { identityToken, email, fullName, user } = credential;
+      
+      if (!identityToken) {
+        throw new Error('No identity token received from Apple');
+      }
+
+      // Prepare data for your backend
+      const appleLoginData = {
+        token: identityToken,
+        email: email || '',
+        firstName: fullName?.givenName || '',
+        lastName: fullName?.familyName || '',
+        appleUserId: user,
+      };
+
+      // TODO: Implement your Apple Login API call here
+      // const response = await apple_login(appleLoginData);
+      
+      // Temporary placeholder - replace with your actual API call
+      console.log('Apple Login Data:', appleLoginData);
+      
+      // Simulate API call (remove this when implementing)
+      setTimeout(() => {
+       // navigation.navigate('MainTabs');
+        Alert.alert(
+          'Welcome to FreshyFoodFactory!',
+          `Welcome back${fullName?.givenName ? ' ' + fullName.givenName : ''}! 🎉`,
+          [{ text: 'Continue' }]
+        );
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Apple Login Error:', error);
+      
+      if (error.code === 'ERR_CANCELED') {
+        Alert.alert('Apple Sign-In Cancelled', 'You cancelled the sign-in process.');
+      } else if (error.code === 'ERR_NOT_AVAILABLE') {
+        Alert.alert('Not Available', 'Apple Sign-In is not available on this device.');
+      } else {
+        Alert.alert(
+          'Apple Login Failed',
+          error.message || 'An error occurred during Apple Sign-In. Please try again.'
+        );
+      }
+    } finally {
+      setAppleLoading(false);
+    }
+  };
+
   const handleLogin = async () => {
     if (!validateForm()) return;
 
@@ -224,7 +304,7 @@ const LoginScreen = ({ navigation }) => {
   };
 
   // Combined loading state
-  const isLoading = loading || googleLoading;
+  const isLoading = loading || googleLoading || appleLoading;
 
   return (
     <KeyboardAvoidingView
@@ -253,6 +333,7 @@ const LoginScreen = ({ navigation }) => {
 
         {/* Social Login */}
         <View style={styles.socialContainer}>
+          {/* Google Button */}
           <TouchableOpacity 
             style={[styles.socialButton, googleLoading && styles.socialButtonDisabled]}
             onPress={handleGoogleLogin}
@@ -274,6 +355,32 @@ const LoginScreen = ({ navigation }) => {
               </>
             )}
           </TouchableOpacity>
+
+          {/* Apple Sign-In Button - iOS only */}
+          {Platform.OS === 'ios' && (
+            <TouchableOpacity 
+              style={[styles.socialButton, styles.appleButton, appleLoading && styles.socialButtonDisabled]}
+              onPress={handleAppleLogin}
+              disabled={isLoading}
+              activeOpacity={0.7}
+            >
+              {appleLoading ? (
+                <View style={styles.socialButtonLoading}>
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <Text style={[styles.socialButtonText, styles.appleButtonText, { marginLeft: 8 }]}>
+                    Connecting...
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  <Ionicons name="logo-apple" size={22} color="#FFFFFF" style={styles.appleIcon} />
+                  <Text style={[styles.socialButtonText, styles.appleButtonText]}>
+                    Continue with Apple
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Divider */}
@@ -395,6 +502,7 @@ const LoginScreen = ({ navigation }) => {
         visible={isLoading}
         message={
           googleLoading ? "Signing in with Google..." : 
+          appleLoading ? "Signing in with Apple..." :
           loading ? "Logging in..." : 
           "Please wait..."
         }
@@ -553,6 +661,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
+    marginRight: 8,
   },
   dividerContainer: {
     flexDirection: 'row',
@@ -583,6 +692,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderWidth: 1,
     borderColor: '#E0E0E0',
+    marginBottom: 12,
   },
   socialButtonDisabled: {
     backgroundColor: '#F5F5F5',
@@ -597,6 +707,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     fontWeight: '500',
+  },
+  appleButton: {
+    backgroundColor: '#000000',
+    borderColor: '#000000',
+  },
+  appleButtonText: {
+    color: '#FFFFFF',
+  },
+  appleIcon: {
+    marginRight: 12,
   },
   signupLinkContainer: {
     flexDirection: 'row',

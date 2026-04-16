@@ -81,7 +81,9 @@ const WelcomeScreen = ({ navigation }) => {
         <Text style={styles.terms}>
           By continuing, you agree to our{' '}
           <Text style={styles.termsLink}>Terms of Service</Text> and{' '}
-          <Text style={styles.termsLink}>Privacy Policy</Text>
+          <Text style={styles.termsLink}
+           onPress={() => navigation.navigate('PrivacyPolicy')}
+          >Privacy Policy</Text>
         </Text>
       </View>
     </SafeAreaView>

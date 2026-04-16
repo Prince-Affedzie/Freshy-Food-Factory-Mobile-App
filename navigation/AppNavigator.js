@@ -27,6 +27,7 @@ import SupportScreen from '../screens/SupportScreen';
 import AboutScreen from '../screens/AboutScreen';
 import NotificationScreen from '../screens/NotificationsScreen'
 import ForgotPasswordScreen from  '../screens/ForgetPasswordScreen'
+import TermsOfServiceScreen from '../screens/TermsofServiceScreen'
 import WelcomeScreen from '../screens/WelcomeScreen';
 import { checkIfFirstLaunch } from '../hooks/checkIfFirstLaunch';
 
@@ -54,6 +55,7 @@ function AuthNavigator() {
               component={PrivacyPolicyScreen} 
                
           />
+     <AuthStack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
     </AuthStack.Navigator>
   );
 }

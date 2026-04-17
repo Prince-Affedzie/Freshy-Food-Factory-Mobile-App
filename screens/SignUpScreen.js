@@ -17,7 +17,7 @@ import {
   Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { SignUp } from '../apis/userApi';
+import { SignUp,apple_signUp } from '../apis/userApi';
 import { useAuth } from '../context/AuthContext';
 import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
 import * as AppleAuthentication from 'expo-apple-authentication';
@@ -208,86 +208,67 @@ const SignUpScreen = ({ navigation }) => {
     }
   };
 
-  const handleAppleSignUp = async () => {
-    if (isLoading) return; // Prevent multiple clicks
-    
-    setAppleLoading(true);
-    
-    try {
-      // Check if Apple Authentication is available (iOS only)
-      const isAvailable = await AppleAuthentication.isAvailableAsync();
-      
-      if (!isAvailable) {
-        Alert.alert(
-          'Not Available',
-          'Apple Sign-In is only available on iOS devices.'
-        );
-        return;
-      }
+ const handleAppleSignUp = async () => {
+  if (isLoading) return;
+  setAppleLoading(true);
 
-      // Perform Apple Sign-In
-      const credential = await AppleAuthentication.signInAsync({
-        requestedScopes: [
-          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-          AppleAuthentication.AppleAuthenticationScope.EMAIL,
-        ],
-      });
-
-      
-      const { identityToken, email, fullName, user } = credential;
-      
-      if (!identityToken) {
-        throw new Error('No identity token received from Apple');
-      }
-
-      // Prepare data for your backend
-      const appleSignUpData = {
-        token: identityToken,
-        email: email || '',
-        firstName: fullName?.givenName || '',
-        lastName: fullName?.familyName || '',
-        appleUserId: user,
-      };
-
-      // TODO: Implement your Apple Sign-In API call here
-      // const response = await apple_signUp(appleSignUpData);
-      
-      // Temporary placeholder - replace with your actual API call
-      console.log('Apple Sign-In Data:', appleSignUpData);
-      
-      // Simulate API call (remove this when implementing)
-      setTimeout(() => {
-       // const userId = 'temp_apple_user_id_' + user;
-       // const tokenSent = sendTokenToBackend(userId, expoPushToken);
-        
-        setTimeout(() => {
-          //navigation.navigate('MainTabs');
-          Alert.alert(
-            'Welcome to FreshyFoodFactory!',
-            `Welcome${fullName?.givenName ? ' ' + fullName.givenName : ''}! Your account has been created successfully 🎉`,
-            [{ text: 'Continue' }]
-          );
-        }, 100);
-      }, 1000);
-      
-    } catch (error) {
-      console.error('Apple Sign-Up Error:', error);
-      
-      if (error.code === 'ERR_CANCELED') {
-        Alert.alert('Apple Sign-In Cancelled', 'You cancelled the sign-in process.');
-      } else if (error.code === 'ERR_NOT_AVAILABLE') {
-        Alert.alert('Not Available', 'Apple Sign-In is not available on this device.');
-      } else {
-        Alert.alert(
-          'Apple Sign-Up Failed',
-          error.message || 'An error occurred during Apple Sign-Up. Please try again.'
-        );
-      }
-    } finally {
-      setAppleLoading(false);
+  try {
+    const isAvailable = await AppleAuthentication.isAvailableAsync();
+    if (!isAvailable) {
+      Alert.alert('Not Available', 'Apple Sign-In is only available on iOS.');
+      setAppleLoading(false); // Important to reset here
+      return;
     }
-  };
 
+    const credential = await AppleAuthentication.signInAsync({
+      requestedScopes: [
+        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+        AppleAuthentication.AppleAuthenticationScope.EMAIL,
+      ],
+    });
+
+    const { identityToken, email, fullName, user: appleUserId } = credential;
+
+    if (!identityToken) {
+      throw new Error('No identity token received.');
+    }
+
+
+    const appleAuthData = {
+      token: identityToken,
+      appleUserId,
+      email: email || undefined, 
+      firstName: fullName?.givenName || "",
+      lastName: fullName?.familyName || "",
+    };
+
+    const response = await apple_signUp(appleAuthData);
+
+    if (response.status === 200 || response.success) {
+      const userId = response.data.user?._id;
+      await sendTokenToBackend(userId, expoPushToken);
+      
+      navigation.navigate('MainTabs');
+      Alert.alert(
+        'Welcome!',
+        `Successfully signed in with Apple 🎉`
+      );
+    } else {
+      Alert.alert('Sign In Failed', response.message || 'Check your connection.');
+    }
+
+  } catch (error) {
+    // Correct error code for cancellation is 'ERR_REQUEST_CANCELED'
+    if (error.code === 'ERR_REQUEST_CANCELED') {
+      // Typically we don't show an alert for a user-initiated cancel
+      console.log('User cancelled Apple Sign-In');
+    } else {
+      Alert.alert('Apple Auth Error', error.message);
+    }
+  } finally {
+    setAppleLoading(false);
+  }
+};
   const handleSignUp = async () => {
     // Prevent multiple clicks while loading
     if (isLoading) return;

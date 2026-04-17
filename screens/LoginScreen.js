@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
 import * as AppleAuthentication from 'expo-apple-authentication';
+import {apple_signUp } from '../apis/userApi';
 
 const GoogleLogo = require('../assets/Google-logo.png');
 const BrandLogo = require('../assets/FreshyFoodFactory_App_Icon.png');
@@ -184,80 +185,61 @@ const LoginScreen = ({ navigation }) => {
   };
 
   const handleAppleLogin = async () => {
-    if (isLoading) return;
+  if (isLoading) return;
+  setAppleLoading(true);
+  
+  try {
+    const isAvailable = await AppleAuthentication.isAvailableAsync();
     
-    setAppleLoading(true);
-    
-    try {
-      // Check if Apple Authentication is available (iOS only)
-      const isAvailable = await AppleAuthentication.isAvailableAsync();
-      
-      if (!isAvailable) {
-        Alert.alert(
-          'Not Available',
-          'Apple Sign-In is only available on iOS devices.'
-        );
-        return;
-      }
-
-      // Perform Apple Sign-In
-      const credential = await AppleAuthentication.signInAsync({
-        requestedScopes: [
-          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-          AppleAuthentication.AppleAuthenticationScope.EMAIL,
-        ],
-      });
-
-     
-      
-      const { identityToken, email, fullName, user } = credential;
-      
-      if (!identityToken) {
-        throw new Error('No identity token received from Apple');
-      }
-
-      // Prepare data for your backend
-      const appleLoginData = {
-        token: identityToken,
-        email: email || '',
-        firstName: fullName?.givenName || '',
-        lastName: fullName?.familyName || '',
-        appleUserId: user,
-      };
-
-      // TODO: Implement your Apple Login API call here
-      // const response = await apple_login(appleLoginData);
-      
-      // Temporary placeholder - replace with your actual API call
-      console.log('Apple Login Data:', appleLoginData);
-      
-      // Simulate API call (remove this when implementing)
-      setTimeout(() => {
-       // navigation.navigate('MainTabs');
-        Alert.alert(
-          'Welcome to FreshyFoodFactory!',
-          `Welcome back${fullName?.givenName ? ' ' + fullName.givenName : ''}! 🎉`,
-          [{ text: 'Continue' }]
-        );
-      }, 1000);
-      
-    } catch (error) {
-      console.error('Apple Login Error:', error);
-      
-      if (error.code === 'ERR_CANCELED') {
-        Alert.alert('Apple Sign-In Cancelled', 'You cancelled the sign-in process.');
-      } else if (error.code === 'ERR_NOT_AVAILABLE') {
-        Alert.alert('Not Available', 'Apple Sign-In is not available on this device.');
-      } else {
-        Alert.alert(
-          'Apple Login Failed',
-          error.message || 'An error occurred during Apple Sign-In. Please try again.'
-        );
-      }
-    } finally {
-      setAppleLoading(false);
+    if (!isAvailable) {
+      Alert.alert('Not Available', 'Apple Sign-In is only available on iOS devices.');
+      setAppleLoading(false); 
+      return;
     }
-  };
+
+    const credential = await AppleAuthentication.signInAsync({
+      requestedScopes: [
+        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+        AppleAuthentication.AppleAuthenticationScope.EMAIL,
+      ],
+    });
+
+    const { identityToken, email, fullName, user: appleUserId } = credential;
+    
+    if (!identityToken) throw new Error('No identity token received from Apple');
+
+    const appleLoginData = {
+      token: identityToken,
+      appleUserId,
+      email: email || undefined,
+      firstName: fullName?.givenName || "",
+      lastName: fullName?.familyName || "",
+    };
+
+    const response = await apple_signUp(appleLoginData);
+
+    if (response.success) {
+      // No Alert here makes the flow feel faster/native
+      navigation.navigate('MainTabs'); 
+    } else {
+      Alert.alert('Sign In Failed', response.message || 'We could not sign you in.');
+    }
+    
+  } catch (error) {
+    // Check for the specific Apple Cancel code
+    if (error.code === 'ERR_REQUEST_CANCELED') {
+      console.log('User cancelled the flow');
+    } else {
+      console.error('Apple Login Error:', error);
+      Alert.alert(
+        'Apple Login Failed',
+        error.message || 'An unexpected error occurred.'
+      );
+    }
+  } finally {
+    setAppleLoading(false);
+  }
+};
 
   const handleLogin = async () => {
     if (!validateForm()) return;

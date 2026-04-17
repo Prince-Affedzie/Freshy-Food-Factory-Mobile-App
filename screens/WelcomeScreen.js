@@ -15,7 +15,7 @@ const BrandLogo = require('../assets/FreshyFoodFactory_App_Icon.png');
 
 const WelcomeScreen = ({ navigation }) => {
   const handleLogin = useCallback(() => {
-    navigation.navigate('Auth', { screen: 'Login' });
+    navigation.navigate('Auth', { screen: 'GuestHome' });
   }, [navigation]);
 
   const handleSignUp = useCallback(() => {
@@ -75,7 +75,7 @@ const WelcomeScreen = ({ navigation }) => {
           onPress={handleLogin}
           activeOpacity={0.85}
         >
-          <Text style={styles.loginButtonText}>I already have an account</Text>
+          <Text style={styles.loginButtonText}>Explore Products</Text>
         </TouchableOpacity>
 
         <Text style={styles.terms}>

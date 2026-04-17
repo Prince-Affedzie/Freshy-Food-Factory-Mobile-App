@@ -11,6 +11,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Import screens
 import HomeScreen from '../screens/HomeScreen';
+import GuestHomeScreen from '../screens/GuestHomeScreen'
 import ProductsScreen from '../screens/ProductsScreen';
 import ProductDetailScreen from '../screens/ProductDetailScreen';
 import SignUpScreen from '../screens/SignUpScreen';
@@ -47,6 +48,7 @@ function AuthNavigator() {
         cardStyle: { backgroundColor: '#FFFFFF' },
       }}
     >
+      <AuthStack.Screen name="GuestHome" component={GuestHomeScreen} />
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen name="SignUp" component={SignUpScreen} />
       <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />

@@ -19,7 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
 import * as AppleAuthentication from 'expo-apple-authentication';
-import {apple_signUp } from '../apis/userApi';
+//import {apple_signUp } from '../apis/userApi';
 
 const GoogleLogo = require('../assets/Google-logo.png');
 const BrandLogo = require('../assets/FreshyFoodFactory_App_Icon.png');
@@ -88,7 +88,7 @@ const LoginScreen = ({ navigation }) => {
   const [appleLoading, setAppleLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
-  const { login: authLogin, google_login } = useAuth();
+  const { login: authLogin, google_login,signUpByApple } = useAuth();
 
   // Configure Google Sign-In on component mount
   useEffect(() => {
@@ -216,10 +216,11 @@ const LoginScreen = ({ navigation }) => {
       lastName: fullName?.familyName || "",
     };
 
-    const response = await apple_signUp(appleLoginData);
+    const response = await signUpByApple(appleLoginData);
 
-    if (response.success) {
+    if (response?.success) {
       // No Alert here makes the flow feel faster/native
+      setAppleLoading(false);
       navigation.navigate('MainTabs'); 
     } else {
       Alert.alert('Sign In Failed', response.message || 'We could not sign you in.');

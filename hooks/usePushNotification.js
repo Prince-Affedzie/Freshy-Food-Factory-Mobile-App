@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState, useContext } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
-import { Platform, Alert } from "react-native";
+import { Platform } from "react-native";
 import Constants from "expo-constants";
 import { sendPushToken } from "../apis/userApi";
 import { useAuth } from "../context/AuthContext";
@@ -21,167 +21,119 @@ export default function usePushNotifications() {
   const responseListener = useRef();
   const { user } = useAuth();
 
-
-  const sendTokenToBackend = async (userId, token = expoPushToken) => {
-    if (!userId || !token) {
-      console.error("Missing user ID or token");
-      return false;
-    }
-    
-    try {
-      const response = await sendPushToken({ userId, token });
-      if (response.status === 200) {
-        console.log("Push token sent to backend successfully");
-        return true;
-      } else {
-        console.error("Failed to send push token to backend");
-        return false;
-      }
-    } catch (error) {
-      console.error("Error sending push token to backend:", error);
-      return false;
-    }
-  };
-
-  // Log when hook runs
-  useEffect(() => {
-    console.log("usePushNotifications initialized");
-  }, []);
-
-  // Handle push token registration and listeners
   useEffect(() => {
     let isMounted = true;
 
     async function registerAndSendToken() {
+      // Only attempt registration if we are on a physical device
+      if (!Device.isDevice) {
+        console.log("Push notifications skipped: Not a physical device");
+        return;
+      }
+
       try {
         const token = await registerForPushNotificationsAsync();
+        
         if (isMounted && token) {
-          console.log("Expo Push Token:", token);
           setExpoPushToken(token);
-          // Only send token to backend if user is logged in
-          if (user) {
-            await sendPushTokenToBackend(user, token);
-          } else {
-            console.log("User not logged in, skipping token send");
+          
+          // Only sync with backend if we have both a user and a token
+          if (user?._id) {
+            await syncTokenWithBackend(user._id, token);
           }
-        } else if (!token) {
-          console.error("No token returned from registerForPushNotificationsAsync");
         }
       } catch (error) {
-        console.error("Error in registerAndSendToken:", error);
+        console.error("Error in registration flow:", error);
       }
     }
 
-    // Register for push notifications
     registerAndSendToken();
 
-    // Set up notification listeners
     notificationListener.current = Notifications.addNotificationReceivedListener(
       (notification) => {
-        console.log("Received notification:", notification);
         setNotification(notification);
       }
     );
 
     responseListener.current = Notifications.addNotificationResponseReceivedListener(
       (response) => {
-        console.log("Notification response:", response);
         handleNotificationResponse(response);
       }
     );
 
-    // Cleanup
-      return () => {
-      if (notificationListener.current) {
-        notificationListener.current.remove();
-      }
-      if (responseListener.current) {
-        responseListener.current.remove();
-      }
+    return () => {
+      isMounted = false;
+      if (notificationListener.current) notificationListener.current.remove();
+      if (responseListener.current) responseListener.current.remove();
     };
-  }, [user]); // Re-run when user changes (e.g., logs in)
+  }, [user?._id]); // Re-run specifically when the user ID changes
 
-  // Send token to backend when user logs in (if token already exists)
-  useEffect(() => {
-    if (user && expoPushToken) {
-      console.log("User logged in, sending existing token:", expoPushToken);
-      sendPushTokenToBackend(user, expoPushToken);
-    }
-  }, [user, expoPushToken]);
-
-  return { expoPushToken, notification,sendTokenToBackend };
+  return { expoPushToken, notification };
 }
 
+/**
+ * CORE FIX: Removed the Alert.alert that told users to go to settings.
+ * This ensures the app is "Optional" per Apple Guideline 4.5.4.
+ */
 async function registerForPushNotificationsAsync() {
   let token;
-
-  if (!Device.isDevice) {
-    Alert.alert("Push notifications only work on physical devices");
-    return null;
-  }
 
   try {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
-    console.log("Permission status:", finalStatus);
 
     if (existingStatus !== "granted") {
       const { status } = await Notifications.requestPermissionsAsync();
       finalStatus = status;
     }
 
+    // If they still haven't granted permission, exit SILENTLY.
+    // Do NOT show an Alert here.
     if (finalStatus !== "granted") {
-      Alert.alert("Permission required", "Enable push notifications in settings.");
+      console.log("User declined notification permissions.");
       return null;
     }
 
     const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-    console.log("Project ID:", projectId);
     if (!projectId) {
-      console.error("Project ID is missing or undefined");
+      console.error("EAS Project ID missing in app.config.js");
       return null;
     }
 
     const tokenResult = await Notifications.getExpoPushTokenAsync({ projectId });
     token = tokenResult.data;
-    console.log("Generated token:", token);
+
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync("default", {
+        name: "default",
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: "#FF231F7C",
+      });
+    }
+
+    return token;
   } catch (error) {
-    console.error("Error fetching Expo push token:", error);
+    console.error("Failed to get push token:", error);
     return null;
   }
-
-  if (Platform.OS === "android") {
-    await Notifications.setNotificationChannelAsync("default", {
-      name: "default",
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: "#FF231F7C",
-    });
-  }
-
-  return token;
 }
 
-async function sendPushTokenToBackend(user, token) {
-  console.log("Sending to backend - User ID:", user?._id, "Token:", token);
-  if (!user || !token) {
-    console.error("Missing user or token for backend send");
-    return;
-  }
+/**
+ * Helper to sync token to your Heroku backend
+ */
+async function syncTokenWithBackend(userId, token) {
   try {
-    const response = await sendPushToken({ userId: user._id, token });
+    const response = await sendPushToken({ userId, token });
     if (response.status === 200) {
-      console.log("Push token sent to backend successfully");
-    } else {
-      console.error("Failed to send push token to backend:", response.status);
+      console.log("Push token synced to backend successfully");
     }
   } catch (error) {
-    console.error("Error sending push token to backend:", error);
+    console.error("Backend sync failed:", error.message);
   }
 }
 
 function handleNotificationResponse(response) {
-  const { notification } = response;
-  const data = notification.request.content.data;
-  console.log("Notification data:", data);
+  const data = response.notification.request.content.data;
+  console.log("User tapped notification with data:", data);
 }

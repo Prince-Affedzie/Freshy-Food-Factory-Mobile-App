@@ -2,7 +2,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AuthService from '../services/authService';
-import { updateProfile,deleteProfile,logout,loginByGoogle,signUpByGoogle ,signUpByApple} from '../apis/userApi';
+import { updateProfile,deleteProfile,logout,loginByGoogle,signUpByGoogle ,apple_signUp} from '../apis/userApi';
 
 const AuthContext = createContext();
 
@@ -32,16 +32,18 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   };
-//google_login
 
-const apple_signUp = async (data) => {
+  
+//apple_login
+
+const signUpByApple = async (data) => {
   try {
     
     console.log(data)
-    const response = await signUpByApple(data);
+    const response = await apple_signUp(data);
     console.log(response.data)
     
-    if (response.status ===200) {
+    if (response.status === 200 || response.success) {
       await AsyncStorage.setItem('@freshyfood_token', response.data.token);
       await AsyncStorage.setItem('@freshyfood_user', JSON.stringify(response.data.user));
       setToken(response.data.token);
@@ -54,10 +56,11 @@ const apple_signUp = async (data) => {
     }
   } catch (error) {
     const errorMessage = error.response?.data?.message || 
-      "An account with this email already exists. Please login instead.";;
+      "An account with this Id already exists. Please login instead.";;
     return { success: false, error: errorMessage };
   } 
 }
+
 
 const google_login = async (data) => {
     try {
@@ -237,7 +240,7 @@ const google_login = async (data) => {
         signUp,
         google_signUp,
         google_login,
-        apple_signUp,
+        signUpByApple,
         logoutUser,
         updateUser,
         deleteAccount,

@@ -17,7 +17,7 @@ import {
   Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { SignUp,apple_signUp } from '../apis/userApi';
+import { SignUp, } from '../apis/userApi';
 import { useAuth } from '../context/AuthContext';
 import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
 import * as AppleAuthentication from 'expo-apple-authentication';
@@ -44,7 +44,7 @@ const SignUpScreen = ({ navigation }) => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { login: authLogin, google_signUp } = useAuth();
+  const { login: authLogin, google_signUp,signUpByApple } = useAuth();
   
   // Refs
   const scrollViewRef = useRef(null);
@@ -242,12 +242,13 @@ const SignUpScreen = ({ navigation }) => {
       lastName: fullName?.familyName || "",
     };
 
-    const response = await apple_signUp(appleAuthData);
+    const response = await signUpByApple(appleAuthData);
 
-    if (response.status === 200 || response.success) {
+    if (response.success) {
       const userId = response.data.user?._id;
       await sendTokenToBackend(userId, expoPushToken);
       
+      setAppleLoading(false);
       navigation.navigate('MainTabs');
       Alert.alert(
         'Welcome!',

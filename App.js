@@ -60,6 +60,13 @@ export default function App() {
          publicKey={PayStack_Public_Key}
          currency="GHS"
          defaultChannels={['card','mobile_money','bank_transfer']}
+        containerStyle={{ 
+        flex: 1, 
+        height: '100%', 
+       width: '100%', 
+      zIndex: 9999, 
+      marginTop: 20 // Pushes it down slightly to force a repaint
+    }}
          > 
          <PushNotificationInitializer/>
         <SafeAreaView style={{ flex: 1, backgroundColor: '#2E7D32' }} edges={['top']}>

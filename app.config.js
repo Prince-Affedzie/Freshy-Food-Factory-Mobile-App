@@ -20,7 +20,11 @@ export default {
       googleServicesFile: "./GoogleService-Info.plist",
       usesAppleSignIn: true,
       infoPlist: {
-      ITSAppUsesNonExemptEncryption: false
+      ITSAppUsesNonExemptEncryption: false,
+      NSAppTransportSecurity: {
+      NSAllowsArbitraryLoadsInWebContent: true,
+      NSAllowsArbitraryLoads: false
+      }
      },
     
     },

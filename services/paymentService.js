@@ -14,14 +14,16 @@ export const triggerPayment = async ({
   try {
     const initRes = await initializePayment();
     const { reference } = initRes.data;
-    console.log(email)
+
+    const safeAmount = Math.round(Number(amount));
+
     return new Promise((resolve) => {
       popup.newTransaction({
         email,
         phone,
-        amount,
+        amount: safeAmount,
+        currency: "GHS",
         reference,
-
         onSuccess: async () => {
           try {
             /*const verifyRes = await verifyPayment(reference, {

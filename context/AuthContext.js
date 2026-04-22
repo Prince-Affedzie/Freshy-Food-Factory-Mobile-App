@@ -56,7 +56,7 @@ const signUpByApple = async (data) => {
     }
   } catch (error) {
     const errorMessage = error.response?.data?.message || 
-      "An account with this Id already exists. Please login instead.";;
+      "An error occured. Please try again later";;
     return { success: false, error: errorMessage };
   } 
 }

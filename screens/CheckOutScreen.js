@@ -109,7 +109,6 @@ const OrderScreen = ({ route }) => {
   });
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     // Pulse for required badges
@@ -119,9 +118,6 @@ const OrderScreen = ({ route }) => {
         Animated.timing(pulseAnim, { toValue: 1, duration: 750, useNativeDriver: true }),
       ])
     ).start();
-
-    // Fade in content
-    Animated.timing(fadeAnim, { toValue: 1, duration: 350, useNativeDriver: true }).start();
 
     loadUserAddresses();
     const today = new Date().getDay();
@@ -365,19 +361,33 @@ const OrderScreen = ({ route }) => {
         </View>
       </SafeAreaView>
 
-      {/* Step Indicator 
-      <StepIndicator currentStep={currentStep} />*/}
+      {/* Step Indicator */}
+      <StepIndicator currentStep={currentStep} />
 
-     
+      {/* ── REQUIRED CALLOUT ── */}
+      {(!selectedAddress || !emailValid) && (
+        <View style={styles.callout}>
+          <View style={styles.calloutIcon}>
+            <Ionicons name="alert-circle" size={18} color="#E65100" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.calloutTitle}>Complete these to continue</Text>
+            <Text style={styles.calloutBody}>
+              {[
+                !selectedAddress && '• Add a delivery address',
+                !emailValid && '• Enter your payment email',
+              ].filter(Boolean).join('\n')}
+            </Text>
+          </View>
+        </View>
+      )}
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <Animated.ScrollView
-          style={{ opacity: fadeAnim }}
+        <ScrollView
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-      
           {/* Page title */}
           <View style={styles.pageHeader}>
             <Text style={styles.pageTitle}>Checkout</Text>
@@ -677,7 +687,7 @@ const OrderScreen = ({ route }) => {
           </View>
 
           <View style={{ height: 220 }} />
-        </Animated.ScrollView>
+        </ScrollView>
       </KeyboardAvoidingView>
 
       {/* ════════════════════════════
@@ -734,11 +744,13 @@ const OrderScreen = ({ route }) => {
             </>
           ) : (
             <>
-              
+              <View style={styles.payBtnIcon}>
+                <Ionicons name="lock-closed" size={15} color="#2E7D32" />
+              </View>
               <Text style={styles.payBtnText}>
                 Pay Securely · GH₵ {total.toFixed(2)}
               </Text>
-              
+              <Ionicons name="arrow-forward" size={18} color="#fff" />
             </>
           )}
         </TouchableOpacity>

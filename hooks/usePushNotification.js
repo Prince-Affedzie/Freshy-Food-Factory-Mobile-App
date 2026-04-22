@@ -68,7 +68,7 @@ export default function usePushNotifications() {
     };
   }, [user?._id]); // Re-run specifically when the user ID changes
 
-  return { expoPushToken, notification };
+  return { expoPushToken, notification,syncTokenWithBackend };
 }
 
 /**

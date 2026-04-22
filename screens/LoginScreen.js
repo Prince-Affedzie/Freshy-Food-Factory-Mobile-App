@@ -221,7 +221,10 @@ const LoginScreen = ({ navigation }) => {
     if (response?.success) {
       // No Alert here makes the flow feel faster/native
       setAppleLoading(false);
-      navigation.navigate('MainTabs'); 
+      setTimeout(() => {
+         navigation.navigate('MainTabs'); 
+      },500)
+     
     } else {
       Alert.alert('Sign In Failed', response.message || 'We could not sign you in.');
     }

@@ -37,7 +37,7 @@ const SignUpScreen = ({ navigation }) => {
     password: '',
     confirmPassword: '',
   });
-  const { expoPushToken, sendTokenToBackend } = usePushNotifications();
+  const { expoPushToken, syncTokenWithBackend } = usePushNotifications();
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
@@ -165,7 +165,7 @@ const SignUpScreen = ({ navigation }) => {
 
       if (response.success) {
         const userId = response.data.user?._id;
-        const tokenSent = await sendTokenToBackend(userId, expoPushToken);
+        const tokenSent = await syncTokenWithBackend(userId, expoPushToken);
         setTimeout(() => {
           navigation.navigate('MainTabs');
           Alert.alert(
@@ -244,16 +244,20 @@ const SignUpScreen = ({ navigation }) => {
 
     const response = await signUpByApple(appleAuthData);
 
-    if (response.success) {
+    if (response?.success) {
       const userId = response.data.user?._id;
-      await sendTokenToBackend(userId, expoPushToken);
+      await syncTokenWithBackend(userId, expoPushToken);
       
       setAppleLoading(false);
-      navigation.navigate('MainTabs');
-      Alert.alert(
+
+      setTimeout(() => {
+         Alert.alert(
         'Welcome!',
         `Successfully signed in with Apple 🎉`
       );
+       navigation.navigate('MainTabs');
+       },500)
+      
     } else {
       Alert.alert('Sign In Failed', response.message || 'Check your connection.');
     }

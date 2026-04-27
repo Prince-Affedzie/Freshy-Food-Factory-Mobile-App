@@ -4,7 +4,7 @@ export default {
   expo: {
     name: "FreshyFoodFactory-Mobile",
     slug: "freshyfoodfactory-mobile",
-    version: "1.0.0",
+    version: "2.0.0",
     orientation: "portrait",
     icon: "./assets/FreshyFoodFactory_App_Icon.png",
     userInterfaceStyle: "light",
@@ -14,20 +14,38 @@ export default {
       resizeMode: "contain",
       backgroundColor: "#4CAF50"
     },
-    ios: {
-      supportsTablet: true,
-      bundleIdentifier: "com.freshyfood.factory.ios",
-      googleServicesFile: "./GoogleService-Info.plist",
-      usesAppleSignIn: true,
-      infoPlist: {
-      ITSAppUsesNonExemptEncryption: false,
-      NSAppTransportSecurity: {
+    // ... rest of your config
+ios: {
+  supportsTablet: true,
+  bundleIdentifier: "com.freshyfood.factory.ios",
+  googleServicesFile: "./GoogleService-Info.plist",
+  usesAppleSignIn: true,
+  infoPlist: {
+    ITSAppUsesNonExemptEncryption: false,
+    NSAppTransportSecurity: {
+      NSAllowsArbitraryLoads: true, // Keep these as global backups
       NSAllowsArbitraryLoadsInWebContent: true,
-      NSAllowsArbitraryLoads: false
+      NSExceptionDomains: {
+        "paystack.com": {
+          NSIncludesSubdomains: true,
+          NSExceptionAllowsInsecureHTTPLoads: true,
+          NSAllowsArbitraryLoads: true,
+        },
+        "paystack.co": {
+          NSIncludesSubdomains: true,
+          NSExceptionAllowsInsecureHTTPLoads: true,
+          NSAllowsArbitraryLoads: true,
+        },
+        "checkout.paystack.com": {
+          NSIncludesSubdomains: true,
+          NSExceptionAllowsInsecureHTTPLoads: true,
+          NSAllowsArbitraryLoads: true,
+        }
       }
-     },
-    
-    },
+    }
+  },
+},
+
     android: {
       package: "com.freshyfood.factory",
       adaptiveIcon: {

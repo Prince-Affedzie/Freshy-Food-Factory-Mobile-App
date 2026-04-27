@@ -31,6 +31,7 @@ import ForgotPasswordScreen from  '../screens/ForgetPasswordScreen'
 import TermsOfServiceScreen from '../screens/TermsofServiceScreen'
 import WelcomeScreen from '../screens/WelcomeScreen';
 import { checkIfFirstLaunch } from '../hooks/checkIfFirstLaunch';
+import PaymentScreen from '../screens/PaymentScreen'
 
 
 const Stack = createStackNavigator();
@@ -256,6 +257,12 @@ function MainStackNavigator() {
            component={AboutScreen} 
           options={{ headerShown: false }}
            />
+
+           <Stack.Screen 
+           name="Payment" 
+           component={PaymentScreen}
+           options={{ headerShown: false }}
+          />
           <Stack.Screen name="Auth" component={AuthNavigator} />
         </>
       ) : (

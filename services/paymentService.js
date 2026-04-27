@@ -1,76 +1,44 @@
-import axios from "axios";
-import { usePaystack } from "react-native-paystack-webview";
-import { Alert } from "react-native";
-import { initializePayment } from "../apis/paymentApi";
-import { verifyPayment } from "../apis/paymentApi";
+// src/services/paymentService.js
+import { Alert } from 'react-native';
+import { initializePayment } from '../apis/paymentApi';
+import { setPaymentCallbacks, clearPaymentCallbacks } from './paymentCallbacks';
 
+export const triggerPayment = async ({ navigation, email, phone, amount }) => {
+  return new Promise(async (resolve) => {
+    try {
+      const initRes = await initializePayment({ email, phone, amount });
+      const { authorization_url, reference } = initRes.data; 
 
-export const triggerPayment = async ({
-  popup,
-  email,
-  phone,
-  amount,
-}) => {
-  try {
-    const initRes = await initializePayment();
-    const { reference } = initRes.data;
+      const callbackId = reference; // unique per transaction
 
-    const safeAmount = Math.round(Number(amount));
-
-    return new Promise((resolve) => {
-      popup.newTransaction({
-        email,
-        phone,
-        amount: safeAmount,
-        currency: "GHS",
-        reference,
-        onSuccess: async () => {
-          try {
-            /*const verifyRes = await verifyPayment(reference, {
-              amount,
-            });
-
-            if (verifyRes.status === 200) {
-              const payment = verifyRes.data.payment;
-
-              if (!payment?._id) {
-                Alert.alert("Error", "Payment recorded but ID missing.");
-                return resolve({ success: false });
-              }*/
-
-              Alert.alert("Payment Successful", "Funds secured.");
-
-              resolve({
-                success: true,
-                //paymentId: payment._id,
-              });
-
-           /* } else {
-              Alert.alert("Verification Failed");
-              resolve({ success: false });
-            }*/
-          } catch (err) {
-            console.error("Verification Error:", err);
-            Alert.alert("Error", "Payment verification failed.");
-            resolve({ success: false });
-          }
+      // Store callbacks by reference — survives navigation
+      setPaymentCallbacks(callbackId, {
+        onSuccess: (result) => {
+          clearPaymentCallbacks(callbackId);
+          resolve({ success: true, reference, ...result });
         },
-
         onCancel: () => {
-          Alert.alert("Payment Cancelled");
-          resolve({ success: false });
+          clearPaymentCallbacks(callbackId);
+          resolve({ success: false, cancelled: true });
         },
-
-        onError: (err) => {
-          console.error("Paystack Error:", err);
-          Alert.alert("Payment Error");
+        onError: () => {
+          clearPaymentCallbacks(callbackId);
           resolve({ success: false });
         },
       });
-    });
-  } catch (err) {
-    console.error("Error starting payment:", err);
-    Alert.alert("Error", "Could not start payment.");
-    return { success: false };
-  }
+
+      navigation.navigate('Payment', {
+        authorization_url,
+        reference,
+        callbackId,
+        callback_url: 'https://freshy-food-frontend.vercel.app/order-success',
+        cancel_url:   'https://freshy-food-frontend.vercel.app/',
+      });
+
+    } catch (err) {
+      console.error('Payment init error:', err);
+      Alert.alert('Error', 'Could not start payment.');
+      resolve({ success: false });
+    }
+  });
 };

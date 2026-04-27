@@ -25,6 +25,7 @@ import { triggerPayment } from '../services/paymentService';
 import { usePaystack } from 'react-native-paystack-webview';
 import { order } from '../apis/orderApi';
 
+
 const { width } = Dimensions.get('window');
 
 // ─── Step Indicator ───────────────────────────────────────────────────────────
@@ -251,11 +252,12 @@ const OrderScreen = ({ route }) => {
         return;
       }
       const paymentResult = await triggerPayment({
-        popup,
+        //popup,
+        navigation:navigation,
         email: paymentEmail.trim(),
         phone: user?.phone || selectedAddress?.phone,
         amount: total,
-        authToken,
+        //authToken,
       });
       if (!paymentResult?.success) { setPlacingOrder(false); return; }
 
@@ -364,24 +366,7 @@ const OrderScreen = ({ route }) => {
       {/* Step Indicator */}
       <StepIndicator currentStep={currentStep} />
 
-      {/* ── REQUIRED CALLOUT ── */}
-      {(!selectedAddress || !emailValid) && (
-        <View style={styles.callout}>
-          <View style={styles.calloutIcon}>
-            <Ionicons name="alert-circle" size={18} color="#E65100" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.calloutTitle}>Complete these to continue</Text>
-            <Text style={styles.calloutBody}>
-              {[
-                !selectedAddress && '• Add a delivery address',
-                !emailValid && '• Enter your payment email',
-              ].filter(Boolean).join('\n')}
-            </Text>
-          </View>
-        </View>
-      )}
-
+      
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={styles.scroll}
@@ -744,13 +729,11 @@ const OrderScreen = ({ route }) => {
             </>
           ) : (
             <>
-              <View style={styles.payBtnIcon}>
-                <Ionicons name="lock-closed" size={15} color="#2E7D32" />
-              </View>
+             
               <Text style={styles.payBtnText}>
                 Pay Securely · GH₵ {total.toFixed(2)}
               </Text>
-              <Ionicons name="arrow-forward" size={18} color="#fff" />
+             
             </>
           )}
         </TouchableOpacity>

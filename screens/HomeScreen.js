@@ -34,11 +34,10 @@ const { width } = Dimensions.get('window');
 const ALL_MARKETS = [
   { id: 'Madina Market',       icon: '🏬', palette: { bg: '#E8F5E9', accent: '#1B5E20', border: '#A5D6A7' } },
   { id: 'Makola Market',       icon: '🛒', palette: { bg: '#FFF3E0', accent: '#E65100', border: '#FFCC80' } },
+  { id: 'Agbogbloshie Market', icon: '🌳', palette: { bg: '#FFF9C4', accent: '#F57F17', border: '#FFF176' } },
   { id: 'Kaneshie Market',     icon: '🏪', palette: { bg: '#E3F2FD', accent: '#1565C0', border: '#90CAF9' } },
   { id: 'Mallam Market',       icon: '🌿', palette: { bg: '#E0F2F1', accent: '#00695C', border: '#80CBC4' } },
   { id: 'Tema Market',         icon: '🏭', palette: { bg: '#F3E5F5', accent: '#6A1B9A', border: '#CE93D8' } },
-  { id: 'Dansoman Market',     icon: '🏘️', palette: { bg: '#FCE4EC', accent: '#AD1457', border: '#F48FB1' } },
-  { id: 'Agbogbloshie Market', icon: '🌳', palette: { bg: '#FFF9C4', accent: '#F57F17', border: '#FFF176' } },
   { id: 'Dome Market',         icon: '🏙️', palette: { bg: '#EFEBE9', accent: '#4E342E', border: '#BCAAA4' } },
 ];
 
@@ -794,8 +793,14 @@ const HomeScreen = () => {
             </TouchableOpacity>
           </View>
 
-          {/* 2-column grid of all 8 markets */}
-          <View style={styles.marketsGrid}>
+
+         {/* MARKETS IN ACCRA – horizontal scroll */}
+        <View style={styles.section}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.marketsScrollContent}
+          >
             {ALL_MARKETS.map(config => (
               <MarketGridCard
                 key={config.id}
@@ -804,7 +809,19 @@ const HomeScreen = () => {
                 onPress={handleMarketPress}
               />
             ))}
-          </View>
+            {/* Optional "All Markets" card at the end */}
+            <TouchableOpacity
+              style={styles.marketSeeAllCard}
+              onPress={() => navigation.navigate('Vendors')}
+              activeOpacity={0.85}
+            >
+              <View style={styles.marketSeeAllIcon}>
+                <Ionicons name="location-outline" size={22} color="#2E7D32" />
+              </View>
+              <Text style={styles.marketSeeAllText}>All Markets</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
         </View>
 
         {/* ══════════════════════════════════════
@@ -1532,6 +1549,47 @@ const styles = StyleSheet.create({
     borderColor: '#C8E6C9',
   },
   continueBtnText: { color: '#2E7D32', fontSize: 15, fontWeight: '600' },
+  marketsScrollContent: {
+  paddingLeft: 16,
+  paddingRight: 16,
+  gap: 10,
+},
+// Modify the marketCard to have a fixed width (instead of (width-42)/2)
+marketCard: {
+  width: 158,             // fixed width for horizontal scroll
+  borderRadius: 16,
+  padding: 14,
+  borderWidth: 1,
+  gap: 8,
+},
+marketSeeAllCard: {
+  width: 110,
+  backgroundColor: '#fff',
+  borderRadius: 16,
+  justifyContent: 'center',
+  alignItems: 'center',
+  gap: 8,
+  padding: 16,
+  borderWidth: 1.5,
+  borderColor: '#E8E8E8',
+  borderStyle: 'dashed',
+  minHeight: 165,
+},
+marketSeeAllIcon: {
+  width: 48,
+  height: 48,
+  borderRadius: 24,
+  backgroundColor: '#E8F5E9',
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+marketSeeAllText: {
+  fontSize: 12,
+  fontWeight: '700',
+  color: '#2E7D32',
+  textAlign: 'center',
+  lineHeight: 17,
+},
 });
 
 export default HomeScreen;

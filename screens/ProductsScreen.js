@@ -578,7 +578,7 @@ const ProductsScreen = ({ navigation, route }) => {
 
       <FullScreenLoader
         visible={loading}
-        loadingType={loading ? 'category' : 'default'}
+        loadingType={loading ? 'products' : 'default'}
         categoryName={getCategoryNameForLoader()}
         searchQuery={searchQuery}
         loadedCount={products.length}

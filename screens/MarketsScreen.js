@@ -444,29 +444,52 @@ const VendorCard = ({ vendor, onPress }) => {
   );
 };
 
-// ─────────────────────────────────────────────
-// Stats Row
-// ─────────────────────────────────────────────
+const STAT_META = [
+  { 
+    label: 'Markets',  
+    iconName: 'storefront', // Result: storefront-outline
+    iconColor: '#2E7D32', 
+    iconBg: '#E8F5E9' 
+  },
+  { 
+    label: 'Vendors',  
+    iconName: 'people',     // Result: people-outline
+    iconColor: '#1565C0', 
+    iconBg: '#E3F2FD' 
+  },
+  { 
+    label: 'Products', 
+    iconName: 'cube',       // Result: cube-outline (or use 'basket' / 'pricetag')
+    iconColor: '#F9A825', 
+    iconBg: '#FFF8E1' 
+  },
+];
+
 const StatsRow = ({ allVendors, filteredCount, hasFilters }) => {
   const totalProducts = allVendors.reduce((acc, v) => acc + (v.products?.length || 0), 0);
   const uniqueMarkets = [...new Set(allVendors.map(v => v.market_name))].length;
   const stats = [
-    { label: 'Markets', value: uniqueMarkets },
-    { label: 'Vendors', value: hasFilters ? `${filteredCount}/${allVendors.length}` : allVendors.length },
+    { label: 'Markets',  value: uniqueMarkets },
+    { label: 'Vendors',  value: hasFilters ? `${filteredCount}/${allVendors.length}` : allVendors.length },
     { label: 'Products', value: totalProducts > 999 ? `${(totalProducts / 1000).toFixed(1)}k` : totalProducts },
   ];
   return (
     <View style={styles.statsRow}>
-      {stats.map((s, i) => (
-        <View key={s.label} style={[styles.statChip, i < stats.length - 1 && styles.statChipBorder]}>
-          <Text style={styles.statNum}>{s.value}</Text>
-          <Text style={styles.statLabel}>{s.label}</Text>
-        </View>
-      ))}
+      {stats.map((s, i) => {
+        const meta = STAT_META[i];
+        return (
+          <View key={s.label} style={styles.statCard}>
+            <View style={[styles.statIconWrap, { backgroundColor: meta.iconBg }]}>
+              <Ionicons name={meta.iconName + '-outline'} size={16} color={meta.iconColor} />
+            </View>
+            <Text style={styles.statNum}>{s.value}</Text>
+            <Text style={styles.statLabel}>{s.label}</Text>
+          </View>
+        );
+      })}
     </View>
   );
 };
-
 // ─────────────────────────────────────────────
 // Main Screen
 // ─────────────────────────────────────────────
@@ -651,64 +674,118 @@ const MarketsScreen = ({ navigation }) => {
         <HeroCarousel onSlidePress={handleSlidePress} />
 
         {/* 1 — STICKY: search + toolbar */}
-        <View style={styles.stickyBlock}>
-          <View style={styles.searchBar}>
-            <Ionicons name="search-outline" size={18} color="#9E9E9E" />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search vendors, markets, categories…"
-              placeholderTextColor="#BDBDBD"
-              value={search}
-              onChangeText={setSearch}
-              autoCapitalize="none"
-              returnKeyType="search"
-            />
-            {search.length > 0 && (
-              <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Ionicons name="close-circle" size={18} color="#BDBDBD" />
-              </TouchableOpacity>
-            )}
-          </View>
+<View style={styles.stickyBlock}>
+  {/* Search */}
+  <View style={styles.searchBar}>
+    <Ionicons name="search-outline" size={18} color="#9E9E9E" />
+    <TextInput
+      style={styles.searchInput}
+      placeholder="Search vendors, markets, categories…"
+      placeholderTextColor="#BDBDBD"
+      value={search}
+      onChangeText={setSearch}
+      autoCapitalize="none"
+      returnKeyType="search"
+    />
+    {search.length > 0 && (
+      <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <Ionicons name="close-circle" size={18} color="#BDBDBD" />
+      </TouchableOpacity>
+    )}
+  </View>
 
-          <View style={styles.toolbar}>
-            <View style={styles.toolbarRight}>
-              <TouchableOpacity
-                style={[styles.toolbarBtn, marketFilter && styles.toolbarBtnActive]}
-                onPress={() => setMarketModalVisible(true)}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="location-outline" size={15} color={marketFilter ? '#fff' : '#2E7D32'} />
-                <Text style={[styles.toolbarBtnText, marketFilter && styles.toolbarBtnTextActive]} numberOfLines={1}>
-                  {marketFilter ? marketFilter.replace(' Market', '') : 'Market'}
-                </Text>
-                <Ionicons name="chevron-down" size={13} color={marketFilter ? '#fff' : '#2E7D32'} />
-              </TouchableOpacity>
+  {/* Toolbar — clean pill row */}
+  <View style={styles.toolbar}>
+    {/* Filter label (optional, gives context) */}
+    <Text style={styles.toolbarLabel}>Filter</Text>
 
-              <TouchableOpacity
-                style={[styles.toolbarBtn, categoryFilter && styles.toolbarBtnActive]}
-                onPress={() => setCategoryModalVisible(true)}
-                activeOpacity={0.8}
-              >
-                <Text style={{ fontSize: 13 }}>
-                  {categoryFilter ? (CATEGORY_META[categoryFilter]?.emoji || '🏷') : '🏷'}
-                </Text>
-                <Text style={[styles.toolbarBtnText, categoryFilter && styles.toolbarBtnTextActive]} numberOfLines={1}>
-                  {categoryFilter
-                    ? (categoryFilter.length > 10 ? categoryFilter.split(' ')[0] : categoryFilter)
-                    : 'Category'}
-                </Text>
-                <Ionicons name="chevron-down" size={13} color={categoryFilter ? '#fff' : '#2E7D32'} />
-              </TouchableOpacity>
+    {/* Horizontal scroll in case of many filters (future‑proof) */}
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.toolbarPills}
+    >
+      {/* Market pill */}
+      <TouchableOpacity
+        style={[
+          styles.filterPill,
+          marketFilter && styles.filterPillActive,
+        ]}
+        onPress={() => setMarketModalVisible(true)}
+        activeOpacity={0.8}
+      >
+        <Ionicons
+          name="location-outline"
+          size={14}
+          color={marketFilter ? '#fff' : '#2E7D32'}
+        />
+        <Text
+          style={[
+            styles.filterPillText,
+            marketFilter && styles.filterPillTextActive,
+          ]}
+          numberOfLines={1}
+        >
+          {marketFilter ? marketFilter.replace(' Market', '') : 'Market'}
+        </Text>
+        <Ionicons
+          name="chevron-down"
+          size={12}
+          color={marketFilter ? '#fff' : '#2E7D32'}
+        />
+      </TouchableOpacity>
 
-              {hasFilters && (
-                <TouchableOpacity style={styles.clearBtn} onPress={clearAll} activeOpacity={0.8}>
-                  <Ionicons name="close" size={14} color="#E65100" />
-                  <Text style={styles.clearBtnText}>Clear</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
-        </View>
+      {/* Category pill */}
+      <TouchableOpacity
+        style={[
+          styles.filterPill,
+          categoryFilter && styles.filterPillActive,
+        ]}
+        onPress={() => setCategoryModalVisible(true)}
+        activeOpacity={0.8}
+      >
+        {categoryFilter ? (
+          <Text style={styles.filterPillEmoji}>
+            {CATEGORY_META[categoryFilter]?.emoji || '🏷'}
+          </Text>
+        ) : (
+          <Text style={styles.filterPillEmoji}>🏷</Text>
+        )}
+        <Text
+          style={[
+            styles.filterPillText,
+            categoryFilter && styles.filterPillTextActive,
+          ]}
+          numberOfLines={1}
+        >
+          {categoryFilter
+            ? categoryFilter.length > 10
+              ? categoryFilter.split(' ')[0]
+              : categoryFilter
+            : 'Category'}
+        </Text>
+        <Ionicons
+          name="chevron-down"
+          size={12}
+          color={categoryFilter ? '#fff' : '#2E7D32'}
+        />
+      </TouchableOpacity>
+    </ScrollView>
+
+    {/* Clear button (only when filters active) */}
+    {hasFilters && (
+      <TouchableOpacity style={styles.clearBtn} onPress={clearAll} activeOpacity={0.8}>
+        <Text style={styles.clearBtnText}>Clear</Text>
+        <Ionicons name="close-circle" size={14} color="#E65100" />
+      </TouchableOpacity>
+    )}
+
+    {/* Filtered count badge (always visible) */}
+    <View style={styles.countBadge}>
+      <Text style={styles.countBadgeText}>{filteredVendors.length}</Text>
+    </View>
+  </View>
+</View>
 
         {/* 2 — Stats */}
         {allVendors.length > 0 && (
@@ -716,12 +793,9 @@ const MarketsScreen = ({ navigation }) => {
         )}
 
         {/* 3 — Section label */}
-        <View style={styles.sectionLabelRow}>
-          <Text style={styles.sectionLabel}>
-            {hasFilters ? 'Filtered Vendors' : 'All Vendors'}
-          </Text>
-          <Text style={styles.sectionLabelCount}>{filteredVendors.length} found</Text>
-        </View>
+        <View style={styles.sectionCountPill}>
+        <Text style={styles.sectionLabelCount}>{filteredVendors.length} found</Text>
+       </View>
 
         {/* 4 — Vendor grid */}
         {error && allVendors.length === 0 ? (
@@ -779,30 +853,142 @@ const styles = StyleSheet.create({
 
   scrollContent: { backgroundColor: '#F0F2EE' },
 
-  stickyBlock: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 1 },
+  stickyBlock: {
+  backgroundColor: '#fff',
+  borderBottomWidth: 1,
+  borderBottomColor: '#F0F0F0',
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.06,
+  shadowRadius: 4,
+  elevation: 3,
+},
 
-  searchBar: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#F7F9F7', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, margin: 12, borderWidth: 1, borderColor: '#E8F5E9' },
-  searchInput: { flex: 1, fontSize: 14, color: '#1B2714', paddingVertical: 0 },
+searchBar: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 10,
+  backgroundColor: '#F7F9F7',
+  borderRadius: 14,
+  paddingHorizontal: 14,
+  paddingVertical: 13,
+  margin: 12,
+  borderWidth: 1,
+  borderColor: '#E8F5E9',
+},
+searchInput: { flex: 1, fontSize: 14, color: '#1B2714', paddingVertical: 0 },
 
-  toolbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 10, backgroundColor: '#fff', marginHorizontal:28 },
-  toolbarRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  toolbarBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F8E9', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, gap: 5, borderWidth: 1.5, borderColor: '#C8E6C9', maxWidth: 130 },
-  toolbarBtnActive: { backgroundColor: '#2E7D32', borderColor: '#2E7D32', shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 3 },
-  toolbarBtnText: { fontSize: 12, color: '#2E7D32', fontWeight: '700', flex: 1 },
-  toolbarBtnTextActive: { color: '#fff' },
-  clearBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 8, borderRadius: 20, backgroundColor: '#FFF3E0', borderWidth: 1, borderColor: '#FFCCBC' },
-  clearBtnText: { fontSize: 12, fontWeight: '700', color: '#E65100' },
+toolbar: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingHorizontal: 14,
+  paddingBottom: 12,
+  gap: 10,
+  flexWrap: 'wrap',
+},
+toolbarLabel: {
+  fontSize: 11,
+  fontWeight: '700',
+  color: '#9E9E9E',
+  textTransform: 'uppercase',
+  letterSpacing: 0.5,
+},
+toolbarPills: {
+  gap: 8,
+},
+filterPill: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingHorizontal: 14,
+  paddingVertical: 7,
+  borderRadius: 20,
+  backgroundColor: '#F5F5F5',
+  borderWidth: 1,
+  borderColor: '#E0E0E0',
+  gap: 6,
+},
+filterPillActive: {
+  backgroundColor: '#1B5E20',
+  borderColor: '#1B5E20',
+},
+filterPillText: {
+  fontSize: 13,
+  fontWeight: '600',
+  color: '#424242',
+  maxWidth: 100,
+},
+filterPillTextActive: {
+  color: '#fff',
+},
+filterPillEmoji: {
+  fontSize: 14,
+},
 
-  statsRow: { flexDirection: 'row', backgroundColor: '#FFFFFF', marginHorizontal: 16, marginTop: 14, borderRadius: 14, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
-  statChip: { flex: 1, paddingVertical: 12, alignItems: 'center' },
-  statChipBorder: { borderRightWidth: 1, borderRightColor: '#F0F0F0' },
-  statNum: { fontSize: 20, fontWeight: '800', color: '#1B5E20' },
-  statLabel: { fontSize: 11, color: '#888', fontWeight: '500', marginTop: 2 },
+clearBtn: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 4,
+  paddingHorizontal: 10,
+  paddingVertical: 6,
+  borderRadius: 14,
+  backgroundColor: '#FFF3E0',
+  borderWidth: 1,
+  borderColor: '#FFCCBC',
+  marginLeft: 'auto',         // pushes clear to the right
+},
+clearBtnText: {
+  fontSize: 12,
+  fontWeight: '700',
+  color: '#E65100',
+},
 
-  sectionLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 18, paddingTop: 18, paddingBottom: 10 },
-  sectionLabel: { fontSize: 17, fontWeight: '800', color: '#1B2714', letterSpacing: -0.2 },
-  sectionLabelCount: { fontSize: 13, color: '#2E7D32', fontWeight: '600' },
+countBadge: {
+  backgroundColor: '#E8F5E9',
+  borderRadius: 10,
+  paddingHorizontal: 8,
+  paddingVertical: 3,
+  marginLeft: 'auto',         // if no clear button, badge moves to right
+},
+countBadgeText: {
+  fontSize: 12,
+  fontWeight: '700',
+  color: '#2E7D32',
+},
 
+  statsRow: {
+  flexDirection: 'row',
+  gap: 10,
+  paddingHorizontal: 14,
+  paddingTop: 14,
+  paddingBottom: 4,
+},
+statCard: {
+  flex: 1,
+  backgroundColor: '#FFFFFF',
+  borderRadius: 12,
+  paddingVertical: 12,
+  paddingHorizontal: 10,
+  alignItems: 'center',
+  borderWidth: 0.5,
+  borderColor: '#EBEBEB',
+},
+statIconWrap: {
+  width: 32,
+  height: 32,
+  borderRadius: 8,
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginBottom: 7,
+},
+statNum: { fontSize: 18, fontWeight: '800', color: '#1B5E20', lineHeight: 20, marginBottom: 3 },
+statLabel: { fontSize: 10, fontWeight: '600', color: '#9E9E9E', textTransform: 'uppercase', letterSpacing: 0.4 },
+sectionCountPill: {
+  backgroundColor: '#E8F5E9',
+  paddingHorizontal: 10,
+  paddingVertical: 3,
+  borderRadius: 20,
+},
+sectionLabelCount: { fontSize: 12, color: '#2E7D32', fontWeight: '600' },
   vendorGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, gap: 12 },
 
   vendorCard: { width: CARD_WIDTH, backgroundColor: '#FFFFFF', borderRadius: 16, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8, elevation: 3, borderWidth: 1, borderColor: '#F5F5F5' },

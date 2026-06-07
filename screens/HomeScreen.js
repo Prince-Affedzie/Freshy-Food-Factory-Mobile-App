@@ -962,34 +962,33 @@ const HomeScreen = () => {
         )}
 
         {/* ════════════════════════════════
-            SELL YOUR STUFF BANNER
-            ════════════════════════════════ */}
-        <View style={styles.bannerSection}>
-          <TouchableOpacity
-            style={styles.sellBanner}
-            activeOpacity={0.9}
-            onPress={() => isAuthenticated
-              ? navigation.navigate('CreateProduct')
-              : navigation.navigate('Login')
-            }
-          >
-            <View style={styles.sellBannerContent}>
-              <View style={styles.sellBannerTag}>
-                <Ionicons name="storefront-outline" size={11} color="#fff" />
-                <Text style={styles.sellBannerTagText}>FOR SELLERS</Text>
-              </View>
-              <Text style={styles.sellBannerTitle}>Got something{'\n'}to sell?</Text>
-              <Text style={styles.sellBannerSub}>List your items for free and reach thousands of students across campuses</Text>
-              <View style={styles.sellBannerBtn}>
-                <Text style={styles.sellBannerBtnText}>Start Selling</Text>
-                <Ionicons name="arrow-forward" size={13} color="#1B5E20" />
-              </View>
-            </View>
-            <View style={styles.sellBannerIllustration}>
-              <Text style={{ fontSize: 60 }}>🛍️</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
+    ESCROW TRUST BANNER
+    ════════════════════════════════ */}
+<View style={styles.bannerSection}>
+  <TouchableOpacity
+    style={styles.sellBanner}
+    activeOpacity={0.9}
+  >
+    <View style={styles.sellBannerContent}>
+      <View style={styles.sellBannerTag}>
+        <Ionicons name="shield-checkmark" size={11} color="#fff" />
+        <Text style={styles.sellBannerTagText}>ENJOY SECURED TRANSACTIONS</Text>
+      </View>
+      <Text style={styles.sellBannerTitle}>Your money is{'\n'}safe with us</Text>
+      <Text style={styles.sellBannerSub}>
+        We hold your payment securely until you receive your order. Sellers only get paid after you confirm delivery.
+      </Text>
+      <View style={styles.sellBannerBtn}>
+        <Text style={styles.sellBannerBtnText}>Shop with confidence</Text>
+        <Ionicons name="arrow-forward" size={13} color="#1B5E20" />
+      </View>
+    </View>
+    <View style={styles.sellBannerIllustration}>
+      <Text style={{ fontSize: 56 }}>🛍️</Text>
+    </View>
+  </TouchableOpacity>
+</View>
+
 
         {/* ════════════════════════════════
             SAFETY & TRUST TIPS

@@ -191,10 +191,7 @@ const VendorLoginScreen = ({ navigation }) => {
         if (vendorRes.success) {
           setStep(STEPS.PHONE);
           setOtp('');
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'VendorDashboard' }],
-          });
+          
         } else {
           Alert.alert(
             'Login Failed',

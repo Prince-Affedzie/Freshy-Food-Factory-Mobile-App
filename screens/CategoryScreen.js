@@ -501,7 +501,7 @@ const CategoryScreen = () => {
       {/* ═══════════════════════════════ HERO ═══════════════════════════════ */}
       <View style={styles.heroWrap}>
         <Animated.Image
-          source={{ uri: `https://res.cloudinary.com/duv3qvvjz/image/upload/v1780694282/campus_ecommerce_flyer_1_jqpppo.jpg` }}
+          source={{ uri: `https://res.cloudinary.com/duv3qvvjz/image/upload/v1780782982/flyer13_1_fyp0xj.png` }}
           style={[styles.heroImage, { transform: [{ scale: heroScaleAnim }] }]}
           resizeMode="cover"
         />

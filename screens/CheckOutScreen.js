@@ -24,6 +24,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { triggerPayment } from '../services/paymentService';
 import { usePaystack } from 'react-native-paystack-webview';
 import { order } from '../apis/orderApi';
+import {verifyPayment} from '../apis/paymentApi'
 
 
 const { width } = Dimensions.get('window');
@@ -242,61 +243,160 @@ const OrderScreen = ({ route }) => {
   };
 
   const handlePlaceOrder = async () => {
-    if (!isFormValid()) return;
-    setPlacingOrder(true);
-    try {
-      const authToken = token || (await AsyncStorage.getItem('@freshyfood_token'));
-      if (!authToken) {
-        Alert.alert('Login Required', 'Please sign in to continue.');
-        navigation.navigate('Login');
+  // 1. VALIDATION
+  if (!isFormValid()) return;
+
+  setPlacingOrder(true);
+
+  try {
+    // 2. AUTHENTICATION CHECK
+    const authToken = token || (await AsyncStorage.getItem('@freshyfood_token'));
+    if (!authToken) {
+      Alert.alert('Login Required', 'Please sign in to continue.');
+      navigation.navigate('Login');
+      setPlacingOrder(false);
+      return;
+    }
+
+    // 3. INITIATE PAYMENT
+    const paymentResult = await triggerPayment({
+      navigation,
+      email: paymentEmail.trim(),
+      phone: user?.phone || selectedAddress?.phone,
+      amount: total,
+    });
+
+    // 4. HANDLE PAYMENT CANCELLATION / FAILURE
+    if (!paymentResult?.success) {
+      if (paymentResult?.cancelled) {
+        // User cancelled — no alert needed, just stay on checkout
+        setPlacingOrder(false);
         return;
       }
-      const paymentResult = await triggerPayment({
-        //popup,
-        navigation:navigation,
-        email: paymentEmail.trim(),
-        phone: user?.phone || selectedAddress?.phone,
-        amount: total,
-        //authToken,
-      });
-      if (!paymentResult?.success) { setPlacingOrder(false); return; }
-     
-      const orderData = prepareOrderData();
-      const res = await order(orderData, authToken);
-      if (res.status === 200) {
-        clearCart();
-        Alert.alert(
-          'Order Confirmed! 🎉',
-          `Order #${res.data.data.orderNumber || res.data.data._id} placed successfully.`,
-          [
-            { text: 'View Order', onPress: () => navigation.navigate('OrderDetail', { orderId: res.data.data.id }) },
-            { text: 'Continue Shopping', onPress: () => navigation.navigate('MainTabs', { screen: 'Home' }) },
-          ]
-        );
-      } else {
-        Alert.alert('Order Failed', res.data?.message || 'Something went wrong.');
-      }
-    } catch (err) {
-      console.error(err);
+      Alert.alert('Payment Failed', 'Your payment could not be processed. Please try again.');
       setPlacingOrder(false);
-      if (err.response) {
-        if (err.response.status === 400 && err.response.data.outOfStockItems) {
-          const names = err.response.data.outOfStockItems.map(i => i.name).join(', ');
-          Alert.alert('Stock Error', `Out of stock: ${names}`, [{ text: 'OK', onPress: () => navigation.navigate('Cart') }]);
-        } else if (err.response.status === 401) {
-          Alert.alert('Session Expired', 'Please sign in again.');
-          navigation.navigate('Login');
-        } else {
-          Alert.alert('Error', err.response.data?.message || 'Failed to process order.');
-        }
-      } else {
-        Alert.alert('Network Error', 'Please check your connection and try again.');
-      }
+      return;
     }
-  };
 
-  const emailValid = paymentEmail && validateEmail(paymentEmail);
-  const readyToPay = selectedAddress && emailValid;
+    // 5. VERIFY PAYMENT ON BACKEND
+    try {
+      const verifyRes = await verifyPayment(paymentResult.reference);
+
+      if (verifyRes.status !== 200 || verifyRes.data?.status !== 'success') {
+        Alert.alert(
+          'Payment Verification Failed',
+          'Your payment could not be verified. Please contact support if funds were deducted.',
+          [{ text: 'Contact Support', onPress: () => navigation.navigate('Support') }]
+        );
+        setPlacingOrder(false);
+        return;
+      }
+    } catch (verifyError) {
+      console.error('Payment verification error:', verifyError);
+      Alert.alert(
+        'Verification Error',
+        'We couldn\'t confirm your payment status. Your order will be processed once payment is confirmed.',
+        [{ text: 'OK' }]
+      );
+      // Optionally still create the order with pending status
+      // or wait for webhook confirmation
+      setPlacingOrder(false);
+      return;
+    }
+
+    // 6. CREATE ORDER (payment confirmed)
+    const orderData = prepareOrderData();
+    orderData.paymentReference = paymentResult.reference; // Attach payment reference to order
+    
+
+    const res = await order(orderData, authToken);
+
+    if (res.status === 200 || res.status === 201) {
+      // 7. SUCCESS — Clear cart and navigate
+      clearCart();
+
+      const orderNumber = res.data.data?.orderNumber || res.data.data?._id || 'N/A';
+
+      Alert.alert(
+        'Order Confirmed! 🎉',
+        `Order #${orderNumber} has been placed successfully.`,
+        [
+          {
+            text: 'View Order',
+            onPress: () =>
+              navigation.navigate('OrderDetail', {
+                orderId: res.data.data?._id || res.data.data?.id,
+              }),
+          },
+          {
+            text: 'Continue Shopping',
+            onPress: () => navigation.navigate('MainTabs', { screen: 'Home' }),
+          },
+        ]
+      );
+    } else {
+      Alert.alert(
+        'Order Failed',
+        res.data?.message || 'Your payment was processed but we couldn\'t create your order. Please contact support.',
+        [{ text: 'Contact Support', onPress: () => navigation.navigate('Support') }]
+      );
+    }
+  } catch (err) {
+    console.error('Order placement error:', err);
+
+    // 8. ERROR HANDLING
+    if (err.response) {
+      switch (err.response.status) {
+        case 400: {
+          if (err.response.data?.outOfStockItems) {
+            const names = err.response.data.outOfStockItems.map((i) => i.name).join(', ');
+            Alert.alert(
+              'Items Unavailable',
+              `The following items are out of stock: ${names}. They have been removed from your cart.`,
+              [{ text: 'OK', onPress: () => navigation.navigate('Cart') }]
+            );
+          } else {
+            Alert.alert('Error', err.response.data?.message || 'Invalid order. Please check your items.');
+          }
+          break;
+        }
+        case 401: {
+          Alert.alert('Session Expired', 'Please sign in again to continue.');
+          navigation.navigate('Login');
+          break;
+        }
+        case 409: {
+          Alert.alert(
+            'Duplicate Order',
+            'It looks like this order may have already been placed. Please check your orders.',
+            [{ text: 'View Orders', onPress: () => navigation.navigate('Orders') }]
+          );
+          break;
+        }
+        default: {
+          Alert.alert('Error', err.response.data?.message || 'Failed to process your order. Please try again.');
+        }
+      }
+    } else if (err.request) {
+      // Network error — no response received
+      Alert.alert(
+        'Network Error',
+        'Please check your internet connection and try again. If the issue persists, your payment may have been processed — check your orders before retrying.',
+        [
+          { text: 'Check Orders', onPress: () => navigation.navigate('Orders') },
+          { text: 'Retry', style: 'cancel' },
+        ]
+      );
+    } else {
+      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+    }
+  } finally {
+    setPlacingOrder(false);
+  }
+};
+
+const emailValid = paymentEmail && validateEmail(paymentEmail);
+const readyToPay = selectedAddress && emailValid;
 
   // ── LOADING ──
   if (cartLoading) {

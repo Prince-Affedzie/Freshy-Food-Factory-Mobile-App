@@ -4,7 +4,7 @@ export default {
   expo: {
     name: "CediMart",
     slug: "freshyfoodfactory-mobile",
-    version: "3.0.0",
+    version: "4.0.0",
     orientation: "portrait",
     icon: "./assets/cedimart_logo.png",
     userInterfaceStyle: "light",
@@ -25,6 +25,12 @@ ios: {
     NSAppTransportSecurity: {
       NSAllowsArbitraryLoads: true, // Keep these as global backups
       NSAllowsArbitraryLoadsInWebContent: true,
+      NSPhotoLibraryUsageDescription:
+       "Cedimart uses your photo library to let you upload profile photos and product images.",
+
+     NSCameraUsageDescription:
+       "Cedimart uses your camera to let you take profile photos and product images.",
+
       NSExceptionDomains: {
         "paystack.com": {
           NSIncludesSubdomains: true,
@@ -52,6 +58,11 @@ ios: {
         foregroundImage: "./assets/cedimart_logo.png",
         backgroundColor: "#ffffff"
       },
+      blockedPermissions: [
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_EXTERNAL_STORAGE"
+      ],
       edgeToEdgeEnabled: true,
       googleServicesFile: "./google-services.json"
     },

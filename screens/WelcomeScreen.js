@@ -75,7 +75,7 @@ const WelcomeScreen = ({ navigation }) => {
           onPress={handleLogin}
           activeOpacity={0.85}
         >
-          <Text style={styles.loginButtonText}>Browse Products And Vendors</Text>
+          <Text style={styles.loginButtonText}>Browse Products </Text>
         </TouchableOpacity>
 
         <Text style={styles.terms}>

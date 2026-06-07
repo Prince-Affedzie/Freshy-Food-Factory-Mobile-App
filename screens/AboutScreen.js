@@ -18,30 +18,36 @@ const AboutScreen = ({ navigation }) => {
   const [expandedSection, setExpandedSection] = useState(null);
 
   const appStats = [
-    { value: '5000+', label: 'Happy Customers', icon: 'people-outline' },
-    { value: '100+', label: 'Local Farms', icon: 'leaf-outline' },
-    { value: '50+', label: 'Fresh Products', icon: 'basket-outline' },
+    { value: '10,000+', label: 'Student Users', icon: 'people-outline' },
+    { value: '8', label: 'Campuses', icon: 'school-outline' },
+    { value: '1,000+', label: 'Active Listings', icon: 'cube-outline' },
     { value: '24h', label: 'Delivery Time', icon: 'time-outline' },
   ];
 
   const features = [
     {
       id: 1,
-      title: 'Farm Fresh Produce',
-      description: 'Direct from local farms within 24 hours of harvest',
-      icon: 'leaf',
+      title: 'Buy & Sell',
+      description: 'Browse thousands of items or list your own in minutes',
+      icon: 'swap-horizontal',
     },
     {
       id: 2,
-      title: 'Flexible Delivery',
-      description: 'Choose your preferred delivery time',
-      icon: 'bicycle',
+      title: 'Secure Payments',
+      description: 'Escrow protection ensures safe transactions for everyone',
+      icon: 'shield-checkmark',
     },
     {
       id: 3,
-      title: 'Quality Guarantee',
-      description: 'Freshness guaranteed on every order',
-      icon: 'star',
+      title: 'Campus Delivery',
+      description: 'We handle pickup and delivery across all campuses',
+      icon: 'bicycle',
+    },
+    {
+      id: 4,
+      title: 'Verified Sellers',
+      description: 'All vendors are verified students on your campus',
+      icon: 'ribbon',
     },
   ];
 
@@ -49,32 +55,31 @@ const AboutScreen = ({ navigation }) => {
     {
       id: 'mission',
       title: 'Our Mission',
-      content: 'To bridge the gap between local farmers and urban consumers by providing fresh, high-quality produce directly from farm to table. We aim to support local agriculture while ensuring our customers get the freshest products at fair prices.',
+      content: 'To create a trusted marketplace where Ghanaian university students can buy and sell safely within their campus communities. We aim to make student commerce simple, secure, and accessible to everyone.',
     },
     {
       id: 'story',
       title: 'Our Story',
-      content: 'Founded in 2023, CediMart connects local farmers directly to your table. We noticed farmers struggled to get fair prices while consumers paid premium for produce that had lost freshness through multiple middlemen. We built a direct connection to solve both problems.',
+      content: 'CediMart was born on campus. As students ourselves, we saw how difficult it was to sell unused items and find affordable used goods. From textbooks to electronics, students needed a better way. We built CediMart to connect students across Ghana\'s top universities — starting with UG, KNUST, UCC, and growing to 8 campuses today.',
     },
     {
       id: 'impact',
-      title: 'Our Impact',
-      content: '• Supporting 100+ local farming families\n• Reducing food waste by 40%\n• Creating 50+ direct jobs\n• Serving 5000+ happy households',
+      title: 'How It Works',
+      content: '• List your items in under 2 minutes\n• Buyers browse and purchase through the app\n• Payment is held securely in escrow\n• Our delivery team handles pickup and drop-off\n• Funds are released to seller after confirmed delivery\n• Everyone stays safe with in-app communication',
+    },
+    {
+      id: 'trust',
+      title: 'Trust & Safety',
+      content: 'Every vendor goes through a verification process. All payments are protected by our escrow system — money is only released when the buyer confirms receipt. Our delivery team ensures items are handled properly, and our support team is always available to resolve any issues.',
     },
   ];
-
-  const appInfo = {
-    version: '1.5.2',
-    build: '2024.12.1',
-    releaseDate: 'December 2024',
-  };
 
   const handleShare = async () => {
     try {
       await Share.share({
         title: 'CediMart',
-        message: 'Check out CediMart - Fresh produce delivered to your doorstep! Download now: https://freshyfood.com/download',
-        url: 'https://freshyfood.com',
+        message: 'Check out CediMart — Ghana\'s campus marketplace! Buy & sell with students on your campus. Download now: https://cedimart.com',
+        url: 'https://cedimart.com',
       });
     } catch (error) {
       Alert.alert('Error', 'Failed to share app');
@@ -83,14 +88,14 @@ const AboutScreen = ({ navigation }) => {
 
   const handleRateApp = () => {
     Alert.alert(
-      'Rate Our App',
-      'Would you like to rate CediMart on the app store?',
+      'Rate CediMart',
+      'Love using CediMart? Rate us on the app store!',
       [
         { text: 'Not Now', style: 'cancel' },
-        { 
-          text: 'Rate Now', 
-          onPress: () => Linking.openURL('https://apps.apple.com/app/idYOUR_APP_ID')
-        }
+        {
+          text: 'Rate Now',
+          onPress: () => Linking.openURL('https://apps.apple.com/app/idYOUR_APP_ID'),
+        },
       ]
     );
   };
@@ -101,50 +106,43 @@ const AboutScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar backgroundColor="#2E7D32" barStyle="light-content" />
-      
-      {/* Green Header - Matching other screens */}
+      <StatusBar backgroundColor="#1B5E20" barStyle="light-content" />
+
+      {/* Header */}
       <View style={styles.topBar}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.topBarTitle}>About Us</Text>
+        <Text style={styles.topBarTitle}>About CediMart</Text>
         <View style={styles.headerRight}>
-          <TouchableOpacity 
-            style={styles.headerIconBtn}
-            onPress={handleShare}
-          >
+          <TouchableOpacity style={styles.headerIconBtn} onPress={handleShare}>
             <Ionicons name="share-outline" size={22} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.headerIconBtn}
-            onPress={() => navigation.navigate('MainTabs', { screen: 'Home' })}
-          >
-            <Ionicons name="home-outline" size={22} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
 
-      <ScrollView 
+      <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Hero Section - Simplified */}
+        {/* Hero Section */}
         <View style={styles.heroSection}>
           <View style={styles.heroOverlay} />
           <View style={styles.heroContent}>
             <View style={styles.logoContainer}>
-              <Ionicons name="leaf" size={48} color="#4CAF50" />
+              <Ionicons name="school" size={40} color="#2E7D32" />
             </View>
             <Text style={styles.appName}>CediMart</Text>
             <Text style={styles.appTagline}>
-              Fresh from farm to your table
+              Ghana's Campus Marketplace
             </Text>
-            
+            <View style={styles.versionBadge}>
+              <Text style={styles.versionText}>v1.0.0</Text>
+            </View>
           </View>
         </View>
 
-        {/* Stats Section - Simplified */}
+        {/* Stats Section */}
         <View style={styles.statsContainer}>
           {appStats.map((stat, index) => (
             <View key={index} style={styles.statItem}>
@@ -155,7 +153,27 @@ const AboutScreen = ({ navigation }) => {
           ))}
         </View>
 
-        {/* Story Sections - Clean accordion */}
+        {/* Features - Horizontal scroll */}
+        <View style={styles.featuresContainer}>
+          <Text style={styles.sectionTitle}>Why CediMart?</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.featuresScroll}
+          >
+            {features.map((feature) => (
+              <View key={feature.id} style={styles.featureCard}>
+                <View style={styles.featureIconContainer}>
+                  <Ionicons name={feature.icon} size={28} color="#2E7D32" />
+                </View>
+                <Text style={styles.featureTitle}>{feature.title}</Text>
+                <Text style={styles.featureDescription}>{feature.description}</Text>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Story Sections - Accordion */}
         <View style={styles.storyContainer}>
           {storySections.map((section) => (
             <View key={section.id} style={styles.storyItem}>
@@ -165,13 +183,13 @@ const AboutScreen = ({ navigation }) => {
                 activeOpacity={0.7}
               >
                 <Text style={styles.storyTitle}>{section.title}</Text>
-                <Ionicons 
-                  name={expandedSection === section.id ? "chevron-up" : "chevron-down"} 
-                  size={20} 
-                  color="#666" 
+                <Ionicons
+                  name={expandedSection === section.id ? 'chevron-up' : 'chevron-down'}
+                  size={20}
+                  color="#666"
                 />
               </TouchableOpacity>
-              
+
               {expandedSection === section.id && (
                 <Text style={styles.storyContent}>{section.content}</Text>
               )}
@@ -179,82 +197,95 @@ const AboutScreen = ({ navigation }) => {
           ))}
         </View>
 
-        {/* Features - Horizontal scroll for cleaner look */}
-        <View style={styles.featuresContainer}>
-          <Text style={styles.sectionTitle}>What Makes Us Special</Text>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.featuresScroll}
-          >
-            {features.map((feature) => (
-              <View key={feature.id} style={styles.featureCard}>
-                <View style={styles.featureIconContainer}>
-                  <Ionicons name={feature.icon} size={32} color="#4CAF50" />
+        {/* Our Campuses */}
+        <View style={styles.campusesContainer}>
+          <Text style={styles.sectionTitle}>Our Campuses</Text>
+          <View style={styles.campusesGrid}>
+            {[
+              { code: 'UG', name: 'University of Ghana' },
+              { code: 'KNUST', name: 'KNUST' },
+              { code: 'UCC', name: 'Univ. of Cape Coast' },
+              { code: 'UEW', name: 'Univ. of Education' },
+              { code: 'UPSA', name: 'UPSA' },
+              { code: 'ASHESI', name: 'Ashesi University' },
+              { code: 'GIMPA', name: 'GIMPA' },
+              { code: 'ATU', name: 'Accra Tech Univ.' },
+            ].map((campus) => (
+              <View key={campus.code} style={styles.campusCard}>
+                <View style={styles.campusIconWrap}>
+                  <Ionicons name="school-outline" size={20} color="#2E7D32" />
                 </View>
-                <Text style={styles.featureTitle}>{feature.title}</Text>
-                <Text style={styles.featureDescription}>{feature.description}</Text>
+                <Text style={styles.campusCode}>{campus.code}</Text>
+                <Text style={styles.campusName}>{campus.name}</Text>
               </View>
             ))}
-          </ScrollView>
-        </View>
-
-        {/* Partners - Simplified 
-        <View style={styles.partnersContainer}>
-          <Text style={styles.sectionTitle}>Our Partners</Text>
-          <View style={styles.partnersRow}>
-            <View style={styles.partnerItem}>
-              <Ionicons name="business" size={28} color="#666" />
-              <Text style={styles.partnerName}>Ministry of Food & Agriculture</Text>
-            </View>
-            <View style={styles.partnerItem}>
-              <Ionicons name="leaf" size={28} color="#666" />
-              <Text style={styles.partnerName}>Ghana Farmers Association</Text>
-            </View>
           </View>
-        </View>*/}
-
-        {/* Legal Links - Clean list */}
-        <View style={styles.legalContainer}>
-          <TouchableOpacity 
-            style={styles.legalLink}
-            onPress={() => navigation.navigate('PrivacyPolicy')}
-          >
-            <Text style={styles.legalLinkText}>Privacy Policy</Text>
-            <Ionicons name="chevron-forward" size={18} color="#666" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.legalLink}
-            onPress={() => navigation.navigate('PrivacyPolicy')}
-          >
-            <Text style={styles.legalLinkText}>Terms of Service</Text>
-            <Ionicons name="chevron-forward" size={18} color="#666" />
-          </TouchableOpacity>
-          
-          {/*<TouchableOpacity 
-            style={styles.legalLink}
-            onPress={() => Linking.openURL('https://freshyfood.com/licenses')}
-          >
-            <Text style={styles.legalLinkText}>Licenses</Text>
-            <Ionicons name="chevron-forward" size={18} color="#666" />
-          </TouchableOpacity>*/}
         </View>
 
-        {/* Rate App Button 
-        <TouchableOpacity style={styles.rateButton} onPress={handleRateApp}>
-          <Ionicons name="star" size={20} color="#FFC107" />
-          <Text style={styles.rateButtonText}>Rate Our App</Text>
-        </TouchableOpacity>*/}
-
-        {/* Footer - Simplified */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            © 2023-2026 CediMart. All rights reserved.
-          </Text>
-          <TouchableOpacity onPress={() => Linking.openURL('https://freshyfoodfactory.com')}>
-            <Text style={styles.websiteLink}>www.freshyfoodfactory.com</Text>
+        {/* Legal Links */}
+        <View style={styles.legalContainer}>
+          <TouchableOpacity
+            style={styles.legalLink}
+            onPress={() => navigation.navigate('PrivacyPolicy')}
+          >
+            <View style={styles.legalLinkLeft}>
+              <Ionicons name="document-text-outline" size={18} color="#2E7D32" />
+              <Text style={styles.legalLinkText}>Privacy Policy</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#BDBDBD" />
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.legalLink}
+            onPress={() => navigation.navigate('TermsOfService')}
+          >
+            <View style={styles.legalLinkLeft}>
+              <Ionicons name="shield-outline" size={18} color="#2E7D32" />
+              <Text style={styles.legalLinkText}>Terms of Service</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#BDBDBD" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.legalLink, { borderBottomWidth: 0 }]}
+            onPress={handleRateApp}
+          >
+            <View style={styles.legalLinkLeft}>
+              <Ionicons name="star-outline" size={18} color="#F9A825" />
+              <Text style={styles.legalLinkText}>Rate the App</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#BDBDBD" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Contact */}
+        <TouchableOpacity
+          style={styles.contactCard}
+          onPress={() => navigation.navigate('Support')}
+          activeOpacity={0.85}
+        >
+          <View style={styles.contactIconWrap}>
+            <Ionicons name="chatbubble-ellipses-outline" size={24} color="#fff" />
+          </View>
+          <View style={styles.contactInfo}>
+            <Text style={styles.contactTitle}>Need help?</Text>
+            <Text style={styles.contactSub}>Contact our support team</Text>
+          </View>
+          <Ionicons name="arrow-forward" size={20} color="#2E7D32" />
+        </TouchableOpacity>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <View style={styles.footerBrand}>
+            <Ionicons name="school" size={16} color="#A5D6A7" />
+            <Text style={styles.footerBrandText}>CediMart</Text>
+          </View>
+          <Text style={styles.footerText}>
+            © 2024-2026 CediMart. All rights reserved.
+          </Text>
+          <Text style={styles.footerTagline}>
+            Ghana's trusted campus marketplace
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -266,60 +297,49 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F5F5',
   },
-  
-  // ── TOP BAR (Green header like other screens) ──
+
   topBar: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#1B5E20',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  backBtn: { 
-    padding: 4,
-  },
-  topBarTitle: { 
-    fontSize: 18, 
-    fontWeight: '700', 
-    color: '#fff', 
-    flex: 1, 
-    textAlign: 'center' 
+  backBtn: { padding: 4 },
+  topBarTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+    flex: 1,
+    textAlign: 'center',
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  headerIconBtn: {
-    padding: 4,
-    position: 'relative',
-  },
-  
-  scrollContent: {
-    paddingBottom: 30,
-  },
-  
-  // Hero Section
+  headerIconBtn: { padding: 4 },
+
+  scrollContent: { paddingBottom: 30 },
+
+  // Hero
   heroSection: {
     height: 220,
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#1B5E20',
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
   },
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    backgroundColor: 'rgba(0,0,0,0.15)',
   },
-  heroContent: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
+  heroContent: { alignItems: 'center', paddingHorizontal: 20 },
   logoContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
@@ -331,37 +351,31 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   appName: {
-    fontSize: 26,
-    fontWeight: '700',
+    fontSize: 28,
+    fontWeight: '800',
     color: '#FFFFFF',
     marginBottom: 4,
     textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
   },
   appTagline: {
     fontSize: 15,
-    color: '#E8F5E8',
+    color: '#A5D6A7',
     textAlign: 'center',
     marginBottom: 12,
-    textShadowColor: 'rgba(0,0,0,0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   versionBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255,255,255,0.18)',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 16,
   },
   versionText: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#FFFFFF',
-    fontWeight: '500',
+    fontWeight: '600',
   },
-  
-  // Stats Section - Clean grid without cards
+
+  // Stats
   statsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -374,7 +388,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 5,
   },
@@ -391,22 +405,70 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   statLabel: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#666',
     textAlign: 'center',
   },
-  
-  // Story Section - Clean accordion
+
+  // Section Title
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1B5E20',
+    marginBottom: 14,
+    marginLeft: 4,
+  },
+
+  // Features
+  featuresContainer: {
+    marginTop: 16,
+    marginHorizontal: 16,
+  },
+  featuresScroll: { paddingRight: 20 },
+  featureCard: {
+    width: 170,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginRight: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  featureIconContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#E8F5E9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  featureTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#212121',
+    marginBottom: 6,
+  },
+  featureDescription: {
+    fontSize: 12,
+    color: '#666',
+    lineHeight: 18,
+  },
+
+  // Story Accordion
   storyContainer: {
     backgroundColor: '#FFFFFF',
     marginTop: 16,
     marginHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 4,
     paddingHorizontal: 16,
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 3,
   },
@@ -427,91 +489,57 @@ const styles = StyleSheet.create({
   },
   storyContent: {
     fontSize: 14,
-    color: '#666',
+    color: '#555',
     lineHeight: 22,
     paddingBottom: 16,
-    paddingRight: 20,
+    paddingRight: 8,
   },
-  
-  // Section Title
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1B5E20',
-    marginBottom: 16,
-    marginLeft: 4,
-  },
-  
-  // Features - Horizontal scroll cards
-  featuresContainer: {
+
+  // Campuses
+  campusesContainer: {
     marginTop: 16,
     marginHorizontal: 16,
   },
-  featuresScroll: {
-    paddingRight: 20,
+  campusesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
   },
-  featureCard: {
-    width: 180,
+  campusCard: {
+    width: '23%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    marginRight: 12,
+    borderRadius: 14,
+    padding: 12,
+    alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  featureIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#E8F5E8',
+  campusIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#E8F5E9',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
-  featureTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#212121',
-    marginBottom: 6,
-  },
-  featureDescription: {
+  campusCode: {
     fontSize: 13,
-    color: '#666',
-    lineHeight: 18,
+    fontWeight: '800',
+    color: '#1B5E20',
+    marginBottom: 2,
   },
-  
-  // Partners - Simplified
-  partnersContainer: {
-    backgroundColor: '#FFFFFF',
-    marginTop: 16,
-    marginHorizontal: 16,
-    padding: 16,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  partnersRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  partnerItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  partnerName: {
-    fontSize: 12,
-    color: '#666',
+  campusName: {
+    fontSize: 9,
+    color: '#888',
     textAlign: 'center',
-    marginTop: 8,
+    lineHeight: 12,
   },
-  
-  // Legal Links - Clean list
+
+  // Legal
   legalContainer: {
     backgroundColor: '#FFFFFF',
     marginTop: 16,
@@ -520,7 +548,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 3,
   },
@@ -532,52 +560,81 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
+  legalLinkLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   legalLinkText: {
     fontSize: 15,
     color: '#212121',
+    fontWeight: '500',
   },
-  
-  // Rate Button
-  rateButton: {
+
+  // Contact Card
+  contactCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: '#FFFFFF',
     marginHorizontal: 16,
     marginTop: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#FFC107',
-    gap: 8,
-    shadowColor: '#FFC107',
+    padding: 16,
+    borderRadius: 16,
+    gap: 14,
+    borderWidth: 1.5,
+    borderColor: '#C8E6C9',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.06,
     shadowRadius: 4,
     elevation: 2,
   },
-  rateButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#212121',
+  contactIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#2E7D32',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  
-  // Footer - Simplified
+  contactInfo: { flex: 1 },
+  contactTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1B5E20',
+  },
+  contactSub: {
+    fontSize: 13,
+    color: '#888',
+    marginTop: 2,
+  },
+
+  // Footer
   footer: {
     alignItems: 'center',
-    paddingVertical: 24,
-    marginTop: 8,
+    paddingVertical: 28,
+    marginTop: 12,
+    gap: 6,
+  },
+  footerBrand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  footerBrandText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#9E9E9E',
   },
   footerText: {
     fontSize: 12,
     color: '#999',
     textAlign: 'center',
-    marginBottom: 8,
   },
-  websiteLink: {
-    fontSize: 14,
-    color: '#4CAF50',
-    fontWeight: '500',
+  footerTagline: {
+    fontSize: 11,
+    color: '#BDBDBD',
+    marginTop: 2,
   },
 });
 

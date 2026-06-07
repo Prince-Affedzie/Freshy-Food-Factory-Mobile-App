@@ -18,12 +18,11 @@ import { useNavigation } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 
-const LAST_UPDATED = 'January 15, 2025';
-const EFFECTIVE_DATE = 'February 1, 2025';
-const CONTACT_EMAIL = 'legal@freshyfoodfactory.com';
+const LAST_UPDATED = 'June 1, 2026';
+const EFFECTIVE_DATE = 'June 15, 2026';
+const CONTACT_EMAIL = 'legal@cedimart.com';
 const CONTACT_PHONE = '+233 505 671 577';
 
-// ─── Section data ─────────────────────────────────────────────────────────────
 const SECTIONS = [
   {
     id: 'acceptance',
@@ -36,25 +35,25 @@ const SECTIONS = [
     tagBg: '#E8F5E9',
     content: `By downloading, installing, or using the CediMart mobile application ("App"), you confirm that you have read, understood, and agree to be bound by these Terms of Service ("Terms").
 
-If you do not agree to these Terms, please do not use our App or services. These Terms apply to all users of the App, including visitors, customers, and merchants.
+If you do not agree to these Terms, please do not use our App or services. These Terms apply to all users — buyers, sellers (vendors), and visitors.
 
-You must be at least 18 years old, or have the consent of a parent or guardian, to use our services.`,
+You must be at least 18 years old, or have the consent of a parent or guardian, to use our services. By creating a vendor account, you confirm you are a registered student or authorized campus community member.`,
   },
   {
     id: 'services',
-    icon: 'storefront-outline',
+    icon: 'school-outline',
     iconColor: '#1565C0',
     iconBg: '#E3F2FD',
     title: 'Our Services',
-    content: `CediMart is an online platform that connects customers with fresh food products including vegetables, fruits, staples, herbs, tubers, and other groceries. Through our App, you can:`,
+    content: `CediMart is a campus marketplace that connects student buyers and sellers across Ghanaian universities. Through our App, you can:`,
     bullets: [
-      { heading: 'Browse Products', text: 'View our catalogue of fresh food items with current pricing, availability, and product details.' },
-      { heading: 'Place Orders', text: 'Add items to your cart and place orders for home delivery to your specified address in our delivery zones.' },
-      { heading: 'Schedule Deliveries', text: 'Choose your preferred delivery day and time window at checkout.' },
-      { heading: 'Track Orders', text: 'Monitor the status of your order from placement through to delivery.' },
-      { heading: 'Manage Your Account', text: 'Save delivery addresses, view order history, and manage your profile information.' },
+      { heading: 'Browse & Buy', text: 'Discover items listed by verified students on your campus — from electronics and textbooks to hostel essentials and fashion.' },
+      { heading: 'Sell Your Items', text: 'List your products for free, set your own prices, and reach thousands of students across multiple campuses.' },
+      { heading: 'Secure Escrow Payments', text: 'All payments are held securely by CediMart until the buyer confirms receipt and satisfaction with the item.' },
+      { heading: 'Campus Delivery', text: 'We handle pickup from sellers and delivery to buyers within and across campuses.' },
+      { heading: 'In-App Communication', text: 'Message buyers and sellers safely within the app — no need to share personal contact details.' },
     ],
-    note: 'Our services are currently available within select delivery zones in Accra, Ghana. Availability may vary by location.',
+    note: 'Our services are currently available at University of Ghana, KNUST, UCC, UEW, UPSA, Ashesi, GIMPA, and ATU. More campuses coming soon.',
   },
   {
     id: 'account',
@@ -63,74 +62,87 @@ You must be at least 18 years old, or have the consent of a parent or guardian, 
     iconBg: '#F3E5F5',
     title: 'Your Account',
     bullets: [
-      { heading: 'Registration', text: 'You must provide accurate, current, and complete information when creating your account. You agree to keep this information up to date.' },
+      { heading: 'Registration', text: 'You must provide accurate, current, and complete information when creating your account. For vendors, this includes your real name, campus, and phone number.' },
       { heading: 'Account Security', text: 'You are responsible for maintaining the confidentiality of your login credentials. Any activity under your account is your responsibility.' },
-      { heading: 'One Account Per Person', text: 'You may create only one personal account. Creating multiple accounts to exploit promotions is prohibited.' },
-      { heading: 'Account Suspension', text: 'We reserve the right to suspend or terminate accounts that violate these Terms, engage in fraudulent activity, or misuse our platform.' },
-      { heading: 'Account Deletion', text: 'You may request deletion of your account at any time by contacting us. Pending orders must be completed or cancelled before deletion.' },
+      { heading: 'One Account Per Person', text: 'You may create only one personal account and one vendor account. Creating multiple accounts to manipulate ratings or prices is prohibited.' },
+      { heading: 'Verification', text: 'Vendor accounts undergo a verification process. We may require proof of student status or campus affiliation.' },
+      { heading: 'Account Suspension', text: 'We reserve the right to suspend or terminate accounts that violate these Terms, engage in fraudulent activity, or receive consistent negative feedback.' },
     ],
   },
   {
-    id: 'orders',
-    icon: 'receipt-outline',
+    id: 'buying',
+    icon: 'cart-outline',
     iconColor: '#F57F17',
     iconBg: '#FFF8E1',
-    title: 'Orders & Payments',
+    title: 'Buying on CediMart',
     bullets: [
-      { heading: 'Order Confirmation', text: 'An order is confirmed only after successful payment is processed. You will receive an in-app and email confirmation.' },
-      { heading: 'Pricing', text: 'All prices are displayed in Ghana Cedis (GH₵) and are inclusive of applicable taxes. Prices may change without prior notice.' },
-      { heading: 'Payment Methods', text: 'We accept payments via Paystack, which supports mobile money and card payments. Payment must be made in full at the time of ordering.' },
-      { heading: 'Delivery Fee', text: 'A delivery fee of GH₵ 20–80 applies per order, based on your location. This fee is paid separately to the delivery rider upon receipt.' },
-      { heading: 'Order Modifications', text: 'Orders cannot be modified after payment has been processed. If you need to make changes, you must cancel and place a new order, subject to our cancellation policy.' },
-      { heading: 'Out-of-Stock Items', text: 'In rare cases where an item becomes unavailable after ordering, we will notify you and process a refund for that item within 3–5 business days.' },
+      { heading: 'Order Placement', text: 'When you place an order, the payment is immediately processed but held in escrow. The seller is notified to prepare the item for pickup.' },
+      { heading: 'Escrow Protection', text: 'Your payment is NOT released to the seller until you confirm that you have received the item and it matches the description. This protects you from fraud.' },
+      { heading: 'Inspection Period', text: 'You have 24 hours from delivery to inspect the item and report any issues. If no report is made within 24 hours, the transaction is considered complete.' },
+      { heading: 'Dispute Resolution', text: 'If an item is significantly different from its description, damaged, or not delivered, you can file a dispute. Our support team will investigate and facilitate a resolution.' },
+      { heading: 'Meeting Safety', text: 'For in-person exchanges, always meet in public campus areas. Use our in-app messaging for all communication.' },
+    ],
+  },
+  {
+    id: 'selling',
+    icon: 'storefront-outline',
+    iconColor: '#2E7D32',
+    iconBg: '#E8F5E9',
+    title: 'Selling on CediMart',
+    tag: 'VENDORS',
+    tagColor: '#2E7D32',
+    tagBg: '#E8F5E9',
+    bullets: [
+      { heading: 'Listing Requirements', text: 'All listings must include accurate descriptions, clear photos, correct condition, and fair pricing. Misleading listings will be removed.' },
+      { heading: 'Prohibited Items', text: 'Counterfeit goods, stolen items, weapons, alcohol, drugs, and items violating university policies or Ghanaian law are strictly prohibited.' },
+      { heading: 'Commission Fees', text: 'CediMart charges a commission on each successful sale. The current rate is displayed before you publish each listing. Commission is deducted from the sale amount before payout.' },
+      { heading: 'Payouts', text: 'Your earnings are released to your registered mobile money or bank account within 24-48 hours after the buyer confirms delivery.' },
+      { heading: 'Delivery Cooperation', text: 'You agree to make items available for pickup by our delivery team within 24 hours of order confirmation. Delays may affect your seller rating.' },
+      { heading: 'Seller Ratings', text: 'Buyers can rate their experience. Maintain high standards to build trust and increase sales.' },
     ],
   },
   {
     id: 'delivery',
     icon: 'bicycle-outline',
-    iconColor: '#2E7D32',
-    iconBg: '#E8F5E9',
-    title: 'Delivery Terms',
+    iconColor: '#6A1B9A',
+    iconBg: '#F3E5F5',
+    title: 'Delivery & Logistics',
     bullets: [
-      { heading: 'Delivery Zones', text: 'We currently deliver to select areas in Accra, Ghana. You can check if we deliver to your address at checkout.' },
-      { heading: 'Delivery Schedule', text: 'You may choose a preferred delivery day and time. While we strive to honour your schedule, delivery times are estimates and not guaranteed.' },
-      { heading: 'Missed Delivery', text: 'If you are unavailable at the time of delivery, our rider will attempt to contact you. If delivery cannot be completed, you may be charged a redelivery fee.' },
-      { heading: 'Risk of Loss', text: 'Risk of loss and title to ordered items pass to you upon delivery to your specified address.' },
-      { heading: 'Delivery Personnel', text: 'Our delivery riders are bound by conduct standards. If you experience unprofessional behaviour, please report it immediately.' },
+      { heading: 'CediMart Delivery', text: 'We provide pickup and delivery services for items purchased through the platform. Our delivery team operates on all partner campuses.' },
+      { heading: 'Delivery Timeframes', text: 'Standard delivery is within 24-48 hours of order confirmation. Same-day delivery may be available on certain campuses.' },
+      { heading: 'Seller Drop-off', text: 'Sellers may also drop off items at designated CediMart collection points on their campus for faster processing.' },
+      { heading: 'Delivery Issues', text: 'If an item is damaged during delivery, CediMart takes responsibility. Report any delivery issues immediately upon receipt.' },
+      { heading: 'In-Person Exchange', text: 'Buyers and sellers may arrange in-person exchanges through the app. We recommend meeting in public campus areas during daylight hours.' },
     ],
   },
   {
-    id: 'cancellations',
-    icon: 'close-circle-outline',
-    iconColor: '#C62828',
-    iconBg: '#FFEBEE',
-    title: 'Cancellations & Refunds',
-    tag: 'KEY POLICY',
-    tagColor: '#C62828',
-    tagBg: '#FFEBEE',
+    id: 'payments',
+    icon: 'card-outline',
+    iconColor: '#1565C0',
+    iconBg: '#E3F2FD',
+    title: 'Payments & Escrow',
+    content: `CediMart uses a secure escrow system to protect both buyers and sellers:`,
     bullets: [
-      { heading: 'Cancellation Window', text: 'You may cancel an order at no charge before it has been confirmed for processing. Once processing begins, cancellation may not be possible.' },
-      { heading: 'Cancellation by CediMart', text: 'We reserve the right to cancel orders due to product unavailability, delivery zone restrictions, suspected fraud, or pricing errors. You will be notified and refunded in full.' },
-      { heading: 'Refund Eligibility', text: 'Refunds are issued for: cancelled orders, items not delivered, items significantly different from description, or damaged items reported within 24 hours of delivery.' },
-      { heading: 'Refund Process', text: 'Approved refunds are processed within 3–5 business days back to your original payment method. Mobile money refunds may be instant.' },
-      { heading: 'No Refunds For', text: 'Change of mind after delivery, items consumed or partially used, or claims made more than 24 hours after delivery.' },
+      { heading: 'How Escrow Works', text: 'Buyer pays → Funds held by CediMart → Seller provides item → Item delivered → Buyer confirms → Funds released to seller.' },
+      { heading: 'Payment Methods', text: 'We accept mobile money (MTN, Vodafone, AirtelTigo), bank transfers, and card payments through our secure payment partner.' },
+      { heading: 'Refund Eligibility', text: 'Refunds are issued when: items are not delivered, items are significantly different from description, items arrive damaged, or the seller cancels the order.' },
+      { heading: 'Refund Process', text: 'Approved refunds are processed within 3-5 business days back to the original payment method.' },
+      { heading: 'Dispute Timeframe', text: 'Disputes must be raised within 24 hours of delivery confirmation. After 24 hours, the transaction is considered final.' },
     ],
-    note: 'To request a refund, contact us within 24 hours of delivery with your order number and issue description.',
   },
   {
     id: 'conduct',
     icon: 'shield-outline',
-    iconColor: '#1565C0',
-    iconBg: '#E3F2FD',
+    iconColor: '#C62828',
+    iconBg: '#FFEBEE',
     title: 'User Conduct',
     content: `You agree not to use the App in any way that:`,
     bullets: [
-      { heading: 'Violates Laws', text: 'Is unlawful, fraudulent, deceptive, or violates any applicable Ghanaian laws or regulations.' },
-      { heading: 'Harms Others', text: 'Harasses, abuses, threatens, or intimidates other users, delivery riders, or CediMart staff.' },
-      { heading: 'Disrupts Services', text: 'Attempts to gain unauthorised access, introduces malware, or interferes with the proper functioning of the App.' },
-      { heading: 'Misrepresents Identity', text: 'Impersonates another person or entity, or falsely claims affiliation with any organisation.' },
-      { heading: 'Exploits Promotions', text: 'Abuses promotional offers, referral codes, or discount systems through fraudulent means.' },
-      { heading: 'Scrapes Data', text: 'Uses automated tools to scrape, crawl, or extract data from the App without our written consent.' },
+      { heading: 'Violates Laws', text: 'Is unlawful, fraudulent, or violates any applicable Ghanaian laws or university regulations.' },
+      { heading: 'Harms Others', text: 'Harasses, abuses, threatens, or intimidates other users, delivery personnel, or CediMart staff.' },
+      { heading: 'Manipulates the Platform', text: 'Creates fake accounts, posts fake listings, manipulates ratings, or engages in any deceptive practice.' },
+      { heading: 'Circumvents CediMart', text: 'Uses the platform to find buyers/sellers and then completes transactions outside the app to avoid commissions.' },
+      { heading: 'Misrepresents Items', text: 'Posts misleading photos, inaccurate descriptions, or misrepresents the condition of items.' },
     ],
   },
   {
@@ -139,11 +151,11 @@ You must be at least 18 years old, or have the consent of a parent or guardian, 
     iconColor: '#F57F17',
     iconBg: '#FFF8E1',
     title: 'Intellectual Property',
-    content: `All content in the App — including logos, product images, text, design, code, and the CediMart brand — is owned by or licensed to CediMart and is protected by applicable intellectual property laws.
+    content: `All content in the App — including logos, design, code, and the CediMart brand — is owned by or licensed to CediMart and is protected by applicable intellectual property laws.
 
-You may not reproduce, distribute, modify, create derivative works from, or commercially exploit any content from the App without our prior written permission.
+You may not reproduce, distribute, modify, or commercially exploit any content from the App without our prior written permission.
 
-You retain ownership of content you submit (such as reviews or profile photos), but grant CediMart a non-exclusive licence to use such content in connection with our services.`,
+You retain ownership of content you submit (such as product photos and descriptions), but grant CediMart a non-exclusive licence to display such content in connection with our services.`,
   },
   {
     id: 'liability',
@@ -153,12 +165,12 @@ You retain ownership of content you submit (such as reviews or profile photos), 
     title: 'Limitation of Liability',
     content: `To the maximum extent permitted by Ghanaian law, CediMart shall not be liable for:`,
     bullets: [
-      { heading: 'Indirect Damages', text: 'Any indirect, incidental, special, or consequential damages arising from your use of the App or services.' },
-      { heading: 'Service Interruptions', text: 'Loss caused by temporary unavailability of the App due to maintenance, technical issues, or circumstances beyond our control.' },
-      { heading: 'Third-Party Actions', text: 'Actions or omissions of delivery riders or payment processors beyond our reasonable control.' },
-      { heading: 'Force Majeure', text: 'Delays or failures caused by circumstances beyond our control including natural disasters, civil unrest, or government restrictions.' },
+      { heading: 'Indirect Damages', text: 'Any indirect, incidental, or consequential damages arising from your use of the App or services.' },
+      { heading: 'User Disputes', text: 'Disputes between buyers and sellers. We provide a dispute resolution mechanism but are not party to transactions.' },
+      { heading: 'Service Interruptions', text: 'Loss caused by temporary unavailability of the App due to maintenance or technical issues.' },
+      { heading: 'Third-Party Actions', text: 'Actions of delivery personnel or payment processors beyond our reasonable control.' },
     ],
-    note: 'Our total liability to you for any claim shall not exceed the amount you paid for the order giving rise to the claim.',
+    note: 'Our total liability for any claim shall not exceed the commission earned by CediMart on the transaction giving rise to the claim.',
   },
   {
     id: 'governing',
@@ -180,7 +192,7 @@ If any provision of these Terms is found to be unenforceable, the remaining prov
     title: 'Changes to These Terms',
     content: `We reserve the right to modify these Terms at any time. When we make material changes, we will notify you via in-app notification or email at least 7 days before the changes take effect.
 
-Your continued use of the App after the effective date of changes constitutes your acceptance of the revised Terms. If you do not agree with the changes, you may close your account before the effective date.
+Your continued use of the App after the effective date constitutes your acceptance of the revised Terms. If you do not agree, you may close your account before the effective date.
 
 The "Last Updated" date at the top of this screen reflects the most recent revision.`,
   },
@@ -190,22 +202,17 @@ The "Last Updated" date at the top of this screen reflects the most recent revis
     iconColor: '#1565C0',
     iconBg: '#E3F2FD',
     title: 'Contact & Support',
-    content: `If you have questions about these Terms, need support, or wish to report a violation, please reach out to us:`,
+    content: `If you have questions about these Terms, need support, or wish to report a violation, please reach out:`,
     isContact: true,
   },
 ];
 
-// ─── Section component ────────────────────────────────────────────────────────
 const TermsSection = ({ section, index }) => {
   const [open, setOpen] = useState(index === 0);
   const rotateAnim = useRef(new Animated.Value(index === 0 ? 1 : 0)).current;
 
   const toggle = () => {
-    Animated.timing(rotateAnim, {
-      toValue: open ? 0 : 1,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
+    Animated.timing(rotateAnim, { toValue: open ? 0 : 1, duration: 200, useNativeDriver: true }).start();
     setOpen(o => !o);
   };
 
@@ -215,7 +222,7 @@ const TermsSection = ({ section, index }) => {
     <View style={[styles.section, open && styles.sectionOpen]}>
       <TouchableOpacity style={styles.sectionHeader} onPress={toggle} activeOpacity={0.75}>
         <View style={styles.sectionLeft}>
-          <View style={[styles.sectionNum]}>
+          <View style={styles.sectionNum}>
             <Text style={styles.sectionNumText}>{String(index + 1).padStart(2, '0')}</Text>
           </View>
           <View style={[styles.sectionIconWrap, { backgroundColor: section.iconBg }]}>
@@ -237,9 +244,7 @@ const TermsSection = ({ section, index }) => {
 
       {open && (
         <View style={styles.sectionBody}>
-          {section.content && (
-            <Text style={styles.bodyText}>{section.content}</Text>
-          )}
+          {section.content && <Text style={styles.bodyText}>{section.content}</Text>}
 
           {section.bullets?.map((b, i) => (
             <View key={i} style={styles.bulletRow}>
@@ -262,11 +267,7 @@ const TermsSection = ({ section, index }) => {
 
           {section.isContact && (
             <View style={styles.contactBlock}>
-              <TouchableOpacity
-                style={styles.contactRow}
-                onPress={() => Linking.openURL(`mailto:${CONTACT_EMAIL}`)}
-                activeOpacity={0.8}
-              >
+              <TouchableOpacity style={styles.contactRow} onPress={() => Linking.openURL(`mailto:${CONTACT_EMAIL}`)} activeOpacity={0.8}>
                 <View style={[styles.contactIconWrap, { backgroundColor: '#E3F2FD' }]}>
                   <Ionicons name="mail-outline" size={16} color="#1565C0" />
                 </View>
@@ -276,12 +277,7 @@ const TermsSection = ({ section, index }) => {
                 </View>
                 <Ionicons name="chevron-forward" size={14} color="#BDBDBD" />
               </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.contactRow}
-                onPress={() => Linking.openURL(`tel:${CONTACT_PHONE.replace(/\s/g, '')}`)}
-                activeOpacity={0.8}
-              >
+              <TouchableOpacity style={styles.contactRow} onPress={() => Linking.openURL(`tel:${CONTACT_PHONE.replace(/\s/g, '')}`)} activeOpacity={0.8}>
                 <View style={[styles.contactIconWrap, { backgroundColor: '#E8F5E9' }]}>
                   <Ionicons name="call-outline" size={16} color="#2E7D32" />
                 </View>
@@ -291,7 +287,6 @@ const TermsSection = ({ section, index }) => {
                 </View>
                 <Ionicons name="chevron-forward" size={14} color="#BDBDBD" />
               </TouchableOpacity>
-
               <View style={[styles.contactRow, { borderBottomWidth: 0 }]}>
                 <View style={[styles.contactIconWrap, { backgroundColor: '#FFF8E1' }]}>
                   <Ionicons name="location-outline" size={16} color="#F57F17" />
@@ -309,7 +304,6 @@ const TermsSection = ({ section, index }) => {
   );
 };
 
-// ─── Table of Contents ────────────────────────────────────────────────────────
 const TableOfContents = ({ onSelect }) => (
   <View style={styles.tocCard}>
     <View style={styles.tocHead}>
@@ -328,7 +322,6 @@ const TableOfContents = ({ onSelect }) => (
   </View>
 );
 
-// ─── Main Screen ──────────────────────────────────────────────────────────────
 const TermsOfServiceScreen = () => {
   const navigation = useNavigation();
   const scrollRef = useRef(null);
@@ -348,23 +341,18 @@ const TermsOfServiceScreen = () => {
     <View style={styles.screen}>
       <StatusBar barStyle="dark-content" backgroundColor="#F7F8F7" />
 
-      {/* ── Floating nav ── */}
       <SafeAreaView edges={['top']} style={{ zIndex: 10 }}>
         <View style={styles.navRow}>
           <TouchableOpacity style={styles.navBtn} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={22} color="#1A1A1A" />
           </TouchableOpacity>
           <Text style={styles.navTitle}>Terms of Service</Text>
-          <TouchableOpacity
-            style={[styles.navBtn, showToc && styles.navBtnOn]}
-            onPress={() => setShowToc(t => !t)}
-          >
+          <TouchableOpacity style={[styles.navBtn, showToc && styles.navBtnOn]} onPress={() => setShowToc(t => !t)}>
             <Ionicons name={showToc ? 'close' : 'list-outline'} size={20} color={showToc ? '#1565C0' : '#1A1A1A'} />
           </TouchableOpacity>
         </View>
       </SafeAreaView>
 
-      {/* ── TOC overlay ── */}
       {showToc && (
         <View style={styles.tocOverlay} pointerEvents="box-none">
           <TouchableOpacity style={styles.tocBackdrop} activeOpacity={1} onPress={() => setShowToc(false)} />
@@ -374,31 +362,22 @@ const TermsOfServiceScreen = () => {
         </View>
       )}
 
-      <ScrollView
-        ref={scrollRef}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* ── Hero ── */}
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Hero */}
         <View style={styles.hero}>
-          {/* Background geometric accent */}
           <View style={styles.heroAccentCircle} />
           <View style={styles.heroAccentCircle2} />
-
           <View style={styles.heroInner}>
             <View style={styles.heroIconRing}>
               <View style={styles.heroIconInner}>
                 <Ionicons name="document-text" size={30} color="#fff" />
               </View>
             </View>
-
             <Text style={styles.heroTitle}>Terms of Service</Text>
-            <Text style={styles.heroSubtitle}>CediMart</Text>
+            <Text style={styles.heroSubtitle}>CediMart — Ghana's Campus Marketplace</Text>
             <Text style={styles.heroDesc}>
-              Please read these terms carefully before using our app and services. By continuing to use CediMart, you agree to all terms outlined below.
+              Please read these terms carefully. By using CediMart, you agree to all terms below. These terms apply to both buyers and vendors.
             </Text>
-
-            {/* Date pills */}
             <View style={styles.heroDates}>
               <View style={styles.datePill}>
                 <Ionicons name="create-outline" size={12} color="#9E9E9E" />
@@ -409,14 +388,12 @@ const TermsOfServiceScreen = () => {
                 <Text style={styles.datePillGreenText}>Effective {EFFECTIVE_DATE}</Text>
               </View>
             </View>
-
-            {/* Summary chips */}
             <View style={styles.summaryRow}>
               {[
-                { icon: 'location-outline',     label: 'Ghana Only' },
-                { icon: 'card-outline',          label: 'Paystack' },
-                { icon: 'bicycle-outline',       label: 'Delivery Terms' },
-                { icon: 'refresh-circle-outline', label: 'Refund Policy' },
+                { icon: 'school-outline', label: '8 Campuses' },
+                { icon: 'shield-checkmark-outline', label: 'Escrow Protected' },
+                { icon: 'bicycle-outline', label: 'Free Delivery' },
+                { icon: 'card-outline', label: 'Secure Payments' },
               ].map((chip, i) => (
                 <View key={i} style={styles.summaryChip}>
                   <Ionicons name={chip.icon} size={13} color="#1565C0" />
@@ -427,11 +404,11 @@ const TermsOfServiceScreen = () => {
           </View>
         </View>
 
-        {/* Quick summary banner */}
+        {/* Quick Summary */}
         <View style={styles.tldrBanner}>
           <View style={styles.tldrLeft}>
             <Text style={styles.tldrTitle}>Quick Summary</Text>
-            <Text style={styles.tldrSub}>What you need to know at a glance</Text>
+            <Text style={styles.tldrSub}>Key points for buyers & sellers</Text>
           </View>
           <View style={styles.tldrIcon}>
             <Ionicons name="bulb-outline" size={20} color="#F57F17" />
@@ -439,11 +416,11 @@ const TermsOfServiceScreen = () => {
         </View>
         <View style={styles.tldrItems}>
           {[
-            { icon: 'checkmark-circle', color: '#2E7D32', text: 'Order fresh food for delivery in Accra' },
-            { icon: 'card',             color: '#1565C0', text: 'Pay securely via Paystack — no hidden charges' },
-            { icon: 'bicycle',          color: '#6A1B9A', text: 'Delivery fee (GH₵ 20–80) paid to rider on delivery' },
-            { icon: 'close-circle',     color: '#C62828', text: 'Cancel orders before processing for a full refund' },
-            { icon: 'shield-checkmark', color: '#2E7D32', text: 'Your data is protected — we never sell it' },
+            { icon: 'cart-outline', color: '#2E7D32', text: 'Buy & sell with verified students on your campus' },
+            { icon: 'shield-checkmark', color: '#1565C0', text: 'Payments held in escrow until you confirm delivery' },
+            { icon: 'bicycle', color: '#6A1B9A', text: 'We handle pickup and delivery across all campuses' },
+            { icon: 'wallet-outline', color: '#2E7D32', text: 'Vendors: commission deducted from sale, payout within 48h' },
+            { icon: 'close-circle', color: '#C62828', text: 'Report issues within 24h of delivery for refund eligibility' },
           ].map((item, i) => (
             <View key={i} style={styles.tldrItem}>
               <Ionicons name={item.icon} size={16} color={item.color} />
@@ -452,7 +429,7 @@ const TermsOfServiceScreen = () => {
           ))}
         </View>
 
-        {/* ── Sections ── */}
+        {/* Sections */}
         <View style={styles.sectionsWrap}>
           {SECTIONS.map((section, index) => (
             <View key={section.id} ref={el => { sectionRefs.current[index] = el; }}>
@@ -461,28 +438,27 @@ const TermsOfServiceScreen = () => {
           ))}
         </View>
 
-        {/* ── Agreement footer ── */}
+        {/* Agreement Footer */}
         <View style={styles.agreementCard}>
           <View style={styles.agreementIconWrap}>
             <Ionicons name="checkmark-done-circle" size={28} color="#2E7D32" />
           </View>
           <Text style={styles.agreementTitle}>You've Agreed to These Terms</Text>
           <Text style={styles.agreementText}>
-            By using CediMart, you acknowledge that you have read and understood these Terms of Service and agree to be bound by them.
+            By using CediMart, you acknowledge that you have read and understood these Terms of Service and agree to be bound by them as a buyer, seller, or visitor.
           </Text>
           <View style={styles.agreementMeta}>
             <Text style={styles.agreementMetaText}>Effective: {EFFECTIVE_DATE}</Text>
             <View style={styles.agreementMetaDot} />
-            <Text style={styles.agreementMetaText}>v2.0</Text>
+            <Text style={styles.agreementMetaText}>v3.0</Text>
           </View>
         </View>
 
         {/* Footer */}
         <View style={styles.footer}>
-          <View style={styles.footerLeafRow}>
-            <Ionicons name="leaf" size={14} color="#A5D6A7" />
+          <View style={styles.footerBrandRow}>
+            <Ionicons name="school" size={14} color="#A5D6A7" />
             <Text style={styles.footerBrand}>CediMart</Text>
-            <Ionicons name="leaf" size={14} color="#A5D6A7" />
           </View>
           <Text style={styles.footerSub}>Accra, Ghana · © {new Date().getFullYear()}</Text>
           <TouchableOpacity onPress={() => navigation.navigate('PrivacyPolicy')} style={styles.footerLink}>
@@ -496,271 +472,92 @@ const TermsOfServiceScreen = () => {
   );
 };
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#F7F8F7' },
   scrollContent: { paddingBottom: 20 },
 
-  // ── NAV ────────────────────────────────────────────────────────────────────
-  navRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 10,
-  },
-  navBtn: {
-    width: 42, height: 42, borderRadius: 21,
-    backgroundColor: '#fff',
-    justifyContent: 'center', alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07, shadowRadius: 6, elevation: 3,
-  },
-  navBtnOn: {
-    backgroundColor: '#E3F2FD',
-    shadowColor: '#1565C0', shadowOpacity: 0.14,
-  },
+  navRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10 },
+  navBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 6, elevation: 3 },
+  navBtnOn: { backgroundColor: '#E3F2FD', shadowColor: '#1565C0', shadowOpacity: 0.14 },
   navTitle: { fontSize: 17, fontWeight: '800', color: '#1A1A1A', letterSpacing: 0.1 },
 
-  // ── TOC ─────────────────────────────────────────────────────────────────────
-  tocOverlay: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99,
-  },
+  tocOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 },
   tocBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.35)' },
-  tocPanel: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 100 : 70,
-    right: 16,
-    width: width * 0.8,
-    maxWidth: 320,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.14, shadowRadius: 20, elevation: 16,
-  },
+  tocPanel: { position: 'absolute', top: Platform.OS === 'ios' ? 100 : 70, right: 16, width: width * 0.8, maxWidth: 320, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.14, shadowRadius: 20, elevation: 16 },
   tocCard: { backgroundColor: '#fff', borderRadius: 18, overflow: 'hidden' },
-  tocHead: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingHorizontal: 16, paddingVertical: 13,
-    backgroundColor: '#EBF3FF',
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#DDEEFF',
-  },
+  tocHead: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 13, backgroundColor: '#EBF3FF', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#DDEEFF' },
   tocHeadText: { fontSize: 12, fontWeight: '800', color: '#1565C0', textTransform: 'uppercase', letterSpacing: 1.2 },
-  tocRow: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 14, paddingVertical: 11,
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#F5F5F5', gap: 10,
-  },
-  tocNumBadge: {
-    width: 28, height: 20, borderRadius: 6,
-    justifyContent: 'center', alignItems: 'center',
-  },
+  tocRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#F5F5F5', gap: 10 },
+  tocNumBadge: { width: 28, height: 20, borderRadius: 6, justifyContent: 'center', alignItems: 'center' },
   tocNum: { fontSize: 10, fontWeight: '800' },
   tocLabel: { flex: 1, fontSize: 13, color: '#424242', fontWeight: '500' },
 
-  // ── HERO ────────────────────────────────────────────────────────────────────
-  hero: {
-    backgroundColor: '#2E7D32',
-    marginHorizontal: 16, marginTop: 8, marginBottom: 12,
-    borderRadius: 22,
-    overflow: 'hidden',
-    shadowColor: '#1A237E', shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25, shadowRadius: 16, elevation: 8,
-    position: 'relative',
-  },
-  heroAccentCircle: {
-    position: 'absolute', top: -40, right: -40,
-    width: 160, height: 160, borderRadius: 80,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-  },
-  heroAccentCircle2: {
-    position: 'absolute', bottom: -30, left: -30,
-    width: 120, height: 120, borderRadius: 60,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-  },
+  hero: { backgroundColor: '#1B5E20', marginHorizontal: 16, marginTop: 8, marginBottom: 12, borderRadius: 22, overflow: 'hidden', shadowColor: '#1B5E20', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 8, position: 'relative' },
+  heroAccentCircle: { position: 'absolute', top: -40, right: -40, width: 160, height: 160, borderRadius: 80, backgroundColor: 'rgba(255,255,255,0.05)' },
+  heroAccentCircle2: { position: 'absolute', bottom: -30, left: -30, width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(255,255,255,0.04)' },
   heroInner: { padding: 24, alignItems: 'center' },
-  heroIconRing: {
-    width: 80, height: 80, borderRadius: 40,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    justifyContent: 'center', alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 2, borderColor: 'rgba(255,255,255,0.15)',
-  },
-  heroIconInner: {
-    width: 60, height: 60, borderRadius: 30,
-    backgroundColor: '#1565C0',
-    justifyContent: 'center', alignItems: 'center',
-  },
-  heroTitle: {
-    fontSize: 26, fontWeight: '900', color: '#fff',
-    letterSpacing: -0.4, textAlign: 'center', marginBottom: 2,
-  },
-  heroSubtitle: {
-    fontSize: 14, color: 'rgba(255,255,255,0.55)',
-    fontWeight: '600', letterSpacing: 0.5, marginBottom: 14,
-  },
-  heroDesc: {
-    fontSize: 13, color: 'rgba(255,255,255,0.7)',
-    textAlign: 'center', lineHeight: 20, marginBottom: 18,
-    paddingHorizontal: 8,
-  },
+  heroIconRing: { width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255,255,255,0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 16, borderWidth: 2, borderColor: 'rgba(255,255,255,0.15)' },
+  heroIconInner: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#1565C0', justifyContent: 'center', alignItems: 'center' },
+  heroTitle: { fontSize: 26, fontWeight: '900', color: '#fff', letterSpacing: -0.4, textAlign: 'center', marginBottom: 2 },
+  heroSubtitle: { fontSize: 13, color: '#A5D6A7', fontWeight: '600', letterSpacing: 0.3, marginBottom: 14 },
+  heroDesc: { fontSize: 13, color: 'rgba(255,255,255,0.7)', textAlign: 'center', lineHeight: 20, marginBottom: 18, paddingHorizontal: 8 },
   heroDates: { flexDirection: 'row', gap: 8, marginBottom: 16, flexWrap: 'wrap', justifyContent: 'center' },
-  datePill: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
-  },
+  datePill: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' },
   datePillText: { fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: '500' },
-  datePillGreen: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: '#E8F5E9',
-    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
-  },
+  datePillGreen: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#E8F5E9', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
   datePillGreenText: { fontSize: 12, color: '#2E7D32', fontWeight: '700' },
-  summaryRow: {
-    flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center',
-  },
-  summaryChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20,
-  },
+  summaryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
+  summaryChip: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(255,255,255,0.1)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
   summaryChipText: { fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: '600' },
 
-  // ── TLDR BANNER ──────────────────────────────────────────────────────────────
-  tldrBanner: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#fff',
-    marginHorizontal: 16, marginBottom: 0,
-    borderRadius: 14, padding: 16,
-    borderBottomLeftRadius: 0, borderBottomRightRadius: 0,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
-    borderBottomWidth: 1, borderBottomColor: '#F5F5F5',
-  },
+  tldrBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', marginHorizontal: 16, marginBottom: 0, borderRadius: 14, padding: 16, borderBottomLeftRadius: 0, borderBottomRightRadius: 0, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2, borderBottomWidth: 1, borderBottomColor: '#F5F5F5' },
   tldrLeft: { flex: 1 },
   tldrTitle: { fontSize: 15, fontWeight: '800', color: '#1A1A1A' },
   tldrSub: { fontSize: 12, color: '#9E9E9E', marginTop: 1 },
-  tldrIcon: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: '#FFF8E1',
-    justifyContent: 'center', alignItems: 'center',
-  },
-  tldrItems: {
-    backgroundColor: '#fff',
-    marginHorizontal: 16, marginBottom: 12,
-    borderRadius: 14,
-    borderTopLeftRadius: 0, borderTopRightRadius: 0,
-    paddingHorizontal: 16, paddingBottom: 14,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
-  },
-  tldrItem: {
-    flexDirection: 'row', alignItems: 'center',
-    gap: 10, paddingVertical: 7,
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#F5F5F5',
-  },
+  tldrIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFF8E1', justifyContent: 'center', alignItems: 'center' },
+  tldrItems: { backgroundColor: '#fff', marginHorizontal: 16, marginBottom: 12, borderRadius: 14, borderTopLeftRadius: 0, borderTopRightRadius: 0, paddingHorizontal: 16, paddingBottom: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
+  tldrItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#F5F5F5' },
   tldrItemText: { flex: 1, fontSize: 13, color: '#424242', fontWeight: '500', lineHeight: 18 },
 
-  // ── SECTIONS ────────────────────────────────────────────────────────────────
   sectionsWrap: { paddingHorizontal: 16, gap: 8 },
-  section: {
-    backgroundColor: '#fff', borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
-  },
+  section: { backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
   sectionOpen: { shadowOpacity: 0.08, shadowRadius: 12, elevation: 3 },
-  sectionHeader: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 15,
-  },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 15 },
   sectionLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
   sectionNum: { width: 22 },
   sectionNumText: { fontSize: 11, fontWeight: '800', color: '#D0D0D0' },
-  sectionIconWrap: {
-    width: 34, height: 34, borderRadius: 9,
-    justifyContent: 'center', alignItems: 'center', flexShrink: 0,
-  },
+  sectionIconWrap: { width: 34, height: 34, borderRadius: 9, justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
   sectionTitleWrap: { flex: 1, gap: 3 },
   sectionTitle: { fontSize: 14, fontWeight: '700', color: '#1A1A1A', lineHeight: 19 },
-  sectionTag: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 7, paddingVertical: 2,
-    borderRadius: 5,
-  },
+  sectionTag: { alignSelf: 'flex-start', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 5 },
   sectionTagText: { fontSize: 9, fontWeight: '900', letterSpacing: 0.6 },
-
-  // Body
-  sectionBody: {
-    paddingHorizontal: 16, paddingBottom: 18, paddingTop: 6,
-    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#F0F0F0',
-  },
+  sectionBody: { paddingHorizontal: 16, paddingBottom: 18, paddingTop: 6, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#F0F0F0' },
   bodyText: { fontSize: 13, color: '#555', lineHeight: 21, marginTop: 10, marginBottom: 8 },
-
-  // Bullets with numbered markers
-  bulletRow: {
-    flexDirection: 'row', alignItems: 'flex-start',
-    marginTop: 10, gap: 12,
-  },
-  bulletMarker: {
-    width: 22, height: 22, borderRadius: 11,
-    justifyContent: 'center', alignItems: 'center',
-    flexShrink: 0, marginTop: 1,
-  },
+  bulletRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 10, gap: 12 },
+  bulletMarker: { width: 22, height: 22, borderRadius: 11, justifyContent: 'center', alignItems: 'center', flexShrink: 0, marginTop: 1 },
   bulletMarkerNum: { fontSize: 10, fontWeight: '900', color: '#fff' },
   bulletBody: { flex: 1 },
   bulletHeading: { fontSize: 13, fontWeight: '700', color: '#1A1A1A', marginBottom: 3 },
   bulletText: { fontSize: 13, color: '#757575', lineHeight: 19 },
-
-  // Note box
-  noteBox: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
-    borderLeftWidth: 3, backgroundColor: 'rgba(0,0,0,0.02)',
-    borderRadius: 6, padding: 10, marginTop: 14,
-  },
+  noteBox: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderLeftWidth: 3, backgroundColor: 'rgba(0,0,0,0.02)', borderRadius: 6, padding: 10, marginTop: 14 },
   noteText: { flex: 1, fontSize: 12, lineHeight: 17, fontWeight: '600' },
-
-  // Contact block
-  contactBlock: {
-    backgroundColor: '#F8FAFF', borderRadius: 12,
-    marginTop: 12, overflow: 'hidden',
-    borderWidth: 1, borderColor: '#E3F2FD',
-  },
-  contactRow: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 14, paddingVertical: 13,
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#EEF4FF', gap: 12,
-  },
-  contactIconWrap: {
-    width: 36, height: 36, borderRadius: 10,
-    justifyContent: 'center', alignItems: 'center', flexShrink: 0,
-  },
+  contactBlock: { backgroundColor: '#F8FAFF', borderRadius: 12, marginTop: 12, overflow: 'hidden', borderWidth: 1, borderColor: '#E3F2FD' },
+  contactRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 13, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#EEF4FF', gap: 12 },
+  contactIconWrap: { width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
   contactInfo: { flex: 1 },
   contactLabel: { fontSize: 10, color: '#9E9E9E', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
   contactValue: { fontSize: 14, color: '#1A1A1A', fontWeight: '600' },
 
-  // ── AGREEMENT CARD ───────────────────────────────────────────────────────────
-  agreementCard: {
-    backgroundColor: '#1A237E',
-    marginHorizontal: 16, marginTop: 12, marginBottom: 8,
-    borderRadius: 20, padding: 24, alignItems: 'center',
-    shadowColor: '#1A237E', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25, shadowRadius: 12, elevation: 6,
-  },
-  agreementIconWrap: {
-    width: 60, height: 60, borderRadius: 30,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    justifyContent: 'center', alignItems: 'center', marginBottom: 14,
-  },
+  agreementCard: { backgroundColor: '#1B5E20', marginHorizontal: 16, marginTop: 12, marginBottom: 8, borderRadius: 20, padding: 24, alignItems: 'center', shadowColor: '#1B5E20', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 12, elevation: 6 },
+  agreementIconWrap: { width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(255,255,255,0.12)', justifyContent: 'center', alignItems: 'center', marginBottom: 14 },
   agreementTitle: { fontSize: 18, fontWeight: '900', color: '#fff', marginBottom: 8, textAlign: 'center' },
-  agreementText: {
-    fontSize: 13, color: 'rgba(255,255,255,0.65)',
-    textAlign: 'center', lineHeight: 19, marginBottom: 14,
-  },
+  agreementText: { fontSize: 13, color: 'rgba(255,255,255,0.65)', textAlign: 'center', lineHeight: 19, marginBottom: 14 },
   agreementMeta: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   agreementMetaText: { fontSize: 12, color: 'rgba(255,255,255,0.4)', fontWeight: '600' },
   agreementMetaDot: { width: 3, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.25)' },
 
-  // ── FOOTER ──────────────────────────────────────────────────────────────────
   footer: { alignItems: 'center', paddingVertical: 28, gap: 6 },
-  footerLeafRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  footerBrandRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   footerBrand: { fontSize: 14, fontWeight: '800', color: '#9E9E9E' },
   footerSub: { fontSize: 12, color: '#BDBDBD' },
   footerLink: { marginTop: 4 },

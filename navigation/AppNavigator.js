@@ -196,9 +196,9 @@ function MainTabNavigator() {
 // ───────────────────────────────────────────────────
 function MainStackNavigator() {
   const { user, role, loading } = useAuth();
-  const [isFirstLaunch, setIsFirstLaunch] = useState(null);
+   /*const [isFirstLaunch, setIsFirstLaunch] = useState(null);
 
-  useEffect(() => {
+ useEffect(() => {
     const init = async () => {
       const first = await checkIfFirstLaunch();
       setIsFirstLaunch(first);
@@ -206,11 +206,11 @@ function MainStackNavigator() {
     init();
   }, []);
 
-  if (loading || isFirstLaunch === null) return null;
+  if (loading || isFirstLaunch === null) return null;*/
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {isFirstLaunch && <Stack.Screen name="Welcome" component={WelcomeScreen} />}
+      
 
       {!user ? (
        

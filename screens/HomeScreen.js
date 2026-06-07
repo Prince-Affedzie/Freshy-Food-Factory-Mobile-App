@@ -47,7 +47,7 @@ const ALL_CAMPUSES = [
 const HERO_SLIDES = [
   {
     id: '1',
-    image: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1780692313/ChatGPT_Image_Jun_5_2026_08_37_eybjm8.png',
+    image: 'https://res.cloudinary.com/duv3qvvjz/image/upload/v1780782982/flyer13_1_fyp0xj.png',
     tag: '🎓  Campus Marketplace',
     title: 'Buy & Sell on\nYour Campus',
     subtitle: "Connect with students across Ghana's top universities",

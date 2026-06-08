@@ -22,18 +22,19 @@ const { width } = Dimensions.get('window');
 // STATUS CONFIG
 // ─────────────────────────────────────────────
 const STATUS_CONFIG = {
-  pending:   { bg: '#FFF8E1', border: '#FFD54F', text: '#E65100', icon: 'time-outline',              label: 'Pending' },
-  confirmed: { bg: '#E8F5E9', border: '#81C784', text: '#2E7D32', icon: 'checkmark-circle-outline',  label: 'Confirmed' },
-  preparing: { bg: '#E3F2FD', border: '#64B5F6', text: '#1565C0', icon: 'restaurant-outline',        label: 'Preparing' },
-  ready:     { bg: '#F3E5F5', border: '#CE93D8', text: '#6A1B9A', icon: 'cube-outline',              label: 'Ready' },
-  delivered: { bg: '#E0F2F1', border: '#4DB6AC', text: '#00695C', icon: 'checkmark-done-outline',    label: 'Delivered' },
-  cancelled: { bg: '#FFEBEE', border: '#EF9A9A', text: '#C62828', icon: 'close-circle-outline',      label: 'Cancelled' },
+  Pending:   { bg: '#FFF8E1', border: '#FFD54F', text: '#E65100', icon: 'time-outline',              label: 'Pending' },
+  //confirmed: { bg: '#E8F5E9', border: '#81C784', text: '#2E7D32', icon: 'checkmark-circle-outline',  label: 'Confirmed' },
+  Processing: { bg: '#E3F2FD', border: '#64B5F6', text: '#1565C0', icon: 'restaurant-outline',        label: 'Processing' },
+ // ready:     { bg: '#F3E5F5', border: '#CE93D8', text: '#6A1B9A', icon: 'cube-outline',              label: 'Ready' },
+  Delivered: { bg: '#E0F2F1', border: '#4DB6AC', text: '#00695C', icon: 'checkmark-done-outline',    label: 'Delivered' },
+  Cancelled: { bg: '#FFEBEE', border: '#EF9A9A', text: '#C62828', icon: 'close-circle-outline',      label: 'Cancelled' },
 };
 
 // ─────────────────────────────────────────────
 // FILTER TABS
 // ─────────────────────────────────────────────
-const FILTERS = ['All', 'pending', 'confirmed', 'preparing', 'ready', 'delivered', 'cancelled'];
+//'Out for Delivery',
+const FILTERS = ['All', 'Pending', 'Processing',  'Delivered', 'Cancelled'];
 
 // ─────────────────────────────────────────────
 // HELPERS
@@ -54,9 +55,6 @@ const getAddressString = (addr) => {
 // ─────────────────────────────────────────────
 const StatCard = ({ label, count, iconName, color, bg }) => (
   <View style={[styles.statCard, { backgroundColor: bg }]}>
-    <View style={[styles.statIconWrap, { backgroundColor: color + '22' }]}>
-      <Ionicons name={iconName} size={16} color={color} />
-    </View>
     <Text style={[styles.statCount, { color }]}>{count}</Text>
     <Text style={styles.statLabel}>{label}</Text>
   </View>
@@ -83,10 +81,11 @@ const OrderCard = ({ item, onPress, index }) => {
       }),
     ]).start();
   }, []);
-
-  const cfg = STATUS_CONFIG[item.vendorStatus] || STATUS_CONFIG.pending;
+ 
+  const cfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.pending;
   const addressStr = getAddressString(item.shippingAddress);
   const itemCount = item.items?.length || 0;
+  
 
   return (
     <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
@@ -154,7 +153,7 @@ const OrderCard = ({ item, onPress, index }) => {
               <View style={styles.footerPill}>
                 <Ionicons name="bicycle-outline" size={12} color="#1565C0" />
                 <Text style={[styles.footerPillText, { color: '#1565C0' }]}>
-                  {new Date(item.deliverySchedule).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                  {item.deliverySchedule.preferredDay}, {item.deliverySchedule.preferredTime}
                 </Text>
               </View>
             )}
@@ -194,6 +193,7 @@ const VendorOrdersScreen = () => {
       setError(null);
       const res = await getMyOrders();
       if (res?.data?.success || res?.status === 200) {
+        
         setOrders(res.data.data || res.data);
       } else {
         setError('Failed to load orders.');
@@ -214,12 +214,12 @@ const VendorOrdersScreen = () => {
   // Derived data
   const filteredOrders = activeFilter === 'All'
     ? orders
-    : orders.filter(o => o.vendorStatus === activeFilter);
+    : orders.filter(o => o.status === activeFilter);
 
   // Summary stats for header
-  const pendingCount   = orders.filter(o => o.vendorStatus === 'pending').length;
-  const preparingCount = orders.filter(o => ['confirmed', 'preparing'].includes(o.vendorStatus)).length;
-  const doneCount      = orders.filter(o => o.vendorStatus === 'delivered').length;
+  const pendingCount   = orders.filter(o => o.status === 'Pending').length;
+  const preparingCount = orders.filter(o => ['confirmed', 'Processing'].includes(o.status)).length;
+  const doneCount      = orders.filter(o => o.status === 'Delivered').length;
 
   // ── Loading ──
   if (loading && !refreshing) {

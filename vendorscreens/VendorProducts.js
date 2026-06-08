@@ -187,7 +187,7 @@ const MyProductsScreen = ({ navigation }) => {
       [
         {
           text: 'View Details',
-          onPress: () => navigation.navigate('VendorProductDetail', { productId: product._id, product }),
+          onPress: () => navigation.navigate('ProductDetail', { productId: product._id, product }),
         },
         {
           text: 'Edit Listing',
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F0F2EE' },
   header: {
     backgroundColor: '#1B5E20',
-    paddingHorizontal: 4,
+    paddingHorizontal: 15,
     paddingTop: 10,
     paddingBottom: 24,
     borderTopLeftRadius:18,

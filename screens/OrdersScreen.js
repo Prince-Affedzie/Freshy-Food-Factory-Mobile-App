@@ -143,7 +143,7 @@ const OrdersScreen = () => {
   // Helper to get product image from array
   // Helper to get product image
 const getProductImage = (item) => {
-  console.log(item)
+  
   if (!item) return 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=80';
   
   // Backend already resolves image to a string or null

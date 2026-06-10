@@ -207,7 +207,7 @@ const HERO_IMAGES = {
   'phones and tablets':   'https://res.cloudinary.com/duv3qvvjz/image/upload/v1780694855/computers_flyer_ceekpj.jpg',
   'computers and laptops':'https://res.cloudinary.com/duv3qvvjz/image/upload/v1780694855/computers_flyer_ceekpj.jpg',
   gaming:                 'https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?w=800',
-  fashion:                'https://images.unsplash.com/photo-1445205170230-053b83016050?w=800',
+  fashion:                'https://res.cloudinary.com/duv3qvvjz/image/upload/v1781101245/fashion_banner_ibwmaz.png',
   'books-course-materials':'https://res.cloudinary.com/duv3qvvjz/image/upload/v1780695851/books_flyer_ljnqis.jpg',
   'hostel-items':         'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800',
   appliances:             'https://res.cloudinary.com/duv3qvvjz/image/upload/v1780690124/appliances_bkv5s1.jpg',

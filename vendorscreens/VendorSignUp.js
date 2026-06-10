@@ -441,7 +441,7 @@ const VendorSignUpScreen = ({ navigation }) => {
       <View style={styles.stepHeader}>
         <View style={styles.stepIconBadge}><Ionicons name="shield-checkmark-outline" size={28} color="#4CAF50" /></View>
         <Text style={styles.stepTitle}>Verify Your Phone</Text>
-        <Text style={styles.stepSubtitle}>We sent a 6-digit code to <Text style={styles.phoneHighlight}>+233 {phone}</Text></Text>
+        <Text style={styles.stepSubtitle}>We sent a 6-digit code to <Text style={styles.phoneHighlight}> {phone}</Text></Text>
       </View>
       <OTPInput value={otp} onChange={setOtp} editable={!loading} />
       {error !== '' && <View style={[styles.errorRow, { justifyContent: 'center', marginTop: 10 }]}><Ionicons name="alert-circle-outline" size={14} color="#F44336" /><Text style={styles.errorText}>{error}</Text></View>}

@@ -321,7 +321,7 @@ const VendorLoginScreen = ({ navigation }) => {
         <Text style={styles.stepTitle}>Verify Your Phone</Text>
         <Text style={styles.stepSubtitle}>
           We sent a 6-digit code to{' '}
-          <Text style={styles.phoneHighlight}>+233 {phone}</Text>
+          <Text style={styles.phoneHighlight}>{phone}</Text>
         </Text>
       </View>
 

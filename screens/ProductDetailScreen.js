@@ -901,13 +901,6 @@ const ProductDetailScreen = ({ route, navigation }) => {
                   <Ionicons name="chevron-forward" size={18} color="#BDBDBD" />
                 </View>
               </TouchableOpacity>
-
-              <View style={styles.safetyNote}>
-                <Ionicons name="shield-checkmark-outline" size={14} color="#1565C0" />
-                <Text style={styles.safetyNoteText}>
-                  Always meet in a safe, public campus location when exchanging items.
-                </Text>
-              </View>
             </CollapsibleSection>
           )}
 

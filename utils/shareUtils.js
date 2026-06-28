@@ -60,9 +60,29 @@ const shareWithRNShare = async (options) => {
   }
 };
 
+
+const getStoreLinks = () => {
+  const links = getAppStoreLink();
+  return `App Store: ${links.ios}\nGoogle Play: ${links.android}`;
+};
 /**
  * Build a rich share message with all product details
  */
+// First, update the getAppStoreLink function to return both links
+export const getAppStoreLink = () => {
+  return {
+    ios: 'https://apps.apple.com/us/app/cedimart/id6762318566',
+    android: 'https://play.google.com/store/apps/details?id=com.freshyfood.factory',
+  };
+};
+
+// Helper to get both store links as formatted string
+const getStoreLinks = () => {
+  const links = getAppStoreLink();
+  return `📱 App Store: ${links.ios}\n📱 Google Play: ${links.android}`;
+};
+
+// Then update the buildProductMessage function
 const buildProductMessage = (product, shareLink, includeDescription = true) => {
   const productName = product.name || 'Product';
   const price = product.price?.toFixed(2) || '0.00';
@@ -110,7 +130,7 @@ const buildProductMessage = (product, shareLink, includeDescription = true) => {
     message += `Price: Negotiable\n`;
   }
   
-  if (includeDescription && product.description) {
+  if (product.description) {
     const desc = product.description.length > 120 
       ? product.description.substring(0, 120) + '...' 
       : product.description;
@@ -119,11 +139,11 @@ const buildProductMessage = (product, shareLink, includeDescription = true) => {
   
   message += `\n――――――――――――――――――\n`;
   message += `View on CediMart:\n${shareLink}\n\n`;
-  message += `Download the CediMart app for the best student deals!\n${getAppStoreLink()}`;
+  message += `Download the CediMart app for the best student deals!\n`;
+  message += getStoreLinks();
   
   return message;
 };
-
 /**
  * Share a product with image
  */
@@ -177,7 +197,7 @@ export const shareGuestProduct = async (product) => {
     const productName = product.name || 'Product';
     const price = product.price?.toFixed(2) || '0.00';
     
-    const message = buildProductMessage(product, shareLink, false);
+    const message = buildProductMessage(product, shareLink, true);
     const imageUrl = product.images?.[0] || product.image;
     
     let localImageUri = null;

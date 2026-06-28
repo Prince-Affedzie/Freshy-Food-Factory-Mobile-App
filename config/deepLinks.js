@@ -82,8 +82,8 @@ export const getTagLink = (tag, useWebLink = true) => {
  * Get app store download link
  */
 export const getAppStoreLink = () => {
-  return Platform.select({
+  return {
     ios: 'https://apps.apple.com/us/app/cedimart/id6762318566',
     android: 'https://play.google.com/store/apps/details?id=com.freshyfood.factory',
-  });
+  };
 };

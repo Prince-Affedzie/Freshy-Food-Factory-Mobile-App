@@ -4,7 +4,7 @@ export default {
   expo: {
     name: "CediMart",
     slug: "freshyfoodfactory-mobile",
-    version: "4.0.0",
+    version: "5.0.0",
     orientation: "portrait",
     icon: "./assets/cedimart_logo.png",
     userInterfaceStyle: "light",
@@ -151,6 +151,9 @@ export default {
       [
         "expo-build-properties",
         {
+          "ios": {
+           "useFrameworks": "static"
+            },
           "android": {
             "minSdkVersion": 24,
             "compileSdkVersion": 35,
